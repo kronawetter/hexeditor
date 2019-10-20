@@ -16,6 +16,8 @@
 		F4169FC12354B9BE00CF0F2C /* AtomicWordGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4169FC02354B9BE00CF0F2C /* AtomicWordGroup.swift */; };
 		F4169FC32354B9D100CF0F2C /* UnicodeAtomicWordGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4169FC22354B9D100CF0F2C /* UnicodeAtomicWordGroup.swift */; };
 		F4520074235510CA00B51AE1 /* DocumentBrowserViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4520073235510CA00B51AE1 /* DocumentBrowserViewController.swift */; };
+		F463AB2B235CE69300B7A41A /* OffsetTreeNodePayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = F463AB2A235CE69300B7A41A /* OffsetTreeNodePayload.swift */; };
+		F463AB2D235CE6B100B7A41A /* ContigiousOffsetTreeNodePayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = F463AB2C235CE6B100B7A41A /* ContigiousOffsetTreeNodePayload.swift */; };
 		F48725ED2355FA9400959C4A /* ByteOrder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48725EC2355FA9400959C4A /* ByteOrder.swift */; };
 		F48725EF2356585400959C4A /* OffsetTree.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48725EE2356585400959C4A /* OffsetTree.swift */; };
 		F48BC76023550998006338F6 /* ExtendedUnicodeCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48BC75F23550998006338F6 /* ExtendedUnicodeCodec.swift */; };
@@ -46,6 +48,8 @@
 		F4169FC02354B9BE00CF0F2C /* AtomicWordGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AtomicWordGroup.swift; sourceTree = "<group>"; };
 		F4169FC22354B9D100CF0F2C /* UnicodeAtomicWordGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnicodeAtomicWordGroup.swift; sourceTree = "<group>"; };
 		F4520073235510CA00B51AE1 /* DocumentBrowserViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentBrowserViewController.swift; sourceTree = "<group>"; };
+		F463AB2A235CE69300B7A41A /* OffsetTreeNodePayload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OffsetTreeNodePayload.swift; sourceTree = "<group>"; };
+		F463AB2C235CE6B100B7A41A /* ContigiousOffsetTreeNodePayload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContigiousOffsetTreeNodePayload.swift; sourceTree = "<group>"; };
 		F48725EC2355FA9400959C4A /* ByteOrder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ByteOrder.swift; sourceTree = "<group>"; };
 		F48725EE2356585400959C4A /* OffsetTree.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OffsetTree.swift; sourceTree = "<group>"; };
 		F48BC75F23550998006338F6 /* ExtendedUnicodeCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtendedUnicodeCodec.swift; sourceTree = "<group>"; };
@@ -91,19 +95,12 @@
 		F4169F9A2354B41600CF0F2C /* Hex Editor */ = {
 			isa = PBXGroup;
 			children = (
-				F4169F9B2354B41600CF0F2C /* AppDelegate.swift */,
-				F4169F9D2354B41600CF0F2C /* SceneDelegate.swift */,
-				F4520073235510CA00B51AE1 /* DocumentBrowserViewController.swift */,
+				F463AB29235CE64A00B7A41A /* App */,
+				F463AB26235CE62300B7A41A /* Atomic Word Groups */,
+				F463AB28235CE64100B7A41A /* Unicode */,
+				F463AB27235CE63700B7A41A /* Offset Tree */,
 				F4DF9C8D2354E33100ECA3C9 /* WordCollection.swift */,
-				F4169FBE2354B99200CF0F2C /* AtomicWordGroupManager.swift */,
-				F4169FC02354B9BE00CF0F2C /* AtomicWordGroup.swift */,
-				F4169FC22354B9D100CF0F2C /* UnicodeAtomicWordGroup.swift */,
-				F48BC75F23550998006338F6 /* ExtendedUnicodeCodec.swift */,
-				F48725EE2356585400959C4A /* OffsetTree.swift */,
 				F48725EC2355FA9400959C4A /* ByteOrder.swift */,
-				F4169FA12354B41B00CF0F2C /* Assets.xcassets */,
-				F4169FA62354B41B00CF0F2C /* LaunchScreen.storyboard */,
-				F4169FA92354B41B00CF0F2C /* Info.plist */,
 			);
 			path = "Hex Editor";
 			sourceTree = "<group>";
@@ -115,6 +112,47 @@
 				F4169FB42354B41B00CF0F2C /* Info.plist */,
 			);
 			path = "Hex Editor Tests";
+			sourceTree = "<group>";
+		};
+		F463AB26235CE62300B7A41A /* Atomic Word Groups */ = {
+			isa = PBXGroup;
+			children = (
+				F4169FBE2354B99200CF0F2C /* AtomicWordGroupManager.swift */,
+				F4169FC02354B9BE00CF0F2C /* AtomicWordGroup.swift */,
+				F4169FC22354B9D100CF0F2C /* UnicodeAtomicWordGroup.swift */,
+			);
+			path = "Atomic Word Groups";
+			sourceTree = "<group>";
+		};
+		F463AB27235CE63700B7A41A /* Offset Tree */ = {
+			isa = PBXGroup;
+			children = (
+				F48725EE2356585400959C4A /* OffsetTree.swift */,
+				F463AB2A235CE69300B7A41A /* OffsetTreeNodePayload.swift */,
+				F463AB2C235CE6B100B7A41A /* ContigiousOffsetTreeNodePayload.swift */,
+			);
+			path = "Offset Tree";
+			sourceTree = "<group>";
+		};
+		F463AB28235CE64100B7A41A /* Unicode */ = {
+			isa = PBXGroup;
+			children = (
+				F48BC75F23550998006338F6 /* ExtendedUnicodeCodec.swift */,
+			);
+			path = Unicode;
+			sourceTree = "<group>";
+		};
+		F463AB29235CE64A00B7A41A /* App */ = {
+			isa = PBXGroup;
+			children = (
+				F4169F9B2354B41600CF0F2C /* AppDelegate.swift */,
+				F4169F9D2354B41600CF0F2C /* SceneDelegate.swift */,
+				F4520073235510CA00B51AE1 /* DocumentBrowserViewController.swift */,
+				F4169FA12354B41B00CF0F2C /* Assets.xcassets */,
+				F4169FA62354B41B00CF0F2C /* LaunchScreen.storyboard */,
+				F4169FA92354B41B00CF0F2C /* Info.plist */,
+			);
+			path = App;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -220,9 +258,11 @@
 				F48725ED2355FA9400959C4A /* ByteOrder.swift in Sources */,
 				F4520074235510CA00B51AE1 /* DocumentBrowserViewController.swift in Sources */,
 				F48725EF2356585400959C4A /* OffsetTree.swift in Sources */,
+				F463AB2B235CE69300B7A41A /* OffsetTreeNodePayload.swift in Sources */,
 				F48BC76023550998006338F6 /* ExtendedUnicodeCodec.swift in Sources */,
 				F4169FBF2354B99200CF0F2C /* AtomicWordGroupManager.swift in Sources */,
 				F4169FC32354B9D100CF0F2C /* UnicodeAtomicWordGroup.swift in Sources */,
+				F463AB2D235CE6B100B7A41A /* ContigiousOffsetTreeNodePayload.swift in Sources */,
 				F4169F9C2354B41600CF0F2C /* AppDelegate.swift in Sources */,
 				F4DF9C8E2354E33100ECA3C9 /* WordCollection.swift in Sources */,
 				F4169FC12354B9BE00CF0F2C /* AtomicWordGroup.swift in Sources */,
@@ -382,7 +422,7 @@
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = 62ZWYS9243;
 				ENABLE_PREVIEWS = YES;
-				INFOPLIST_FILE = "Hex Editor/Info.plist";
+				INFOPLIST_FILE = "Hex Editor/App/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -403,7 +443,7 @@
 				DEVELOPMENT_ASSET_PATHS = "";
 				DEVELOPMENT_TEAM = 62ZWYS9243;
 				ENABLE_PREVIEWS = YES;
-				INFOPLIST_FILE = "Hex Editor/Info.plist";
+				INFOPLIST_FILE = "Hex Editor/App/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

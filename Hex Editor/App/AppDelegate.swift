@@ -27,7 +27,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 	var view = UIView()
 	
 	func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-		var tree = OffsetTree<UInt8>()
+		var tree = OffsetTree<ContigiousOffsetTreeNodePayload<UInt8>>()
 		tree.insert(10, at: 10, size: 2)
 		tree.insert(8, at: 8, size: 2)
 		tree.insert(12, at: 12, size: 2)
