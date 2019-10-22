@@ -15,9 +15,13 @@
 		F4169FBF2354B99200CF0F2C /* AtomicWordGroupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4169FBE2354B99200CF0F2C /* AtomicWordGroupManager.swift */; };
 		F4169FC12354B9BE00CF0F2C /* AtomicWordGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4169FC02354B9BE00CF0F2C /* AtomicWordGroup.swift */; };
 		F4169FC32354B9D100CF0F2C /* UnicodeAtomicWordGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4169FC22354B9D100CF0F2C /* UnicodeAtomicWordGroup.swift */; };
+		F4253D25235FB23B008063D7 /* OffsetTreeElementStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4253D24235FB23B008063D7 /* OffsetTreeElementStorage.swift */; };
+		F4253D27235FB25A008063D7 /* LinearOffsetTreeElementStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4253D26235FB25A008063D7 /* LinearOffsetTreeElementStorage.swift */; };
 		F4520074235510CA00B51AE1 /* DocumentBrowserViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4520073235510CA00B51AE1 /* DocumentBrowserViewController.swift */; };
 		F48725ED2355FA9400959C4A /* ByteOrder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48725EC2355FA9400959C4A /* ByteOrder.swift */; };
 		F48BC76023550998006338F6 /* ExtendedUnicodeCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48BC75F23550998006338F6 /* ExtendedUnicodeCodec.swift */; };
+		F492B1B8235F563000CCE9E5 /* OffsetTree.swift in Sources */ = {isa = PBXBuildFile; fileRef = F492B1B7235F563000CCE9E5 /* OffsetTree.swift */; };
+		F492B1BA235F564B00CCE9E5 /* OffsetTreeNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = F492B1B9235F564B00CCE9E5 /* OffsetTreeNode.swift */; };
 		F4DF9C8E2354E33100ECA3C9 /* WordCollection.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4DF9C8D2354E33100ECA3C9 /* WordCollection.swift */; };
 /* End PBXBuildFile section */
 
@@ -44,9 +48,13 @@
 		F4169FBE2354B99200CF0F2C /* AtomicWordGroupManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AtomicWordGroupManager.swift; sourceTree = "<group>"; };
 		F4169FC02354B9BE00CF0F2C /* AtomicWordGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AtomicWordGroup.swift; sourceTree = "<group>"; };
 		F4169FC22354B9D100CF0F2C /* UnicodeAtomicWordGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnicodeAtomicWordGroup.swift; sourceTree = "<group>"; };
+		F4253D24235FB23B008063D7 /* OffsetTreeElementStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OffsetTreeElementStorage.swift; sourceTree = "<group>"; };
+		F4253D26235FB25A008063D7 /* LinearOffsetTreeElementStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinearOffsetTreeElementStorage.swift; sourceTree = "<group>"; };
 		F4520073235510CA00B51AE1 /* DocumentBrowserViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentBrowserViewController.swift; sourceTree = "<group>"; };
 		F48725EC2355FA9400959C4A /* ByteOrder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ByteOrder.swift; sourceTree = "<group>"; };
 		F48BC75F23550998006338F6 /* ExtendedUnicodeCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtendedUnicodeCodec.swift; sourceTree = "<group>"; };
+		F492B1B7235F563000CCE9E5 /* OffsetTree.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OffsetTree.swift; sourceTree = "<group>"; };
+		F492B1B9235F564B00CCE9E5 /* OffsetTreeNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OffsetTreeNode.swift; sourceTree = "<group>"; };
 		F4DF9C8D2354E33100ECA3C9 /* WordCollection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordCollection.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -92,6 +100,7 @@
 				F463AB29235CE64A00B7A41A /* App */,
 				F463AB26235CE62300B7A41A /* Atomic Word Groups */,
 				F463AB28235CE64100B7A41A /* Unicode */,
+				F492B1B6235F560C00CCE9E5 /* Offset Tree */,
 				F4DF9C8D2354E33100ECA3C9 /* WordCollection.swift */,
 				F48725EC2355FA9400959C4A /* ByteOrder.swift */,
 			);
@@ -136,6 +145,17 @@
 				F4169FA92354B41B00CF0F2C /* Info.plist */,
 			);
 			path = App;
+			sourceTree = "<group>";
+		};
+		F492B1B6235F560C00CCE9E5 /* Offset Tree */ = {
+			isa = PBXGroup;
+			children = (
+				F492B1B7235F563000CCE9E5 /* OffsetTree.swift */,
+				F492B1B9235F564B00CCE9E5 /* OffsetTreeNode.swift */,
+				F4253D24235FB23B008063D7 /* OffsetTreeElementStorage.swift */,
+				F4253D26235FB25A008063D7 /* LinearOffsetTreeElementStorage.swift */,
+			);
+			path = "Offset Tree";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -240,7 +260,11 @@
 			files = (
 				F48725ED2355FA9400959C4A /* ByteOrder.swift in Sources */,
 				F4520074235510CA00B51AE1 /* DocumentBrowserViewController.swift in Sources */,
+				F492B1B8235F563000CCE9E5 /* OffsetTree.swift in Sources */,
+				F4253D27235FB25A008063D7 /* LinearOffsetTreeElementStorage.swift in Sources */,
+				F4253D25235FB23B008063D7 /* OffsetTreeElementStorage.swift in Sources */,
 				F48BC76023550998006338F6 /* ExtendedUnicodeCodec.swift in Sources */,
+				F492B1BA235F564B00CCE9E5 /* OffsetTreeNode.swift in Sources */,
 				F4169FBF2354B99200CF0F2C /* AtomicWordGroupManager.swift in Sources */,
 				F4169FC32354B9D100CF0F2C /* UnicodeAtomicWordGroup.swift in Sources */,
 				F4169F9C2354B41600CF0F2C /* AppDelegate.swift in Sources */,
