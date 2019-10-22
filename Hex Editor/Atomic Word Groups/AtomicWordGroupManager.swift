@@ -8,7 +8,11 @@
 
 struct AtomicWordGroupManager<T: AtomicWordGroup> {
 	let dataSource: T.DataSource
-	var groups = OffsetTree<ContigiousOffsetTreeNodePayload<T>>()
+	//var groups = OffsetTree<ContigiousOffsetTreeElementStorage<T>>()
+	
+	mutating func insert(_ group: T) {
+		
+	}
 	
 	mutating func create(for rangeOfInterest: T.DataSource.Indices) {
 		T.create(for: rangeOfInterest, in: &self)

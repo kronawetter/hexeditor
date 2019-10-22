@@ -24,19 +24,17 @@ struct UnicodeAtomicWordGroup<Codec: ExtendedUnicodeCodec, Endianness: _ByteOrde
 		var currentIndex = clampedRange.startIndex
 		
 		loop: while true {
-			//print("Index: \(currentIndex)")
 			switch parser.parseScalar(from: &iterator) {
 			case .emptyInput:
 				break loop
 				
 			case .error(length: let length):
-				if (currentIndex >= rangeOfInterest.startIndex) {
+				if rangeOfInterest.contains(currentIndex) {
 					let group = UnicodeAtomicWordGroup(range: currentIndex..<(currentIndex + length), value: "Invalid")
-					manager.groups.insert(group, at: currentIndex, size: length)
-					
-					//print("→ Invalid, not ignored (length \(length))")
+					manager.insert(group)
+					print("Error (\(length))")
 				} else {
-					//print("→ Invalid, ignored (length \(length))")
+					print("Error: (\(length), Ignored)")
 				}
 				
 				currentIndex += length
@@ -46,10 +44,9 @@ struct UnicodeAtomicWordGroup<Codec: ExtendedUnicodeCodec, Endianness: _ByteOrde
 				let length = Codec.width(scalar)
 				
 				let group = UnicodeAtomicWordGroup(range: currentIndex..<(currentIndex + length), value: String(scalar))
-				manager.groups.insert(group, at: currentIndex, size: length)
-				
-				//print("→ \(scalar) (length \(length))")
-				
+				manager.insert(group)
+				print("\(scalar): \(length)")
+								
 				currentIndex += length
 			}
 		}

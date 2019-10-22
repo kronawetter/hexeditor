@@ -19,8 +19,12 @@ class HexEditorTests: XCTestCase {
     }
 
     func testExample() {
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
+        let string = "🐱abc🐶"
+		var data = Array(string.utf8)
+		data[0] = 0
+
+		var manager = AtomicWordGroupManager<UnicodeAtomicWordGroup<UTF8, ByteOrder.LittleEndian, [UTF8.CodeUnit]>>(dataSource: data)
+		manager.create(for: 2..<data.endIndex - 4)
     }
 
     func testPerformanceExample() {

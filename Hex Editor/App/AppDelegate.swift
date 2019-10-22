@@ -8,32 +8,11 @@
 
 import UIKit
 
-class View<T: AtomicWordGroup>: UIView {
-	var manager: AtomicWordGroupManager<T>
-	
-	init(frame: CGRect, dataSource: T.DataSource) {
-		manager = AtomicWordGroupManager<T>(dataSource: dataSource)
-		
-		super.init(frame: frame)
-	}
-	
-	required init?(coder: NSCoder) {
-		fatalError("init(coder:) has not been implemented")
-	}
-}
-
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 	var view = UIView()
 	
 	func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-		var tree = OffsetTree<ContigiousOffsetTreeNodePayload<UInt8>>()
-		tree.insert(10, at: 10, size: 2)
-		tree.insert(8, at: 8, size: 2)
-		tree.insert(12, at: 12, size: 2)
-		tree.insert(7, at: 7, size: 1)
-		tree.insert(0, at: 0, size: 2)
-
 		// Override point for customization after application launch.
 		return true
 	}
