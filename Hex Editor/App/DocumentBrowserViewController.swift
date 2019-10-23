@@ -39,7 +39,7 @@ class DocumentBrowserViewController: UIDocumentBrowserViewController, UIDocument
 		}
 		
 		typealias CurrentEncoding = UTF8
-		let dataSource: UnsafeBufferPointer<CurrentEncoding.CodeUnit> = data[0..<50].copyWords()
+		let dataSource: UnsafeBufferPointer<CurrentEncoding.CodeUnit> = data[0..<260000].copyWords()
 		var test = AtomicWordGroupManager<UnicodeAtomicWordGroup<CurrentEncoding, ByteOrder.LittleEndian, UnsafeBufferPointer>>(dataSource: dataSource)
 		test.create(for: dataSource.startIndex..<dataSource.endIndex)
 		

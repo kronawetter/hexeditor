@@ -37,15 +37,20 @@ extension OffsetTree {
 		}
 		
 		var pairs: [Pair]
-		var firstChild: Child? = nil
+		var firstChild: Child?
+		var isLeaf: Bool
 		
 		init(initialElement: Element, range: Range<Int>) {
 			let initialPair = Pair(offset: range.startIndex, initialElement: initialElement)
 			pairs = [initialPair]
+			firstChild = nil
+			isLeaf = true
 		}
 		
 		init(pairs: [Pair]) {
 			self.pairs = pairs
+			firstChild = nil
+			isLeaf = true
 		}
 		
 		// Returns pair to insert in parent node after splitting
@@ -53,8 +58,18 @@ extension OffsetTree {
 			switch index(for: offset) {
 			case .existing(at: let index):
 				let baseOffset = pairs[index].range.startIndex
-				pairs[index].elementStorage.insert(element, at: offset - baseOffset)
-				pairs[index].range = pairs[index].range.extended(by: element.size)
+				if pairs[index].elementStorage.insert(element, at: offset - baseOffset) {
+					pairs[index].range = pairs[index].range.extended(by: element.size)
+				} else {
+					let newPair = Pair(offset: offset, initialElement: element)
+					pairs.insert(newPair, at: index)
+					
+					if isExceedingMaximumPairCount {
+						return split()
+					} else {
+						return nil
+					}
+				}
 				
 				return nil
 
@@ -79,6 +94,8 @@ extension OffsetTree {
 					
 					let index = pairs.enumerated().filter { $1.range.startIndex > offset }.first?.offset ?? pairs.endIndex // TOOD: Perform binary search
 					pairs.insert(splitResult, at: index)
+					
+					isLeaf = !(firstChild != nil || pairs.first(where: { $0.child != nil }) != nil)
 				}
 				
 				if isExceedingMaximumPairCount {
@@ -102,20 +119,17 @@ extension OffsetTree {
 			let newChildNode = Node(pairs: pairsForNewNode)
 			newChildNode.firstChild = pairs[indexOfSeparatingPair].child
 			newChildNode.firstChild?.baseOffset -= baseOffsetOfSeparatingPair
-			
+			newChildNode.isLeaf = !(newChildNode.firstChild != nil || newChildNode.pairs.first(where: { $0.child != nil }) != nil)
+
 			var newPair = separatingPair
 			newPair.child = (node: newChildNode, baseOffset: baseOffsetOfSeparatingPair)
 
 			pairs.removeSubrange(indexOfSeparatingPair..<pairs.endIndex)
 			return newPair
 		}
-		
-		var isLeaf: Bool {
-			return pairs.compactMap { $0.child } .isEmpty && firstChild == nil
-		}
-		
+				
 		var isExceedingMaximumPairCount: Bool {
-			return pairs.count > 2
+			return pairs.count > 1020
 		}
 		
 		enum FindResult {

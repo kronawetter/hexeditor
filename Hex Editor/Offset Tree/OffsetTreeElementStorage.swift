@@ -15,5 +15,5 @@ protocol OffsetTreeElementStorage {
 	
 	init(initialElement: Element)
 	
-	mutating func insert(_ element: Element, at offset: Int)
+	mutating func insert(_ element: Element, at offset: Int) -> Bool
 }

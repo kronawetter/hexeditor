@@ -32,9 +32,9 @@ struct UnicodeAtomicWordGroup<Codec: ExtendedUnicodeCodec, Endianness: _ByteOrde
 				if rangeOfInterest.contains(currentIndex) {
 					let group = UnicodeAtomicWordGroup(range: currentIndex..<(currentIndex + length), value: "Invalid")
 					manager.insert(group)
-					print("Error (\(length))")
+					//print("Error (\(length))")
 				} else {
-					print("Error: (\(length), Ignored)")
+					//print("Error: (\(length), Ignored)")
 				}
 				
 				currentIndex += length
@@ -45,7 +45,7 @@ struct UnicodeAtomicWordGroup<Codec: ExtendedUnicodeCodec, Endianness: _ByteOrde
 				
 				let group = UnicodeAtomicWordGroup(range: currentIndex..<(currentIndex + length), value: String(scalar))
 				manager.insert(group)
-				print("\(scalar): \(length)")
+				//print("\(scalar): \(length)")
 								
 				currentIndex += length
 			}

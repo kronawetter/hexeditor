@@ -6,7 +6,7 @@
 //  Copyright © 2019 Philip Kronawetter. All rights reserved.
 //
 
-protocol AtomicWordGroup {
+protocol AtomicWordGroup: Sizeable {
 	associatedtype DataSource: WordCollection
 	
 	var value: String { get }
@@ -14,4 +14,10 @@ protocol AtomicWordGroup {
 	
 	static func create(for rangeOfInterest: DataSource.Indices, in manager: inout AtomicWordGroupManager<Self>)
 	static func update(for changedRange: DataSource.Indices, lengthDelta: DataSource.Index, in manager: inout AtomicWordGroupManager<Self>)
+}
+
+extension AtomicWordGroup {
+	var size: Int {
+		return range.count
+	}
 }
