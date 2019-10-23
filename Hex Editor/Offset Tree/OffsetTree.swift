@@ -6,13 +6,20 @@
 //  Copyright © 2019 Philip Kronawetter. All rights reserved.
 //
 
-struct OffsetTree<Element> {
+struct OffsetTree<ElementStorage: OffsetTreeElementStorage> {
+	typealias Element = ElementStorage.Element
+	
 	var root: Node? = nil
 	
-	mutating func insert(_ element: Element, range: Range<Int>) {
+	mutating func insert(_ element: Element, offset: Int) {
 		if let root = root {
-			root.insert(element, range: range)
+			if let splitResult = root.insert(element, offset: offset) {
+				let newRoot = Node(pairs: [splitResult])
+				newRoot.firstChild = root
+				self.root = newRoot
+			}
 		} else {
+			let range = offset..<(offset + element.size)
 			root = Node(initialElement: element, range: range)
 		}
 	}

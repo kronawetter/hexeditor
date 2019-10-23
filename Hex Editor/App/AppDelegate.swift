@@ -8,22 +8,30 @@
 
 import UIKit
 
+struct Test: Sizeable {
+	let value: Int
+	let size: Int
+}
+
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 	var view = UIView()
 	
 	func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-		var tree = OffsetTree<Int>()
-		tree.insert(5, range: 5..<6)
-		tree.insert(0, range: 0..<1)
-		tree.insert(2, range: 2..<3)
-		tree.insert(8, range: 7..<8)
-		tree.insert(20, range: 20..<21)
-		tree.insert(30, range: 30..<31)
-		tree.insert(10, range: 10..<11)
-		tree.insert(14, range: 14..<15)
-		tree.insert(12, range: 12..<13)
-
+		var tree = OffsetTree<LinearOffsetTreeElementStorage<Test>>()
+		/*tree.insert(Test(value: 100, size: 1), offset: 100)
+		tree.insert(Test(value: 200, size: 1), offset: 200)
+		tree.insert(Test(value: 300, size: 1), offset: 300)
+		tree.insert(Test(value: 250, size: 1), offset: 250)
+		tree.insert(Test(value: 220, size: 1), offset: 220)
+		tree.insert(Test(value: 210, size: 1), offset: 210)
+		tree.insert(Test(value: 230, size: 1), offset: 230)*/
+		tree.insert(Test(value: 100, size: 1), offset: 100)
+		tree.insert(Test(value: 200, size: 1), offset: 200)
+		tree.insert(Test(value: 300, size: 1), offset: 300)
+		tree.insert(Test(value: 50, size: 1), offset: 50)
+		tree.insert(Test(value: 150, size: 1), offset: 150)
+		
 		// Override point for customization after application launch.
 		return true
 	}
