@@ -7,8 +7,12 @@
 //
 
 extension Range where Bound: Numeric {
+	static func +(range: Range, offset: Bound) -> Range {
+		return Range(uncheckedBounds: (lower: range.lowerBound + offset, upper: range.upperBound + offset))
+	}
+	
 	static func -(range: Range, offset: Bound) -> Range {
-		return Range(uncheckedBounds: (lower: range.lowerBound - offset, upper: range.upperBound - offset))
+		return range + offset * -1
 	}
 	
 	func extended(by bound: Bound) -> Range {
@@ -18,11 +22,13 @@ extension Range where Bound: Numeric {
 
 extension OffsetTree {
 	class Node {
+		typealias Child = (node: Node, baseOffset: Int)
+
 		struct Pair {
 			// TODO: Change var -> let where appropriate
 			var range: Range<Int>
 			var elementStorage: ElementStorage
-			var child: Node? = nil
+			var child: Child? = nil
 			
 			init(offset: Int, initialElement: Element) {
 				range = offset..<(offset + initialElement.size)
@@ -31,7 +37,7 @@ extension OffsetTree {
 		}
 		
 		var pairs: [Pair]
-		var firstChild: Node? = nil
+		var firstChild: Child? = nil
 		
 		init(initialElement: Element, range: Range<Int>) {
 			let initialPair = Pair(offset: range.startIndex, initialElement: initialElement)
@@ -46,14 +52,16 @@ extension OffsetTree {
 		func insert(_ element: Element, offset: Int) -> Pair? {
 			switch index(for: offset) {
 			case .existing(at: let index):
-				let baseOffset = 0//pairs[index].range.startIndex
+				let baseOffset = pairs[index].range.startIndex
 				pairs[index].elementStorage.insert(element, at: offset - baseOffset)
 				pairs[index].range = pairs[index].range.extended(by: element.size)
+				
 				return nil
 
 			case .new(before: let index):
 				let newPair = Pair(offset: offset, initialElement: element)
 				pairs.insert(newPair, at: index)
+				
 				if isExceedingMaximumPairCount {
 					return split()
 				} else {
@@ -61,21 +69,18 @@ extension OffsetTree {
 				}
 			
 			case .descend(to: let index):
-				let child: Node
-				let baseOffset: Int
-				if index >= 0 {
-					child = pairs[index].child!
-					baseOffset = 0//pairs[index].range.endIndex
-				} else {
-					child = firstChild!
-					baseOffset = 0//pairs.first!.range.startIndex
-				}
+				let (child, baseOffset) = index >= 0 ? pairs[index].child! : firstChild!
 				
 				let newOffset = offset - baseOffset
-				if let splitResult = child.insert(element, offset: newOffset) {
+				if var splitResult = child.insert(element, offset: newOffset) {
+					// TODO: This should be done as part of split()
+					splitResult.range = splitResult.range + baseOffset
+					splitResult.child?.baseOffset += baseOffset
+					
 					let index = pairs.enumerated().filter { $1.range.startIndex > offset }.first?.offset ?? pairs.endIndex // TOOD: Perform binary search
 					pairs.insert(splitResult, at: index)
 				}
+				
 				if isExceedingMaximumPairCount {
 					return split()
 				} else {
@@ -86,17 +91,20 @@ extension OffsetTree {
 				
 		func split() -> Pair {
 			let indexOfSeparatingPair = pairs.count / 2
+			let separatingPair = pairs[indexOfSeparatingPair]
+			let baseOffsetOfSeparatingPair = separatingPair.range.lowerBound
 			
-			/*for index in pairs.indices.filter({ $0 != indexOfSeparatingPair }) {
-				pairs[index].range = pairs[index].range - pairs[indexOfSeparatingPair].range.startIndex
-			}*/
-						
-			let pairsForNewNode = Array(pairs[(indexOfSeparatingPair + 1)..<pairs.endIndex]) // TODO: Remove array cast
-			let newNode = Node(pairs: pairsForNewNode)
-			newNode.firstChild = pairs[indexOfSeparatingPair].child
+			var pairsForNewNode = Array(pairs[(indexOfSeparatingPair + 1)..<pairs.endIndex]) // TODO: Remove array cast
+			for index in pairsForNewNode.indices {
+				pairsForNewNode[index].range = pairsForNewNode[index].range - baseOffsetOfSeparatingPair
+			}
 			
-			var newPair = pairs[indexOfSeparatingPair]
-			newPair.child = newNode
+			let newChildNode = Node(pairs: pairsForNewNode)
+			newChildNode.firstChild = pairs[indexOfSeparatingPair].child
+			newChildNode.firstChild?.baseOffset -= baseOffsetOfSeparatingPair
+			
+			var newPair = separatingPair
+			newPair.child = (node: newChildNode, baseOffset: baseOffsetOfSeparatingPair)
 
 			pairs.removeSubrange(indexOfSeparatingPair..<pairs.endIndex)
 			return newPair

@@ -15,7 +15,7 @@ struct OffsetTree<ElementStorage: OffsetTreeElementStorage> {
 		if let root = root {
 			if let splitResult = root.insert(element, offset: offset) {
 				let newRoot = Node(pairs: [splitResult])
-				newRoot.firstChild = root
+				newRoot.firstChild = (node: root, baseOffset: 0)
 				self.root = newRoot
 			}
 		} else {
