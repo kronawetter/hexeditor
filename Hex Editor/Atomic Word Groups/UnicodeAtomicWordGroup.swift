@@ -30,7 +30,7 @@ struct UnicodeAtomicWordGroup<Codec: ExtendedUnicodeCodec, Endianness: _ByteOrde
 				
 			case .error(length: let length):
 				if rangeOfInterest.contains(currentIndex) {
-					let group = UnicodeAtomicWordGroup(range: currentIndex..<(currentIndex + length), value: "Invalid")
+					let group = UnicodeAtomicWordGroup(range: currentIndex..<(currentIndex + length), value: "�")
 					manager.insert(group)
 					//print("Error (\(length))")
 				} else {
@@ -42,8 +42,15 @@ struct UnicodeAtomicWordGroup<Codec: ExtendedUnicodeCodec, Endianness: _ByteOrde
 			case .valid(let result):
 				let scalar = Codec.decode(result)
 				let length = Codec.width(scalar)
-				
-				let group = UnicodeAtomicWordGroup(range: currentIndex..<(currentIndex + length), value: String(scalar))
+
+				let value: String
+				if scalar.properties.isWhitespace {
+					value = ""
+				} else {
+					value = String(scalar)
+				}
+
+				let group = UnicodeAtomicWordGroup(range: currentIndex..<(currentIndex + length), value: value)
 				manager.insert(group)
 				//print("\(scalar): \(length)")
 								

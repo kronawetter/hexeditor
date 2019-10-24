@@ -10,7 +10,7 @@ struct OffsetTree<ElementStorage: OffsetTreeElementStorage> {
 	typealias Element = ElementStorage.Element
 	
 	var root: Node? = nil
-	
+
 	mutating func insert(_ element: Element, offset: Int) {
 		if let root = root {
 			if let splitResult = root.insert(element, offset: offset) {
@@ -22,5 +22,17 @@ struct OffsetTree<ElementStorage: OffsetTreeElementStorage> {
 			let range = offset..<(offset + element.size)
 			root = Node(initialElement: element, range: range)
 		}
+	}
+
+	subscript(_ offset: Int) -> Element? {
+		guard let root = root else {
+			return nil
+		}
+
+		return root.find(offset: offset)
+	}
+
+	mutating func clear() {
+		root = nil
 	}
 }

@@ -12,9 +12,26 @@ struct LinearOffsetTreeElementStorage<Element: Sizeable>: OffsetTreeElementStora
 	init(initialElement: Element) {
 		elements = [initialElement]
 	}
-	
+
+	subscript(_ offset: Int) -> Element? {
+		var currentOffset = 0
+
+		for element in elements {
+			if offset == currentOffset {
+				return element
+			}
+			currentOffset += element.size
+		}
+
+		if offset == currentOffset {
+			return elements.last
+		} else {
+			return nil
+		}
+	}
+
 	mutating func insert(_ element: Element, at offset: Int) -> Bool {
-		guard elements.count < 100 else {
+		guard elements.count < 1 else {
 			return false
 		}
 		

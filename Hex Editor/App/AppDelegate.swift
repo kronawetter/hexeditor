@@ -18,7 +18,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 	var view = UIView()
 	
 	func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-		var tree = OffsetTree<LinearOffsetTreeElementStorage<Test>>()
+		/*var tree = OffsetTree<LinearOffsetTreeElementStorage<Test>>()
 		tree.insert(Test(value: 100, size: 2), offset: 100)
 		tree.insert(Test(value: 102, size: 4), offset: 102)
 		tree.insert(Test(value: 200, size: 1), offset: 200)
@@ -26,7 +26,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 		tree.insert(Test(value: 250, size: 1), offset: 250)
 		tree.insert(Test(value: 220, size: 1), offset: 220)
 		tree.insert(Test(value: 210, size: 1), offset: 210)
-		tree.insert(Test(value: 230, size: 1), offset: 230)
+		tree.insert(Test(value: 230, size: 1), offset: 230)*/
 		/*tree.insert(Test(value: 100, size: 1), offset: 100)
 		tree.insert(Test(value: 200, size: 1), offset: 200)
 		tree.insert(Test(value: 300, size: 1), offset: 300)

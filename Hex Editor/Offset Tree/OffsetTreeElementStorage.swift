@@ -14,6 +14,8 @@ protocol OffsetTreeElementStorage {
 	associatedtype Element: Sizeable
 	
 	init(initialElement: Element)
+
+	subscript(_ offset: Int) -> Element? { get }
 	
 	mutating func insert(_ element: Element, at offset: Int) -> Bool
 }

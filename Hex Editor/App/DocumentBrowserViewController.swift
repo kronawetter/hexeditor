@@ -23,27 +23,11 @@ class DocumentBrowserViewController: UIDocumentBrowserViewController, UIDocument
 	}
 	
 	func documentBrowser(_ controller: UIDocumentBrowserViewController, didPickDocumentsAt documentURLs: [URL]) {
-		print(documentURLs)
-		
 		guard let documentURL = documentURLs.first else {
 			return
 		}
-		
-		guard documentURL.startAccessingSecurityScopedResource() else {
-			return
-		}
-		
-		guard let data = try? Data(contentsOf: documentURL) else {
-			documentURL.stopAccessingSecurityScopedResource()
-			return
-		}
-		
-		typealias CurrentEncoding = UTF8
-		let dataSource: UnsafeBufferPointer<CurrentEncoding.CodeUnit> = data[0..<260000].copyWords()
-		var test = AtomicWordGroupManager<UnicodeAtomicWordGroup<CurrentEncoding, ByteOrder.LittleEndian, UnsafeBufferPointer>>(dataSource: dataSource)
-		test.create(for: dataSource.startIndex..<dataSource.endIndex)
-		
-		documentURL.stopAccessingSecurityScopedResource()
+
+		presentDocument(at: documentURL)
 	}
 	
 	func documentBrowser(_ controller: UIDocumentBrowserViewController, didImportDocumentAt sourceURL: URL, toDestinationURL destinationURL: URL) {
@@ -55,7 +39,12 @@ class DocumentBrowserViewController: UIDocumentBrowserViewController, UIDocument
 	}
 		
 	func presentDocument(at documentURL: URL) {
+		let viewController = DocumentViewController(documentURL: documentURL)
+
+		let navigationController = UINavigationController(rootViewController: viewController)
+		navigationController.modalPresentationStyle = .currentContext
 		
+		present(navigationController, animated: true, completion: nil)
 	}
 }
  

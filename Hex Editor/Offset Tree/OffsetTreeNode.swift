@@ -38,19 +38,23 @@ extension OffsetTree {
 		
 		var pairs: [Pair]
 		var firstChild: Child?
-		var isLeaf: Bool
-		
+
+		//var isLeaf: Bool
+		var isLeaf: Bool {
+			return pairs.compactMap { $0.child } .isEmpty && firstChild == nil
+		}
+
 		init(initialElement: Element, range: Range<Int>) {
 			let initialPair = Pair(offset: range.startIndex, initialElement: initialElement)
 			pairs = [initialPair]
 			firstChild = nil
-			isLeaf = true
+			//isLeaf = true
 		}
 		
 		init(pairs: [Pair]) {
 			self.pairs = pairs
 			firstChild = nil
-			isLeaf = true
+			//isLeaf = true
 		}
 		
 		// Returns pair to insert in parent node after splitting
@@ -62,7 +66,7 @@ extension OffsetTree {
 					pairs[index].range = pairs[index].range.extended(by: element.size)
 				} else {
 					let newPair = Pair(offset: offset, initialElement: element)
-					pairs.insert(newPair, at: index)
+					pairs.insert(newPair, at: index + 1)
 					
 					if isExceedingMaximumPairCount {
 						return split()
@@ -85,17 +89,17 @@ extension OffsetTree {
 			
 			case .descend(to: let index):
 				let (child, baseOffset) = index >= 0 ? pairs[index].child! : firstChild!
-				
 				let newOffset = offset - baseOffset
+
 				if var splitResult = child.insert(element, offset: newOffset) {
 					// TODO: This should be done as part of split()
 					splitResult.range = splitResult.range + baseOffset
 					splitResult.child?.baseOffset += baseOffset
-					
+
 					let index = pairs.enumerated().filter { $1.range.startIndex > offset }.first?.offset ?? pairs.endIndex // TOOD: Perform binary search
 					pairs.insert(splitResult, at: index)
 					
-					isLeaf = !(firstChild != nil || pairs.first(where: { $0.child != nil }) != nil)
+					//isLeaf = !(firstChild != nil || pairs.first(where: { $0.child != nil }) != nil)
 				}
 				
 				if isExceedingMaximumPairCount {
@@ -114,12 +118,13 @@ extension OffsetTree {
 			var pairsForNewNode = Array(pairs[(indexOfSeparatingPair + 1)..<pairs.endIndex]) // TODO: Remove array cast
 			for index in pairsForNewNode.indices {
 				pairsForNewNode[index].range = pairsForNewNode[index].range - baseOffsetOfSeparatingPair
+				pairsForNewNode[index].child?.baseOffset -= baseOffsetOfSeparatingPair
 			}
 			
 			let newChildNode = Node(pairs: pairsForNewNode)
 			newChildNode.firstChild = pairs[indexOfSeparatingPair].child
 			newChildNode.firstChild?.baseOffset -= baseOffsetOfSeparatingPair
-			newChildNode.isLeaf = !(newChildNode.firstChild != nil || newChildNode.pairs.first(where: { $0.child != nil }) != nil)
+			//newChildNode.isLeaf = !(newChildNode.firstChild != nil || newChildNode.pairs.first(where: { $0.child != nil }) != nil)
 
 			var newPair = separatingPair
 			newPair.child = (node: newChildNode, baseOffset: baseOffsetOfSeparatingPair)
@@ -129,16 +134,35 @@ extension OffsetTree {
 		}
 				
 		var isExceedingMaximumPairCount: Bool {
-			return pairs.count > 1020
+			return pairs.count > 2
 		}
-		
-		enum FindResult {
+
+		func find(offset: Int) -> Element? {
+			switch index(for: offset, reading: true) {
+			case .descend(to: let index):
+				let (child, baseOffset) = index >= 0 ? pairs[index].child! : firstChild!
+				let newOffset = offset - baseOffset
+
+				return child.find(offset: newOffset)
+
+			case .new(before: _):
+				return nil
+
+			case .existing(at: let index):
+				let baseOffset = pairs[index].range.startIndex
+				let newOffset = offset - baseOffset
+
+				return pairs[index].elementStorage[newOffset]
+			}
+		}
+
+		enum IndexResult {
 			case existing(at: Int)
 			case new(before: Int)
 			case descend(to: Int)
 		}
 		
-		func index(for offset: Int) -> FindResult {
+		func index(for offset: Int, reading: Bool = false) -> IndexResult {
 			var leftBound = pairs.startIndex
 			var rightBound = pairs.endIndex - 1
 			
@@ -149,7 +173,7 @@ extension OffsetTree {
 				let nextPair = nextIndex < pairs.endIndex ? pairs[nextIndex] : nil
 
 				if offset >= currentPair.range.startIndex {
-					if offset <= currentPair.range.endIndex {
+					if (reading && offset < currentPair.range.endIndex) || (!reading && offset <= currentPair.range.endIndex) {
 						return .existing(at: index)
 					} else if let nextPair = nextPair {
 						if offset < nextPair.range.startIndex {
