@@ -77,7 +77,7 @@ class DocumentViewController: UIViewController {
 			return
 		}
 
-		let range = offset..<(offset + 1000)
+		let range = offset..<(offset + 10000)
 
 		typealias CurrentEncoding = UTF8
 		let croppedData = data[range]
@@ -87,19 +87,20 @@ class DocumentViewController: UIViewController {
 
 		documentURL.stopAccessingSecurityScopedResource()
 
-		unicodeTextView.text = ""
-		for index in range {
+		var string = ""
+		for index in dataSource.startIndex..<dataSource.endIndex {
 			if let group = manager.groups[index] {
-				var string = group.value.prefix(group.size)
-				let missingCharacters = group.size - string.count
+				let value = group.value.prefix(group.size)
+				let missingCharacters = group.size - value.count
+
+				string += value
 				for _ in 0..<missingCharacters {
 					string += " "
 				}
-				unicodeTextView.text += string
-			} else {
-				print("Missing: \(index)")
 			}
 		}
+		unicodeTextView.textContainer.lineBreakMode = .byCharWrapping
+		unicodeTextView.text = string
 	}
 
 	@objc func close() {
@@ -109,7 +110,7 @@ class DocumentViewController: UIViewController {
 
 extension DocumentViewController: UITextFieldDelegate {
 	func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
-		let digits = (0x30..<0x39).map { Character(UnicodeScalar($0)) }
+		let digits = (0x30...0x39).map { Character(UnicodeScalar($0)) }
 		return string.first { !digits.contains($0) } == nil
 	}
 }

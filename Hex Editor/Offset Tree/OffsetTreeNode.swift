@@ -39,22 +39,19 @@ extension OffsetTree {
 		var pairs: [Pair]
 		var firstChild: Child?
 
-		//var isLeaf: Bool
-		var isLeaf: Bool {
-			return pairs.compactMap { $0.child } .isEmpty && firstChild == nil
-		}
+		var isLeaf: Bool
 
 		init(initialElement: Element, range: Range<Int>) {
 			let initialPair = Pair(offset: range.startIndex, initialElement: initialElement)
 			pairs = [initialPair]
 			firstChild = nil
-			//isLeaf = true
+			isLeaf = true
 		}
 		
 		init(pairs: [Pair]) {
 			self.pairs = pairs
 			firstChild = nil
-			//isLeaf = true
+			isLeaf = true
 		}
 		
 		// Returns pair to insert in parent node after splitting
@@ -99,7 +96,7 @@ extension OffsetTree {
 					let index = pairs.enumerated().filter { $1.range.startIndex > offset }.first?.offset ?? pairs.endIndex // TOOD: Perform binary search
 					pairs.insert(splitResult, at: index)
 					
-					//isLeaf = !(firstChild != nil || pairs.first(where: { $0.child != nil }) != nil)
+					isLeaf = !(firstChild != nil || pairs.first(where: { $0.child != nil }) != nil)
 				}
 				
 				if isExceedingMaximumPairCount {
@@ -124,7 +121,7 @@ extension OffsetTree {
 			let newChildNode = Node(pairs: pairsForNewNode)
 			newChildNode.firstChild = pairs[indexOfSeparatingPair].child
 			newChildNode.firstChild?.baseOffset -= baseOffsetOfSeparatingPair
-			//newChildNode.isLeaf = !(newChildNode.firstChild != nil || newChildNode.pairs.first(where: { $0.child != nil }) != nil)
+			newChildNode.isLeaf = !(newChildNode.firstChild != nil || newChildNode.pairs.first(where: { $0.child != nil }) != nil)
 
 			var newPair = separatingPair
 			newPair.child = (node: newChildNode, baseOffset: baseOffsetOfSeparatingPair)
@@ -134,7 +131,7 @@ extension OffsetTree {
 		}
 				
 		var isExceedingMaximumPairCount: Bool {
-			return pairs.count > 2
+			return pairs.count > 1020
 		}
 
 		func find(offset: Int) -> Element? {

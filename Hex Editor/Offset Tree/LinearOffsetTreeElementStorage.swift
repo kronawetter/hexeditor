@@ -31,7 +31,7 @@ struct LinearOffsetTreeElementStorage<Element: Sizeable>: OffsetTreeElementStora
 	}
 
 	mutating func insert(_ element: Element, at offset: Int) -> Bool {
-		guard elements.count < 1 else {
+		guard elements.count < 100 else {
 			return false
 		}
 		
