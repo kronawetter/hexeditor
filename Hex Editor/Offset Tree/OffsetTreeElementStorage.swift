@@ -19,3 +19,9 @@ protocol OffsetTreeElementStorage {
 	
 	mutating func insert(_ element: Element, at offset: Int) -> Bool
 }
+
+extension UInt8: Sizeable {
+	var size: Int {
+		return 1
+	}
+}

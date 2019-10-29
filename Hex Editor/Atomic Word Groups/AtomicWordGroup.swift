@@ -7,13 +7,14 @@
 //
 
 protocol AtomicWordGroup: Sizeable {
-	associatedtype DataSource: WordCollection
-	
+	associatedtype DataSource: FileAccessor
+	typealias Index = DataSource.Index
+
 	var value: String { get }
-	var range: /*DataSource.Indices*/Range<DataSource.Index> { get } // TODO
+	var range: Range<Index> { get }
 	
-	static func create(for rangeOfInterest: DataSource.Indices, in manager: inout AtomicWordGroupManager<Self>)
-	static func update(for changedRange: DataSource.Indices, lengthDelta: DataSource.Index, in manager: inout AtomicWordGroupManager<Self>)
+	static func create(for rangeOfInterest: Range<Index>, in manager: inout AtomicWordGroupManager<Self>)
+	static func update(for changedRange: Range<Index>, lengthDelta: Index, in manager: inout AtomicWordGroupManager<Self>)
 }
 
 extension AtomicWordGroup {

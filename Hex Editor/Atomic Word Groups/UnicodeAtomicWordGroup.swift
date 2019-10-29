@@ -6,60 +6,48 @@
 //  Copyright © 2019 Philip Kronawetter. All rights reserved.
 //
 
-struct UnicodeAtomicWordGroup<Codec: ExtendedUnicodeCodec, Endianness: _ByteOrder, DataSource: WordCollection>: AtomicWordGroup where Codec.CodeUnit == DataSource.Element {
+struct UnicodeAtomicWordGroup<Codec: ExtendedUnicodeCodec, Endianness: _ByteOrder, DataSource: FileAccessor>: AtomicWordGroup {
 	let range: Range<DataSource.Index>
 	let value: String
-	
-	static func create(for rangeOfInterest: DataSource.Indices, in manager: inout AtomicWordGroupManager<UnicodeAtomicWordGroup<Codec, Endianness, DataSource>>) {
-		let unclampedStartIndex = rangeOfInterest.startIndex - (Codec.maximumNumberOfCodePointsPerScalar - 1)
-		let unclampedEndIndex = rangeOfInterest.endIndex + (Codec.maximumNumberOfCodePointsPerScalar - 1)
-		let unclampedRange = unclampedStartIndex..<unclampedEndIndex
-		
-		let maximumRange = manager.dataSource.startIndex..<manager.dataSource.endIndex
-		let clampedRange = unclampedRange.clamped(to: maximumRange)
-		
-		let data = manager.dataSource[clampedRange].lazy.map { Endianness.convert($0) }
-		var iterator = data.makeIterator()
+
+	static func create(for rangeOfInterest: Range<Index>, in manager: inout AtomicWordGroupManager<Self>) {
+		let startIndex = max(rangeOfInterest.startIndex - (Codec.maximumNumberOfCodePointsPerScalar - 1), 0) // TODO: Replace 0 literal
+		let dataSourceIterator: AnyIterator<Codec.CodeUnit> = manager.dataSource.iterator(for: startIndex)
+		var iterator = dataSourceIterator.lazy.map { Endianness.convert($0) }.makeIterator()
+
 		var parser = Codec.ForwardParser()
-		var currentIndex = clampedRange.startIndex
+		var currentIndex = startIndex
 		
-		loop: while true {
+		loop: while currentIndex < rangeOfInterest.upperBound {
+			let group: Self?
+
 			switch parser.parseScalar(from: &iterator) {
 			case .emptyInput:
 				break loop
 				
 			case .error(length: let length):
 				if rangeOfInterest.contains(currentIndex) {
-					let group = UnicodeAtomicWordGroup(range: currentIndex..<(currentIndex + length), value: "�")
-					manager.insert(group)
-					//print("Error (\(length))")
+					group = UnicodeAtomicWordGroup(range: currentIndex..<(currentIndex + length), value: "�")
 				} else {
-					//print("Error: (\(length), Ignored)")
+					group = nil
 				}
-				
-				currentIndex += length
-				
+
 			case .valid(let result):
 				let scalar = Codec.decode(result)
 				let length = Codec.width(scalar)
+				let string = scalar.properties.isWhitespace ? "" : String(scalar)
 
-				let value: String
-				if scalar.properties.isWhitespace {
-					value = ""
-				} else {
-					value = String(scalar)
-				}
+				group = UnicodeAtomicWordGroup(range: currentIndex..<(currentIndex + length), value: string)
+			}
 
-				let group = UnicodeAtomicWordGroup(range: currentIndex..<(currentIndex + length), value: value)
+			if let group = group {
 				manager.insert(group)
-				//print("\(scalar): \(length)")
-								
-				currentIndex += length
+				currentIndex += group.size
 			}
 		}
 	}
 	
-	static func update(for changedRange: DataSource.Indices, lengthDelta: DataSource.Index, in manager: inout AtomicWordGroupManager<UnicodeAtomicWordGroup<Codec, Endianness, DataSource>>) {
+	static func update(for changedRange: Range<Index>, lengthDelta: Index, in manager: inout AtomicWordGroupManager<Self>) {
 		
 	}
 }

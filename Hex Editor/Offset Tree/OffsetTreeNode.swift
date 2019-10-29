@@ -134,7 +134,7 @@ extension OffsetTree {
 			return pairs.count > 1020
 		}
 
-		func find(offset: Int) -> Element? {
+		func find(offset: Int) -> (node: Node, elementStorage: ElementStorage, offset: Int)? {
 			switch index(for: offset, reading: true) {
 			case .descend(to: let index):
 				let (child, baseOffset) = index >= 0 ? pairs[index].child! : firstChild!
@@ -149,7 +149,7 @@ extension OffsetTree {
 				let baseOffset = pairs[index].range.startIndex
 				let newOffset = offset - baseOffset
 
-				return pairs[index].elementStorage[newOffset]
+				return (node: self, elementStorage: pairs[index].elementStorage, offset: newOffset)
 			}
 		}
 

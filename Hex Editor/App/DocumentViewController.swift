@@ -77,29 +77,29 @@ class DocumentViewController: UIViewController {
 			return
 		}
 
-		let range = offset..<(offset + 10000)
-
 		typealias CurrentEncoding = UTF8
-		let croppedData = data[range]
-		let dataSource: UnsafeBufferPointer<CurrentEncoding.CodeUnit> = croppedData.copyWords()
-		var manager = AtomicWordGroupManager<UnicodeAtomicWordGroup<CurrentEncoding, ByteOrder.LittleEndian, UnsafeBufferPointer>>(dataSource: dataSource)
-		manager.create(for: dataSource.startIndex..<dataSource.endIndex)
+
+		var fileTree = OffsetTree<LinearOffsetTreeElementStorage<UInt8>>()
+		for (index, byte) in data.enumerated() {
+			fileTree.insert(byte, offset: index)
+		}
+
+		var manager = AtomicWordGroupManager<UnicodeAtomicWordGroup<CurrentEncoding, ByteOrder.BigEndian, OffsetTree<LinearOffsetTreeElementStorage<UInt8>>>>(dataSource: fileTree)
+		manager.create(for: offset..<(offset + 1000))
 
 		documentURL.stopAccessingSecurityScopedResource()
 
 		var string = ""
-		for index in dataSource.startIndex..<dataSource.endIndex {
-			if let group = manager.groups[index] {
-				let value = group.value.prefix(group.size)
-				let missingCharacters = group.size - value.count
+		for group in manager.groups.iterator(for: offset) {
+			print(group.range)
+			let value = group.value.prefix(group.size)
+			let missingCharacters = group.size - value.count
 
-				string += value
-				for _ in 0..<missingCharacters {
-					string += " "
-				}
+			string += value
+			for _ in 0..<missingCharacters {
+				string += " "
 			}
 		}
-		unicodeTextView.textContainer.lineBreakMode = .byCharWrapping
 		unicodeTextView.text = string
 	}
 

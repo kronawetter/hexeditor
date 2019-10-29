@@ -14,11 +14,11 @@ struct AtomicWordGroupManager<T: AtomicWordGroup> {
 		groups.insert(group, offset: group.range.startIndex) // TODO: No need to save full range
 	}
 	
-	mutating func create(for rangeOfInterest: T.DataSource.Indices) {
+	mutating func create(for rangeOfInterest: Range<T.Index>) {
 		T.create(for: rangeOfInterest, in: &self)
 	}
 	
-	mutating func update(for changedRange: T.DataSource.Indices, lengthDelta: T.DataSource.Index) {
+	mutating func update(for changedRange: Range<T.Index>, lengthDelta: T.Index) {
 		T.update(for: changedRange, lengthDelta: lengthDelta, in: &self)
 	}
 }

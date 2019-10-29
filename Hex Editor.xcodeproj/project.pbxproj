@@ -22,7 +22,7 @@
 		F48BC76023550998006338F6 /* ExtendedUnicodeCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48BC75F23550998006338F6 /* ExtendedUnicodeCodec.swift */; };
 		F492B1B8235F563000CCE9E5 /* OffsetTree.swift in Sources */ = {isa = PBXBuildFile; fileRef = F492B1B7235F563000CCE9E5 /* OffsetTree.swift */; };
 		F492B1BA235F564B00CCE9E5 /* OffsetTreeNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = F492B1B9235F564B00CCE9E5 /* OffsetTreeNode.swift */; };
-		F4DF9C8E2354E33100ECA3C9 /* WordCollection.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4DF9C8D2354E33100ECA3C9 /* WordCollection.swift */; };
+		F4DF9C8E2354E33100ECA3C9 /* FileAccessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4DF9C8D2354E33100ECA3C9 /* FileAccessor.swift */; };
 		F4F162C22361C76600337EAA /* DocumentViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4F162C12361C76600337EAA /* DocumentViewController.swift */; };
 		F4F162C42361C84600337EAA /* View.xib in Resources */ = {isa = PBXBuildFile; fileRef = F4F162C32361C84600337EAA /* View.xib */; };
 /* End PBXBuildFile section */
@@ -57,7 +57,7 @@
 		F48BC75F23550998006338F6 /* ExtendedUnicodeCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtendedUnicodeCodec.swift; sourceTree = "<group>"; };
 		F492B1B7235F563000CCE9E5 /* OffsetTree.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OffsetTree.swift; sourceTree = "<group>"; };
 		F492B1B9235F564B00CCE9E5 /* OffsetTreeNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OffsetTreeNode.swift; sourceTree = "<group>"; };
-		F4DF9C8D2354E33100ECA3C9 /* WordCollection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WordCollection.swift; sourceTree = "<group>"; };
+		F4DF9C8D2354E33100ECA3C9 /* FileAccessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileAccessor.swift; sourceTree = "<group>"; };
 		F4F162C12361C76600337EAA /* DocumentViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentViewController.swift; sourceTree = "<group>"; };
 		F4F162C32361C84600337EAA /* View.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = View.xib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -105,7 +105,7 @@
 				F463AB26235CE62300B7A41A /* Atomic Word Groups */,
 				F463AB28235CE64100B7A41A /* Unicode */,
 				F492B1B6235F560C00CCE9E5 /* Offset Tree */,
-				F4DF9C8D2354E33100ECA3C9 /* WordCollection.swift */,
+				F4DF9C8D2354E33100ECA3C9 /* FileAccessor.swift */,
 				F48725EC2355FA9400959C4A /* ByteOrder.swift */,
 			);
 			path = "Hex Editor";
@@ -275,7 +275,7 @@
 				F4169FBF2354B99200CF0F2C /* AtomicWordGroupManager.swift in Sources */,
 				F4169FC32354B9D100CF0F2C /* UnicodeAtomicWordGroup.swift in Sources */,
 				F4169F9C2354B41600CF0F2C /* AppDelegate.swift in Sources */,
-				F4DF9C8E2354E33100ECA3C9 /* WordCollection.swift in Sources */,
+				F4DF9C8E2354E33100ECA3C9 /* FileAccessor.swift in Sources */,
 				F4F162C22361C76600337EAA /* DocumentViewController.swift in Sources */,
 				F4169FC12354B9BE00CF0F2C /* AtomicWordGroup.swift in Sources */,
 				F4169F9E2354B41600CF0F2C /* SceneDelegate.swift in Sources */,
