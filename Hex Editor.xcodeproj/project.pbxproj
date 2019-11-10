@@ -17,14 +17,16 @@
 		F4169FC32354B9D100CF0F2C /* UnicodeAtomicWordGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4169FC22354B9D100CF0F2C /* UnicodeAtomicWordGroup.swift */; };
 		F4253D25235FB23B008063D7 /* OffsetTreeElementStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4253D24235FB23B008063D7 /* OffsetTreeElementStorage.swift */; };
 		F4253D27235FB25A008063D7 /* LinearOffsetTreeElementStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4253D26235FB25A008063D7 /* LinearOffsetTreeElementStorage.swift */; };
+		F435EE552370B72500A09FB3 /* AtomicWordGroupLayerImageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = F435EE542370B72500A09FB3 /* AtomicWordGroupLayerImageCache.swift */; };
 		F4520074235510CA00B51AE1 /* DocumentBrowserViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4520073235510CA00B51AE1 /* DocumentBrowserViewController.swift */; };
+		F48003FC23735ED200548417 /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48003FB23735ED200548417 /* EditorView.swift */; };
 		F48725ED2355FA9400959C4A /* ByteOrder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48725EC2355FA9400959C4A /* ByteOrder.swift */; };
+		F488B1E6236CEC7800C2170A /* EditorContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F488B1E5236CEC7800C2170A /* EditorContentView.swift */; };
 		F48BC76023550998006338F6 /* ExtendedUnicodeCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48BC75F23550998006338F6 /* ExtendedUnicodeCodec.swift */; };
 		F492B1B8235F563000CCE9E5 /* OffsetTree.swift in Sources */ = {isa = PBXBuildFile; fileRef = F492B1B7235F563000CCE9E5 /* OffsetTree.swift */; };
 		F492B1BA235F564B00CCE9E5 /* OffsetTreeNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = F492B1B9235F564B00CCE9E5 /* OffsetTreeNode.swift */; };
 		F4DF9C8E2354E33100ECA3C9 /* FileAccessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4DF9C8D2354E33100ECA3C9 /* FileAccessor.swift */; };
 		F4F162C22361C76600337EAA /* DocumentViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4F162C12361C76600337EAA /* DocumentViewController.swift */; };
-		F4F162C42361C84600337EAA /* View.xib in Resources */ = {isa = PBXBuildFile; fileRef = F4F162C32361C84600337EAA /* View.xib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -52,14 +54,16 @@
 		F4169FC22354B9D100CF0F2C /* UnicodeAtomicWordGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnicodeAtomicWordGroup.swift; sourceTree = "<group>"; };
 		F4253D24235FB23B008063D7 /* OffsetTreeElementStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OffsetTreeElementStorage.swift; sourceTree = "<group>"; };
 		F4253D26235FB25A008063D7 /* LinearOffsetTreeElementStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinearOffsetTreeElementStorage.swift; sourceTree = "<group>"; };
+		F435EE542370B72500A09FB3 /* AtomicWordGroupLayerImageCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AtomicWordGroupLayerImageCache.swift; sourceTree = "<group>"; };
 		F4520073235510CA00B51AE1 /* DocumentBrowserViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentBrowserViewController.swift; sourceTree = "<group>"; };
+		F48003FB23735ED200548417 /* EditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorView.swift; sourceTree = "<group>"; };
 		F48725EC2355FA9400959C4A /* ByteOrder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ByteOrder.swift; sourceTree = "<group>"; };
+		F488B1E5236CEC7800C2170A /* EditorContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorContentView.swift; sourceTree = "<group>"; };
 		F48BC75F23550998006338F6 /* ExtendedUnicodeCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtendedUnicodeCodec.swift; sourceTree = "<group>"; };
 		F492B1B7235F563000CCE9E5 /* OffsetTree.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OffsetTree.swift; sourceTree = "<group>"; };
 		F492B1B9235F564B00CCE9E5 /* OffsetTreeNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OffsetTreeNode.swift; sourceTree = "<group>"; };
 		F4DF9C8D2354E33100ECA3C9 /* FileAccessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileAccessor.swift; sourceTree = "<group>"; };
 		F4F162C12361C76600337EAA /* DocumentViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentViewController.swift; sourceTree = "<group>"; };
-		F4F162C32361C84600337EAA /* View.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = View.xib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -143,12 +147,14 @@
 			children = (
 				F4169F9B2354B41600CF0F2C /* AppDelegate.swift */,
 				F4F162C12361C76600337EAA /* DocumentViewController.swift */,
-				F4F162C32361C84600337EAA /* View.xib */,
 				F4169F9D2354B41600CF0F2C /* SceneDelegate.swift */,
 				F4520073235510CA00B51AE1 /* DocumentBrowserViewController.swift */,
 				F4169FA12354B41B00CF0F2C /* Assets.xcassets */,
 				F4169FA62354B41B00CF0F2C /* LaunchScreen.storyboard */,
 				F4169FA92354B41B00CF0F2C /* Info.plist */,
+				F48003FB23735ED200548417 /* EditorView.swift */,
+				F488B1E5236CEC7800C2170A /* EditorContentView.swift */,
+				F435EE542370B72500A09FB3 /* AtomicWordGroupLayerImageCache.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -246,7 +252,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				F4169FA82354B41B00CF0F2C /* LaunchScreen.storyboard in Resources */,
-				F4F162C42361C84600337EAA /* View.xib in Resources */,
 				F4169FA22354B41B00CF0F2C /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -265,6 +270,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F435EE552370B72500A09FB3 /* AtomicWordGroupLayerImageCache.swift in Sources */,
 				F48725ED2355FA9400959C4A /* ByteOrder.swift in Sources */,
 				F4520074235510CA00B51AE1 /* DocumentBrowserViewController.swift in Sources */,
 				F492B1B8235F563000CCE9E5 /* OffsetTree.swift in Sources */,
@@ -278,7 +284,9 @@
 				F4DF9C8E2354E33100ECA3C9 /* FileAccessor.swift in Sources */,
 				F4F162C22361C76600337EAA /* DocumentViewController.swift in Sources */,
 				F4169FC12354B9BE00CF0F2C /* AtomicWordGroup.swift in Sources */,
+				F488B1E6236CEC7800C2170A /* EditorContentView.swift in Sources */,
 				F4169F9E2354B41600CF0F2C /* SceneDelegate.swift in Sources */,
+				F48003FC23735ED200548417 /* EditorView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

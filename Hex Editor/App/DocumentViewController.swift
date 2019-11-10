@@ -12,7 +12,7 @@ class DocumentViewController: UIViewController {
 	var documentURL: URL
 	var offsetTextField = UITextField()
 	var applyOffsetButton = UIButton()
-	var unicodeTextView = UITextView()
+	var unicodeTextView = EditorView()
 
 	init(documentURL: URL) {
 		self.documentURL = documentURL
@@ -40,7 +40,7 @@ class DocumentViewController: UIViewController {
 		unicodeTextView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.5).isActive = true
 		unicodeTextView.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
 		unicodeTextView.centerYAnchor.constraint(equalTo: view.centerYAnchor).isActive = true
-		unicodeTextView.font = .monospacedSystemFont(ofSize: 12.0, weight: .regular)
+		//unicodeTextView.font = .monospacedSystemFont(ofSize: 12.0, weight: .regular)
 
 		offsetTextField.translatesAutoresizingMaskIntoConstraints = false
 		offsetTextField.leadingAnchor.constraint(equalTo: unicodeTextView.leadingAnchor).isActive = true
@@ -52,7 +52,7 @@ class DocumentViewController: UIViewController {
 
 		applyOffsetButton.translatesAutoresizingMaskIntoConstraints = false
 		applyOffsetButton.leadingAnchor.constraint(equalTo: offsetTextField.trailingAnchor, constant: 10.0).isActive = true
-		applyOffsetButton.trailingAnchor.constraint(equalTo: unicodeTextView.trailingAnchor, constant: 10.0).isActive = true
+		applyOffsetButton.trailingAnchor.constraint(equalTo: unicodeTextView.trailingAnchor).isActive = true
 		applyOffsetButton.topAnchor.constraint(equalTo: offsetTextField.topAnchor).isActive = true
 		applyOffsetButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
 		applyOffsetButton.setTitle("Apply", for: .normal)
@@ -89,7 +89,7 @@ class DocumentViewController: UIViewController {
 
 		documentURL.stopAccessingSecurityScopedResource()
 
-		var string = ""
+		/*var string = ""
 		for group in manager.groups.iterator(for: offset) {
 			print(group.range)
 			let value = group.value.prefix(group.size)
@@ -100,7 +100,7 @@ class DocumentViewController: UIViewController {
 				string += " "
 			}
 		}
-		unicodeTextView.text = string
+		unicodeTextView.text = string*/
 	}
 
 	@objc func close() {
