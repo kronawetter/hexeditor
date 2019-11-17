@@ -9,114 +9,206 @@
 import UIKit
 
 class EditorContentView: UIView {
+	var font = UIFont.monospacedSystemFont(ofSize: 14.0, weight: .regular) {
+		didSet {
+			setNeedsLayout()
+		}
+	}
+
+	var dataSource: EditorDataSource? = nil {
+		didSet {
+			setNeedsLayout()
+		}
+	}
+
 	var visibleRect = CGRect.zero {
 		didSet {
 			if visibleRect != oldValue {
+				removeWordGroupSublayersBeforeVisibleRect()
+				removeWordGroupSublayersAfterVisibleRect()
+				addMissingWordGroupSublayersAtBegin()
+				addMissingWordGroupSublayersAtEnd()
+
 				layer.setNeedsLayout()
 			}
 		}
 	}
 
-	var offsetOfFirstSublayer = 0
-	var sublayers: [CALayer] = []
-	let estimatedWordGroupHeight: CGFloat = 20.0
-	let wordGroupWidth: CGFloat = 14.0 * 2.0
-	let font = UIFont.monospacedSystemFont(ofSize: 14.0, weight: .regular)
-
-	override init(frame: CGRect) {
-		super.init(frame: frame)
+	private var estimatedLineHeight: CGFloat {
+		return round(font.lineHeight * 1.5)
 	}
 
-	override func layoutSublayers(of layer: CALayer) {
-		super.layoutSublayers(of: layer)
+	private var widthPerWord: CGFloat {
+		return font.pointSize * 2.0
+	}
 
-		let firstWordGroup = Int(max(visibleRect.minY, 0.0) / estimatedWordGroupHeight) * Int(visibleRect.width / wordGroupWidth)
+	private var wordsPerLine: Int {
+		return Int(bounds.width / widthPerWord)
+	}
 
-		if firstWordGroup >= offsetOfFirstSublayer {
-			let sublayersToRemove = min(firstWordGroup - offsetOfFirstSublayer, sublayers.count)
+	private func estimatedWordOffset(at point: CGPoint) -> Int {
+		return Int(point.y / estimatedLineHeight) * wordsPerLine
+	}
 
-			sublayers[0..<sublayersToRemove].forEach { $0.removeFromSuperlayer() }
-			sublayers.removeFirst(sublayersToRemove)
-		} else {
-			sublayers.forEach { $0.removeFromSuperlayer() }
-			sublayers.removeAll()
+	private var displayedWordOffset: Range<Int>? = nil
+
+	private var wordGroupSublayers: [CALayer] = []
+	private var cache = AtomicWordGroupLayerImageCache()
+
+	// TODO: Eliminate code duplication
+	private func removeWordGroupSublayersBeforeVisibleRect() {
+		guard let dataSource = dataSource, let displayedWordOffset = displayedWordOffset else {
+			assert(wordGroupSublayers.isEmpty)
+			return
 		}
 
-		offsetOfFirstSublayer = firstWordGroup
+		var currentOffset = displayedWordOffset.lowerBound
+		var sublayersToRemove = 0
 
-		var origin: CGPoint
-		if let lastSublayer = sublayers.last {
-			origin = CGPoint(x: lastSublayer.frame.maxX, y: lastSublayer.frame.minY)
-		} else {
-			origin = CGPoint(x: max(visibleRect.minX, 0.0), y: floor(max(visibleRect.minY, 0.0) / estimatedWordGroupHeight) * estimatedWordGroupHeight)
+		while currentOffset < displayedWordOffset.upperBound {
+			let sublayer = wordGroupSublayers[sublayersToRemove]
+
+			if sublayer.frame.intersects(visibleRect) {
+				break
+			} else {
+				// TODO: Once introduced, convert from presentation offset to file offset
+				let wordGroup = dataSource.atomicWordGroup(at: currentOffset)
+
+				currentOffset += wordGroup.size
+				sublayersToRemove += 1
+			}
 		}
 
-		var index = (firstWordGroup + sublayers.count) % 256
+		wordGroupSublayers.prefix(sublayersToRemove).forEach { $0.removeFromSuperlayer() }
+		wordGroupSublayers.removeFirst(sublayersToRemove)
 
-		while origin.y < visibleRect.maxY, origin.y < bounds.maxY {
-			let size = CGSize(width: wordGroupWidth, height: estimatedWordGroupHeight)
-			var frame = CGRect(origin: origin, size: size)
+		if wordGroupSublayers.isEmpty {
+			self.displayedWordOffset = nil
+		} else {
+			self.displayedWordOffset = currentOffset..<displayedWordOffset.upperBound
+		}
+	}
 
-			if frame.maxX > bounds.width {
-				frame.origin.x = 0.0
-				frame.origin.y += frame.height
+	private func removeWordGroupSublayersAfterVisibleRect() {
+		guard let dataSource = dataSource, let displayedWordOffset = displayedWordOffset else {
+			assert(wordGroupSublayers.isEmpty)
+			return
+		}
 
-				if frame.origin.y >= visibleRect.maxY || frame.origin.y >= bounds.maxY {
-					break
-				}
+		var currentOffset = displayedWordOffset.upperBound
+		var sublayersToRemove = 0
+
+		while currentOffset > displayedWordOffset.lowerBound {
+			let sublayer = wordGroupSublayers[wordGroupSublayers.count - sublayersToRemove - 1]
+
+			if sublayer.frame.intersects(visibleRect) {
+				break
+			} else {
+				// TODO: Once introduced, convert from presentation offset to file offset
+				// TODO: currentOffset might not be a valid starting offset for an atomic word group with non-one size
+				let wordGroup = dataSource.atomicWordGroup(at: currentOffset - 1)
+
+				currentOffset -= wordGroup.size
+				sublayersToRemove += 1
+			}
+		}
+
+		wordGroupSublayers.suffix(sublayersToRemove).forEach { $0.removeFromSuperlayer() }
+		wordGroupSublayers.removeLast(sublayersToRemove)
+
+		if wordGroupSublayers.isEmpty {
+			self.displayedWordOffset = nil
+		} else {
+			self.displayedWordOffset = displayedWordOffset.lowerBound..<currentOffset
+		}
+	}
+
+	private func addMissingWordGroupSublayersAtBegin() {
+		// TODO: Add sublayers when scrolling upwards
+	}
+
+	private func addMissingWordGroupSublayersAtEnd() {
+		guard let dataSource = dataSource else {
+			return
+		}
+
+		var lastFrame: CGRect
+		let initialOffset: Int
+		if let displayedWordOffset = displayedWordOffset {
+			let lastSublayer = wordGroupSublayers.last! // TODO: Put displayedWordOffset and wordGroupSublayers (both non-optional) into optional tuple
+			lastFrame = lastSublayer.frame
+			initialOffset = displayedWordOffset.upperBound
+		} else {
+			let wordOffset = max(estimatedWordOffset(at: visibleRect.origin), 0)
+			precondition(wordOffset % wordsPerLine == 0)
+
+			let y = CGFloat(wordOffset / wordsPerLine) * estimatedLineHeight
+			lastFrame = CGRect(x: .zero, y: y, width: .zero, height: .zero)
+			initialOffset = wordOffset
+		}
+
+		var lastLineHeight = estimatedLineHeight // TODO: Calculate actual height of last line
+
+		func frame(for size: CGSize) -> CGRect {
+			var newFrame = CGRect(x: lastFrame.maxX, y: lastFrame.minY, width: size.width, height: size.height)
+			
+			if newFrame.maxX > bounds.maxX {
+				// Line break
+				// TODO: Line break should work differently, should first fill all remaining space in current line
+				newFrame.origin.x = .zero
+				newFrame.origin.y += lastLineHeight
 			}
 
-			let textLayer = CATextLayer()
-			textLayer.font = font
-			textLayer.fontSize = 14.0
-			textLayer.contentsScale = UIScreen.main.scale
-			textLayer.string = String(format: "%02X", index)
-			textLayer.frame = frame
-
-			sublayers.append(textLayer)
-			layer.addSublayer(textLayer)
-
-			origin = frame.origin
-			origin.x += frame.width
-
-			index = (index + 1) % 256
+			return newFrame
 		}
-	}
 
-	/*func addLayers() {
-		var cache = AtomicWordGroupLayerImageCache()
+		var currentOffset = initialOffset
 		let scale = UIScreen.main.scale
 
-		var origin = CGPoint.zero
+		while currentOffset < dataSource.totalWordCount {
+			// TODO: Once introduced, convert from presentation offset to file offset
+			let wordGroup = dataSource.atomicWordGroup(at: currentOffset)
 
-		for i in 0..<500 {
-			let image = cache.image(for: AtomicWordGroupLayerData(text: "\(i % 10)", size: (i % 3) + 1))
-
+			// TODO: Request image asynchronously
+			// TODO: Pass current font to image generation
+			let image = cache.image(for: AtomicWordGroupLayerData(text: wordGroup.text, size: wordGroup.size))
 			let size = CGSize(width: CGFloat(image.width) / scale, height: CGFloat(image.height) / scale)
-			var frame = CGRect(origin: origin, size: size)
 
-			if frame.maxX > 400.0 {
-				frame.origin.x = 0.0
-				frame.origin.y += frame.height
+			let newFrame = frame(for: size)
+
+			if newFrame.intersects(visibleRect) {
+				let sublayer = CALayer()
+				sublayer.contents = image
+				sublayer.isOpaque = true
+				sublayer.frame = newFrame
+
+				lastFrame = newFrame
+
+				wordGroupSublayers.append(sublayer)
+				layer.addSublayer(sublayer)
+
+				currentOffset += wordGroup.size
+			} else {
+				break
 			}
-
-			let sublayer = CALayer()
-			sublayer.contents = image
-			sublayer.isOpaque = true
-			sublayer.frame = frame
-
-			layer.addSublayer(sublayer)
-
-			origin = frame.origin
-			origin.x += frame.width
 		}
-	}*/
 
-	override func sizeThatFits(_ size: CGSize) -> CGSize {
-		return CGSize(width: size.width, height: size.height * 100000.0)
+		displayedWordOffset = (displayedWordOffset?.lowerBound ?? initialOffset)..<currentOffset
 	}
 
-	required init?(coder: NSCoder) {
-		fatalError("init(coder:) has not been implemented")
+	override func sizeThatFits(_ size: CGSize) -> CGSize {
+		guard let dataSource = dataSource else {
+			return .zero
+		}
+
+		let wordCount = dataSource.totalWordCount
+		let maximumWidth = size.width
+		let wordsPerLine = floor(maximumWidth / widthPerWord)
+		let lineCount = ceil(CGFloat(wordCount) / wordsPerLine)
+
+		let width = wordsPerLine * widthPerWord
+		let height = lineCount * estimatedLineHeight
+
+		return CGSize(width: width, height: height)
 	}
 }

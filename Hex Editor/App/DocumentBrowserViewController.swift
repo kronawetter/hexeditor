@@ -39,7 +39,8 @@ class DocumentBrowserViewController: UIDocumentBrowserViewController, UIDocument
 	}
 		
 	func presentDocument(at documentURL: URL) {
-		let viewController = DocumentViewController(documentURL: documentURL)
+		let viewController = DocumentViewController()
+		viewController.documentURL = documentURL
 
 		let navigationController = UINavigationController(rootViewController: viewController)
 		navigationController.modalPresentationStyle = .currentContext

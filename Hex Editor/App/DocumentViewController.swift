@@ -9,61 +9,82 @@
 import UIKit
 
 class DocumentViewController: UIViewController {
-	var documentURL: URL
-	var offsetTextField = UITextField()
-	var applyOffsetButton = UIButton()
-	var unicodeTextView = EditorView()
+	var documentURL: URL? {
+		didSet {
+			if let oldValue = oldValue {
+				oldValue.stopAccessingSecurityScopedResource()
+			}
 
-	init(documentURL: URL) {
-		self.documentURL = documentURL
-		super.init(nibName: nil, bundle: nil)
+			if let documentURL = documentURL {
+				print(documentURL.path)
+
+				let isPermitted = documentURL.startAccessingSecurityScopedResource()
+				precondition(isPermitted)
+
+				documentData = try! Data(contentsOf: documentURL)
+				navigationItem.title = documentURL.lastPathComponent
+			}
+		}
 	}
 
-	required init?(coder: NSCoder) {
-		fatalError("init(coder:) has not been implemented")
+	deinit {
+		if let documentURL = documentURL {
+			documentURL.stopAccessingSecurityScopedResource()
+		}
 	}
+
+	private var documentData: Data?
+
+	private var editorView = EditorView()
+
+	// MARK: View Lifecycle
 
 	override func loadView() {
 		super.loadView()
 
-		view.addSubview(unicodeTextView)
-		view.addSubview(offsetTextField)
-		view.addSubview(applyOffsetButton)
+		view.addSubview(editorView)
+		editorView.dataSource = self
+		editorView.translatesAutoresizingMaskIntoConstraints = false
+		editorView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
+		editorView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
+		editorView.widthAnchor.constraint(equalTo: view.widthAnchor).isActive = true
+		editorView.heightAnchor.constraint(equalTo: view.heightAnchor).isActive = true
 
 		view.backgroundColor = .systemBackground
-
-		navigationItem.title = documentURL.lastPathComponent
 		navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Files", style: .plain, target: self, action: #selector(close))
-
-		unicodeTextView.translatesAutoresizingMaskIntoConstraints = false
-		unicodeTextView.widthAnchor.constraint(equalTo: view.widthAnchor, multiplier: 0.5).isActive = true
-		unicodeTextView.heightAnchor.constraint(equalTo: view.heightAnchor, multiplier: 0.5).isActive = true
-		unicodeTextView.centerXAnchor.constraint(equalTo: view.centerXAnchor).isActive = true
-		unicodeTextView.centerYAnchor.constraint(equalTo: view.centerYAnchor).isActive = true
-		//unicodeTextView.font = .monospacedSystemFont(ofSize: 12.0, weight: .regular)
-
-		offsetTextField.translatesAutoresizingMaskIntoConstraints = false
-		offsetTextField.leadingAnchor.constraint(equalTo: unicodeTextView.leadingAnchor).isActive = true
-		offsetTextField.bottomAnchor.constraint(equalTo: unicodeTextView.topAnchor, constant: -10.0).isActive = true
-		offsetTextField.borderStyle = .roundedRect
-		offsetTextField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-		offsetTextField.placeholder = "Offset"
-		offsetTextField.delegate = self
-
-		applyOffsetButton.translatesAutoresizingMaskIntoConstraints = false
-		applyOffsetButton.leadingAnchor.constraint(equalTo: offsetTextField.trailingAnchor, constant: 10.0).isActive = true
-		applyOffsetButton.trailingAnchor.constraint(equalTo: unicodeTextView.trailingAnchor).isActive = true
-		applyOffsetButton.topAnchor.constraint(equalTo: offsetTextField.topAnchor).isActive = true
-		applyOffsetButton.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-		applyOffsetButton.setTitle("Apply", for: .normal)
-		applyOffsetButton.addTarget(self, action: #selector(applyOffset), for: .touchUpInside)
 	}
 
-    override func viewDidLoad() {
-        super.viewDidLoad()
-    }
+	// MARK: Button Actions
 
-	@objc func applyOffset() {
+	@objc func close() {
+		dismiss(animated: true, completion: nil)
+	}
+}
+
+extension DocumentViewController: EditorDataSource {
+	var totalWordCount: Int {
+		guard let documentData = documentData else {
+			return 0
+		}
+
+		return documentData.count
+	}
+
+	func atomicWordGroups(for wordRange: Range<Int>) -> [(text: String, size: Int)] {
+		guard let documentData = documentData else {
+			return []
+		}
+		
+		return documentData[wordRange].map { (text: String(format: "%02X", $0), size: 1) }
+	}
+
+	func atomicWordGroup(at wordIndex: Int) -> (text: String, size: Int) {
+		return (text: String(format: "%02X", documentData![wordIndex]), size: 1)
+	}
+}
+
+
+	/*@objc func applyOffset() {
 		guard let offsetString = offsetTextField.text, let offset = Int(offsetString) else {
 			return
 		}
@@ -101,16 +122,4 @@ class DocumentViewController: UIViewController {
 			}
 		}
 		unicodeTextView.text = string*/
-	}
-
-	@objc func close() {
-		dismiss(animated: true, completion: nil)
-	}
-}
-
-extension DocumentViewController: UITextFieldDelegate {
-	func textField(_ textField: UITextField, shouldChangeCharactersIn range: NSRange, replacementString string: String) -> Bool {
-		let digits = (0x30...0x39).map { Character(UnicodeScalar($0)) }
-		return string.first { !digits.contains($0) } == nil
-	}
-}
+	}*/

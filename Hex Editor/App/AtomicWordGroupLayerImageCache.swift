@@ -31,7 +31,7 @@ struct AtomicWordGroupLayerImageCache {
 	private func generateImage(for data: AtomicWordGroupLayerData) -> CGImage {
 		// TODO: Consider using CATextLayer
 		let layer = CALayer()
-		layer.bounds = CGRect(x: 0.0, y: 0.0, width: 14.0 * CGFloat(data.size), height: 14.0)
+		layer.bounds = CGRect(x: 0.0, y: 0.0, width: 14.0 * CGFloat(data.size) * 2.0, height: 14.0)
 		layer.backgroundColor = UIColor.white.cgColor
 
 		let scale = UIScreen.main.scale
