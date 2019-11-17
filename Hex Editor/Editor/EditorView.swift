@@ -8,12 +8,6 @@
 
 import UIKit
 
-protocol EditorDataSource {
-	var totalWordCount: Int { get }
-	func atomicWordGroups(for wordRange: Range<Int>) -> [(text: String, size: Int)]
-	func atomicWordGroup(at wordIndex: Int) -> (text: String, size: Int)
-}
-
 class EditorView: UIScrollView {
 	var dataSource: EditorDataSource? = nil {
 		didSet {

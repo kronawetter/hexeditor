@@ -24,8 +24,9 @@ class EditorContentView: UIView {
 	var visibleRect = CGRect.zero {
 		didSet {
 			if visibleRect != oldValue {
-				removeWordGroupSublayersBeforeVisibleRect()
-				removeWordGroupSublayersAfterVisibleRect()
+				// TODO: Handle size change
+				
+				removeSublayersOutsideVisibleRect()
 				addMissingWordGroupSublayersAtBegin()
 				addMissingWordGroupSublayersAtEnd()
 
@@ -50,77 +51,36 @@ class EditorContentView: UIView {
 		return Int(point.y / estimatedLineHeight) * wordsPerLine
 	}
 
-	private var displayedWordOffset: Range<Int>? = nil
-
-	private var wordGroupSublayers: [CALayer] = []
+	private var wordGroupSublayers: [EditorAtomicWordGroupLayer] = []
 	private var cache = AtomicWordGroupLayerImageCache()
 
-	// TODO: Eliminate code duplication
-	private func removeWordGroupSublayersBeforeVisibleRect() {
-		guard let dataSource = dataSource, let displayedWordOffset = displayedWordOffset else {
+	private func removeSublayersOutsideVisibleRect() {
+		guard let dataSource = dataSource else {
 			assert(wordGroupSublayers.isEmpty)
 			return
 		}
 
-		var currentOffset = displayedWordOffset.lowerBound
-		var sublayersToRemove = 0
+		func remove(sequence: AnySequence<EditorAtomicWordGroupLayer>) -> Int {
+			var sublayersToRemove = 0
 
-		while currentOffset < displayedWordOffset.upperBound {
-			let sublayer = wordGroupSublayers[sublayersToRemove]
-
-			if sublayer.frame.intersects(visibleRect) {
-				break
-			} else {
-				// TODO: Once introduced, convert from presentation offset to file offset
-				let wordGroup = dataSource.atomicWordGroup(at: currentOffset)
-
-				currentOffset += wordGroup.size
-				sublayersToRemove += 1
+			for sublayer in sequence {
+				if sublayer.frame.intersects(visibleRect) {
+					break
+				} else {
+					sublayersToRemove += 1
+				}
 			}
+
+			sequence.prefix(sublayersToRemove).forEach { $0.removeFromSuperlayer() }
+
+			return sublayersToRemove
 		}
 
-		wordGroupSublayers.prefix(sublayersToRemove).forEach { $0.removeFromSuperlayer() }
-		wordGroupSublayers.removeFirst(sublayersToRemove)
+		let removedFromBegin = remove(sequence: AnySequence(wordGroupSublayers))
+		wordGroupSublayers.removeFirst(removedFromBegin)
 
-		if wordGroupSublayers.isEmpty {
-			self.displayedWordOffset = nil
-		} else {
-			self.displayedWordOffset = currentOffset..<displayedWordOffset.upperBound
-		}
-	}
-
-	private func removeWordGroupSublayersAfterVisibleRect() {
-		guard let dataSource = dataSource, let displayedWordOffset = displayedWordOffset else {
-			assert(wordGroupSublayers.isEmpty)
-			return
-		}
-
-		var currentOffset = displayedWordOffset.upperBound
-		var sublayersToRemove = 0
-
-		while currentOffset > displayedWordOffset.lowerBound {
-			let sublayer = wordGroupSublayers[wordGroupSublayers.count - sublayersToRemove - 1]
-
-			if sublayer.frame.intersects(visibleRect) {
-				break
-			} else {
-				// TODO: Once introduced, convert from presentation offset to file offset
-				// TODO: currentOffset might not be a valid starting offset for an atomic word group with non-one size
-				let wordGroup = dataSource.atomicWordGroup(at: currentOffset - 1)
-
-				currentOffset -= wordGroup.size
-				sublayersToRemove += 1
-			}
-		}
-
-		wordGroupSublayers.suffix(sublayersToRemove).forEach { $0.removeFromSuperlayer() }
-		wordGroupSublayers.removeLast(sublayersToRemove)
-
-		if wordGroupSublayers.isEmpty {
-			self.displayedWordOffset = nil
-		} else {
-			self.displayedWordOffset = displayedWordOffset.lowerBound..<currentOffset
-		}
+		let removedFromEnd = remove(sequence: AnySequence(wordGroupSublayers.reversed()))
+		wordGroupSublayers.removeLast(removedFromEnd)
 	}
 
 	private func addMissingWordGroupSublayersAtBegin() {
@@ -134,10 +94,11 @@ class EditorContentView: UIView {
 
 		var lastFrame: CGRect
 		let initialOffset: Int
-		if let displayedWordOffset = displayedWordOffset {
-			let lastSublayer = wordGroupSublayers.last! // TODO: Put displayedWordOffset and wordGroupSublayers (both non-optional) into optional tuple
+		if let lastSublayer = wordGroupSublayers.last {
+			let wordGroup = dataSource.atomicWordGroup(at: lastSublayer.wordOffset)
+
 			lastFrame = lastSublayer.frame
-			initialOffset = displayedWordOffset.upperBound
+			initialOffset = (lastSublayer.wordOffset + wordGroup.size)
 		} else {
 			let wordOffset = max(estimatedWordOffset(at: visibleRect.origin), 0)
 			precondition(wordOffset % wordsPerLine == 0)
@@ -177,7 +138,7 @@ class EditorContentView: UIView {
 			let newFrame = frame(for: size)
 
 			if newFrame.intersects(visibleRect) {
-				let sublayer = CALayer()
+				let sublayer = EditorAtomicWordGroupLayer(wordOffset: currentOffset)
 				sublayer.contents = image
 				sublayer.isOpaque = true
 				sublayer.frame = newFrame
@@ -193,7 +154,7 @@ class EditorContentView: UIView {
 			}
 		}
 
-		displayedWordOffset = (displayedWordOffset?.lowerBound ?? initialOffset)..<currentOffset
+		//displayedWordOffset = (displayedWordOffset?.lowerBound ?? initialOffset)..<currentOffset
 	}
 
 	override func sizeThatFits(_ size: CGSize) -> CGSize {

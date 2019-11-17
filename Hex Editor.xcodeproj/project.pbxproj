@@ -20,6 +20,8 @@
 		F435EE552370B72500A09FB3 /* AtomicWordGroupLayerImageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = F435EE542370B72500A09FB3 /* AtomicWordGroupLayerImageCache.swift */; };
 		F4520074235510CA00B51AE1 /* DocumentBrowserViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4520073235510CA00B51AE1 /* DocumentBrowserViewController.swift */; };
 		F48003FC23735ED200548417 /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48003FB23735ED200548417 /* EditorView.swift */; };
+		F48073AE2380D4A2006DBBFA /* EditorAtomicWordGroupLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48073AD2380D4A2006DBBFA /* EditorAtomicWordGroupLayer.swift */; };
+		F48073B12380DB7F006DBBFA /* EditorDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48073B02380DB7F006DBBFA /* EditorDataSource.swift */; };
 		F48725ED2355FA9400959C4A /* ByteOrder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48725EC2355FA9400959C4A /* ByteOrder.swift */; };
 		F488B1E6236CEC7800C2170A /* EditorContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F488B1E5236CEC7800C2170A /* EditorContentView.swift */; };
 		F48BC76023550998006338F6 /* ExtendedUnicodeCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48BC75F23550998006338F6 /* ExtendedUnicodeCodec.swift */; };
@@ -57,6 +59,8 @@
 		F435EE542370B72500A09FB3 /* AtomicWordGroupLayerImageCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AtomicWordGroupLayerImageCache.swift; sourceTree = "<group>"; };
 		F4520073235510CA00B51AE1 /* DocumentBrowserViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentBrowserViewController.swift; sourceTree = "<group>"; };
 		F48003FB23735ED200548417 /* EditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorView.swift; sourceTree = "<group>"; };
+		F48073AD2380D4A2006DBBFA /* EditorAtomicWordGroupLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorAtomicWordGroupLayer.swift; sourceTree = "<group>"; };
+		F48073B02380DB7F006DBBFA /* EditorDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorDataSource.swift; sourceTree = "<group>"; };
 		F48725EC2355FA9400959C4A /* ByteOrder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ByteOrder.swift; sourceTree = "<group>"; };
 		F488B1E5236CEC7800C2170A /* EditorContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorContentView.swift; sourceTree = "<group>"; };
 		F48BC75F23550998006338F6 /* ExtendedUnicodeCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtendedUnicodeCodec.swift; sourceTree = "<group>"; };
@@ -106,6 +110,7 @@
 			isa = PBXGroup;
 			children = (
 				F463AB29235CE64A00B7A41A /* App */,
+				F48073AF2380DB3A006DBBFA /* Editor */,
 				F463AB26235CE62300B7A41A /* Atomic Word Groups */,
 				F463AB28235CE64100B7A41A /* Unicode */,
 				F492B1B6235F560C00CCE9E5 /* Offset Tree */,
@@ -149,14 +154,23 @@
 				F4F162C12361C76600337EAA /* DocumentViewController.swift */,
 				F4169F9D2354B41600CF0F2C /* SceneDelegate.swift */,
 				F4520073235510CA00B51AE1 /* DocumentBrowserViewController.swift */,
+				F435EE542370B72500A09FB3 /* AtomicWordGroupLayerImageCache.swift */,
 				F4169FA12354B41B00CF0F2C /* Assets.xcassets */,
 				F4169FA62354B41B00CF0F2C /* LaunchScreen.storyboard */,
 				F4169FA92354B41B00CF0F2C /* Info.plist */,
-				F48003FB23735ED200548417 /* EditorView.swift */,
-				F488B1E5236CEC7800C2170A /* EditorContentView.swift */,
-				F435EE542370B72500A09FB3 /* AtomicWordGroupLayerImageCache.swift */,
 			);
 			path = App;
+			sourceTree = "<group>";
+		};
+		F48073AF2380DB3A006DBBFA /* Editor */ = {
+			isa = PBXGroup;
+			children = (
+				F48003FB23735ED200548417 /* EditorView.swift */,
+				F488B1E5236CEC7800C2170A /* EditorContentView.swift */,
+				F48073AD2380D4A2006DBBFA /* EditorAtomicWordGroupLayer.swift */,
+				F48073B02380DB7F006DBBFA /* EditorDataSource.swift */,
+			);
+			path = Editor;
 			sourceTree = "<group>";
 		};
 		F492B1B6235F560C00CCE9E5 /* Offset Tree */ = {
@@ -275,9 +289,11 @@
 				F4520074235510CA00B51AE1 /* DocumentBrowserViewController.swift in Sources */,
 				F492B1B8235F563000CCE9E5 /* OffsetTree.swift in Sources */,
 				F4253D27235FB25A008063D7 /* LinearOffsetTreeElementStorage.swift in Sources */,
+				F48073B12380DB7F006DBBFA /* EditorDataSource.swift in Sources */,
 				F4253D25235FB23B008063D7 /* OffsetTreeElementStorage.swift in Sources */,
 				F48BC76023550998006338F6 /* ExtendedUnicodeCodec.swift in Sources */,
 				F492B1BA235F564B00CCE9E5 /* OffsetTreeNode.swift in Sources */,
+				F48073AE2380D4A2006DBBFA /* EditorAtomicWordGroupLayer.swift in Sources */,
 				F4169FBF2354B99200CF0F2C /* AtomicWordGroupManager.swift in Sources */,
 				F4169FC32354B9D100CF0F2C /* UnicodeAtomicWordGroup.swift in Sources */,
 				F4169F9C2354B41600CF0F2C /* AppDelegate.swift in Sources */,
