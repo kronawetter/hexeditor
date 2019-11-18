@@ -9,32 +9,93 @@
 import UIKit
 
 class EditorView: UIScrollView {
-	var dataSource: EditorDataSource? = nil {
-		didSet {
-			contentView.dataSource = dataSource
+	private let hexContentView = EditorContentView()
+	private let textContentView = EditorContentView()
+	private let separatorViews = [UIView(), UIView(), UIView()]
+	private let backgroundView = UIView()
+
+	private var contentViews: [EditorContentView] {
+		return [hexContentView, textContentView]
+	}
+
+	var hexDataSource: EditorDataSource? {
+		get {
+			return hexContentView.dataSource
+		}
+		set {
+			hexContentView.dataSource = newValue
+			setNeedsLayout()
 		}
 	}
 
-	let contentView: EditorContentView
+	var textDataSource: EditorDataSource? {
+		get {
+			return textContentView.dataSource
+		}
+		set {
+			textContentView.dataSource = newValue
+			setNeedsLayout()
+		}
+	}
+
+	var bytesPerLine = 16 {
+		didSet {
+			setNeedsLayout()
+		}
+	}
 
 	override init(frame: CGRect) {
-		contentView = EditorContentView()
-
 		super.init(frame: frame)
 
-		addSubview(contentView)
+		backgroundColor = .secondarySystemBackground
+
+		backgroundView.backgroundColor = .systemBackground
+		addSubview(backgroundView)
+
+		contentViews.forEach { addSubview($0) }
+
+		separatorViews.forEach { $0.backgroundColor = .separator }
+		separatorViews.forEach { addSubview($0) }
 	}
 
 	override func layoutSubviews() {
-		let desiredContentViewSize = CGSize(width: bounds.width / 2.0, height: .infinity)
+		assert(separatorViews.count == contentViews.count + 1)
 
-		let contentViewSize = contentView.sizeThatFits(desiredContentViewSize)
-		let contentViewOrigin = CGPoint(x: (bounds.width - contentViewSize.width) / 2.0, y: 0.0)
+		let separatorViewSize = CGSize(width: 1.0 / UIScreen.main.scale, height: bounds.height)
 
-		contentView.frame = CGRect(origin: contentViewOrigin, size: contentViewSize)
-		contentView.visibleRect = CGRect(origin: contentOffset, size: bounds.size)
+		let totalContentWidth = contentViews.map { $0.width(for: bytesPerLine) }.reduce(.zero) { $0 + $1 } + separatorViewSize.width * CGFloat(separatorViews.count)
+
+		var origin = CGPoint(x: (bounds.width - totalContentWidth) / 2.0, y: .zero)
+		var separatorViewsIterator = separatorViews.makeIterator()
+
+		backgroundView.frame.origin = CGPoint(x: origin.x, y: contentOffset.y)
+		backgroundView.frame.size = CGSize(width: totalContentWidth, height: bounds.height)
+
+		func layoutNextSeparator() {
+			let separator = separatorViewsIterator.next()!
+
+			separator.frame.origin = CGPoint(x: origin.x, y: contentOffset.y)
+			separator.frame.size = separatorViewSize
+
+			origin.x = separator.frame.maxX
+		}
+
+		for contentView in contentViews {
+			layoutNextSeparator()
+
+			let desiredContentViewSize = CGSize(width: contentView.width(for: bytesPerLine), height: .infinity)
+
+			contentView.frame.origin = origin
+			contentView.frame.size = contentView.sizeThatFits(desiredContentViewSize)
+
+			contentView.visibleRect = CGRect(x: .zero, y: contentOffset.y, width: contentView.bounds.width, height: bounds.height)
+
+			origin.x = contentView.frame.maxX
+		}
+
+		layoutNextSeparator()
 		
-		contentSize = contentViewSize
+		contentSize = CGSize(width: totalContentWidth, height: contentViews.map { $0.frame.height }.max() ?? .zero)
 
 		super.layoutSubviews()
 	}

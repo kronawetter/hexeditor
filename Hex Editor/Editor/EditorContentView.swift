@@ -35,25 +35,46 @@ class EditorContentView: UIView {
 		}
 	}
 
+	var contentInsets = UIEdgeInsets(top: 10.0, left: 10.0, bottom: 10.0, right: 10.0) {
+		didSet {
+			setNeedsLayout()
+		}
+	}
+
 	private var estimatedLineHeight: CGFloat {
 		return round(font.lineHeight * 1.5)
 	}
 
 	private var widthPerWord: CGFloat {
-		return font.pointSize * 2.0
+		// TODO: Get width of characters
+		return font.pointSize * 1.25
 	}
 
 	private var wordsPerLine: Int {
-		return Int(bounds.width / widthPerWord)
+		return Int((bounds.width - contentInsets.left - contentInsets.right) / widthPerWord)
+	}
+
+	func width(for wordsPerLine: Int) -> CGFloat {
+		return CGFloat(wordsPerLine) * widthPerWord + contentInsets.left + contentInsets.right
 	}
 
 	private func estimatedWordOffset(at point: CGPoint) -> Int {
-		return Int(point.y / estimatedLineHeight) * wordsPerLine
+		return Int((point.y - contentInsets.top) / estimatedLineHeight) * wordsPerLine
 	}
 
 	private var wordGroupSublayers: [EditorAtomicWordGroupLayer] = []
 	private var cache = AtomicWordGroupLayerImageCache()
 
+	override init(frame: CGRect) {
+		super.init(frame: frame)
+
+		backgroundColor = .systemBackground
+	}
+	
+	required init?(coder: NSCoder) {
+		fatalError("init(coder:) has not been implemented")
+	}
+	
 	private func removeSublayersOutsideVisibleRect() {
 		guard let dataSource = dataSource else {
 			assert(wordGroupSublayers.isEmpty)
@@ -103,8 +124,8 @@ class EditorContentView: UIView {
 			let wordOffset = max(estimatedWordOffset(at: visibleRect.origin), 0)
 			precondition(wordOffset % wordsPerLine == 0)
 
-			let y = CGFloat(wordOffset / wordsPerLine) * estimatedLineHeight
-			lastFrame = CGRect(x: .zero, y: y, width: .zero, height: .zero)
+			let y = CGFloat(wordOffset / wordsPerLine) * estimatedLineHeight + contentInsets.top
+			lastFrame = CGRect(x: contentInsets.left, y: y, width: .zero, height: .zero)
 			initialOffset = wordOffset
 		}
 
@@ -113,10 +134,10 @@ class EditorContentView: UIView {
 		func frame(for size: CGSize) -> CGRect {
 			var newFrame = CGRect(x: lastFrame.maxX, y: lastFrame.minY, width: size.width, height: size.height)
 			
-			if newFrame.maxX > bounds.maxX {
+			if newFrame.maxX > (bounds.maxX - contentInsets.right) {
 				// Line break
 				// TODO: Line break should work differently, should first fill all remaining space in current line
-				newFrame.origin.x = .zero
+				newFrame.origin.x = contentInsets.left
 				newFrame.origin.y += lastLineHeight
 			}
 
@@ -133,13 +154,14 @@ class EditorContentView: UIView {
 			// TODO: Request image asynchronously
 			// TODO: Pass current font to image generation
 			let image = cache.image(for: AtomicWordGroupLayerData(text: wordGroup.text, size: wordGroup.size))
-			let size = CGSize(width: CGFloat(image.width) / scale, height: CGFloat(image.height) / scale)
 
-			let newFrame = frame(for: size)
+			let newFrame = frame(for: CGSize(width: widthPerWord * CGFloat(wordGroup.size), height: CGFloat(image.height) / scale))
 
 			if newFrame.intersects(visibleRect) {
 				let sublayer = EditorAtomicWordGroupLayer(wordOffset: currentOffset)
 				sublayer.contents = image
+				sublayer.contentsGravity = .topLeft
+				sublayer.contentsScale = scale
 				sublayer.isOpaque = true
 				sublayer.frame = newFrame
 
@@ -153,8 +175,6 @@ class EditorContentView: UIView {
 				break
 			}
 		}
-
-		//displayedWordOffset = (displayedWordOffset?.lowerBound ?? initialOffset)..<currentOffset
 	}
 
 	override func sizeThatFits(_ size: CGSize) -> CGSize {
@@ -163,12 +183,12 @@ class EditorContentView: UIView {
 		}
 
 		let wordCount = dataSource.totalWordCount
-		let maximumWidth = size.width
+		let maximumWidth = size.width - contentInsets.left - contentInsets.right
 		let wordsPerLine = floor(maximumWidth / widthPerWord)
 		let lineCount = ceil(CGFloat(wordCount) / wordsPerLine)
 
-		let width = wordsPerLine * widthPerWord
-		let height = lineCount * estimatedLineHeight
+		let width = wordsPerLine * widthPerWord + contentInsets.left + contentInsets.right
+		let height = lineCount * estimatedLineHeight + contentInsets.top + contentInsets.bottom
 
 		return CGSize(width: width, height: height)
 	}

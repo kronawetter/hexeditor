@@ -43,14 +43,14 @@ class DocumentViewController: UIViewController {
 		super.loadView()
 
 		view.addSubview(editorView)
-		editorView.dataSource = self
+		editorView.hexDataSource = self
+		editorView.textDataSource = self
 		editorView.translatesAutoresizingMaskIntoConstraints = false
 		editorView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
 		editorView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
 		editorView.widthAnchor.constraint(equalTo: view.widthAnchor).isActive = true
 		editorView.heightAnchor.constraint(equalTo: view.heightAnchor).isActive = true
 
-		view.backgroundColor = .systemBackground
 		navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Files", style: .plain, target: self, action: #selector(close))
 	}
 
