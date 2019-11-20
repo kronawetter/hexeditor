@@ -33,8 +33,8 @@ struct AtomicWordGroupLayerImageCache {
 		let line = CTLineCreateWithAttributedString(attributedString)
 		let bounds = CTLineGetBoundsWithOptions(line, [])
 
-		let width = bounds.width
-		let height = bounds.height
+		let width = max(bounds.width, 1.0)
+		let height = max(bounds.height, 1.0)
 
 		let scale = UIScreen.main.scale
 		let context = CGContext(data: nil, width: Int(width * scale), height: Int(height * scale), bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGImageAlphaInfo.none.rawValue)!

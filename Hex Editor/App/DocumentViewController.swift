@@ -21,8 +21,14 @@ class DocumentViewController: UIViewController {
 				let isPermitted = documentURL.startAccessingSecurityScopedResource()
 				precondition(isPermitted)
 
-				documentData = try! Data(contentsOf: documentURL)
+				file = try! File(url: documentURL)
 				navigationItem.title = documentURL.lastPathComponent
+
+				atomicWordGroupManager = AtomicWordGroupManager<UnicodeAtomicWordGroup<UTF8, ByteOrder.BigEndian, OffsetTree<DataOffsetTreeElementStorage>>>(dataSource: file!.data)
+				atomicWordGroupManager!.create(for: 0..<file!.size)
+
+				editorView.hexDataSource = file
+				editorView.textDataSource = atomicWordGroupManager
 			}
 		}
 	}
@@ -33,7 +39,9 @@ class DocumentViewController: UIViewController {
 		}
 	}
 
-	private var documentData: Data?
+	private var file: File?
+
+	private var atomicWordGroupManager: AtomicWordGroupManager<UnicodeAtomicWordGroup<UTF8, ByteOrder.BigEndian, OffsetTree<DataOffsetTreeElementStorage>>>?
 
 	private var editorView = EditorView()
 
@@ -43,8 +51,6 @@ class DocumentViewController: UIViewController {
 		super.loadView()
 
 		view.addSubview(editorView)
-		editorView.hexDataSource = self
-		editorView.textDataSource = self
 		editorView.translatesAutoresizingMaskIntoConstraints = false
 		editorView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
 		editorView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
@@ -60,66 +66,3 @@ class DocumentViewController: UIViewController {
 		dismiss(animated: true, completion: nil)
 	}
 }
-
-extension DocumentViewController: EditorDataSource {
-	var totalWordCount: Int {
-		guard let documentData = documentData else {
-			return 0
-		}
-
-		return documentData.count
-	}
-
-	func atomicWordGroups(for wordRange: Range<Int>) -> [(text: String, size: Int)] {
-		guard let documentData = documentData else {
-			return []
-		}
-		
-		return documentData[wordRange].map { (text: String(format: "%02X", $0), size: 1) }
-	}
-
-	func atomicWordGroup(at wordIndex: Int) -> (text: String, size: Int) {
-		return (text: String(format: "%02X", documentData![wordIndex]), size: 1)
-	}
-}
-
-
-	/*@objc func applyOffset() {
-		guard let offsetString = offsetTextField.text, let offset = Int(offsetString) else {
-			return
-		}
-
-		guard documentURL.startAccessingSecurityScopedResource() else {
-			return
-		}
-
-		guard let data = try? Data(contentsOf: documentURL) else {
-			documentURL.stopAccessingSecurityScopedResource()
-			return
-		}
-
-		typealias CurrentEncoding = UTF8
-
-		var fileTree = OffsetTree<LinearOffsetTreeElementStorage<UInt8>>()
-		for (index, byte) in data.enumerated() {
-			fileTree.insert(byte, offset: index)
-		}
-
-		var manager = AtomicWordGroupManager<UnicodeAtomicWordGroup<CurrentEncoding, ByteOrder.BigEndian, OffsetTree<LinearOffsetTreeElementStorage<UInt8>>>>(dataSource: fileTree)
-		manager.create(for: offset..<(offset + 1000))
-
-		documentURL.stopAccessingSecurityScopedResource()
-
-		/*var string = ""
-		for group in manager.groups.iterator(for: offset) {
-			print(group.range)
-			let value = group.value.prefix(group.size)
-			let missingCharacters = group.size - value.count
-
-			string += value
-			for _ in 0..<missingCharacters {
-				string += " "
-			}
-		}
-		unicodeTextView.text = string*/
-	}*/

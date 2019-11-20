@@ -18,7 +18,9 @@
 		F4253D25235FB23B008063D7 /* OffsetTreeElementStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4253D24235FB23B008063D7 /* OffsetTreeElementStorage.swift */; };
 		F4253D27235FB25A008063D7 /* LinearOffsetTreeElementStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4253D26235FB25A008063D7 /* LinearOffsetTreeElementStorage.swift */; };
 		F435EE552370B72500A09FB3 /* AtomicWordGroupLayerImageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = F435EE542370B72500A09FB3 /* AtomicWordGroupLayerImageCache.swift */; };
+		F449964423844619000AE3E7 /* DataOffsetTreeElementStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F449964323844619000AE3E7 /* DataOffsetTreeElementStorage.swift */; };
 		F4520074235510CA00B51AE1 /* DocumentBrowserViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4520073235510CA00B51AE1 /* DocumentBrowserViewController.swift */; };
+		F47D251E2385CAA600F75663 /* File.swift in Sources */ = {isa = PBXBuildFile; fileRef = F47D251D2385CAA600F75663 /* File.swift */; };
 		F48003FC23735ED200548417 /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48003FB23735ED200548417 /* EditorView.swift */; };
 		F48073AE2380D4A2006DBBFA /* EditorAtomicWordGroupLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48073AD2380D4A2006DBBFA /* EditorAtomicWordGroupLayer.swift */; };
 		F48073B12380DB7F006DBBFA /* EditorDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48073B02380DB7F006DBBFA /* EditorDataSource.swift */; };
@@ -57,7 +59,9 @@
 		F4253D24235FB23B008063D7 /* OffsetTreeElementStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OffsetTreeElementStorage.swift; sourceTree = "<group>"; };
 		F4253D26235FB25A008063D7 /* LinearOffsetTreeElementStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinearOffsetTreeElementStorage.swift; sourceTree = "<group>"; };
 		F435EE542370B72500A09FB3 /* AtomicWordGroupLayerImageCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AtomicWordGroupLayerImageCache.swift; sourceTree = "<group>"; };
+		F449964323844619000AE3E7 /* DataOffsetTreeElementStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataOffsetTreeElementStorage.swift; sourceTree = "<group>"; };
 		F4520073235510CA00B51AE1 /* DocumentBrowserViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentBrowserViewController.swift; sourceTree = "<group>"; };
+		F47D251D2385CAA600F75663 /* File.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = File.swift; sourceTree = "<group>"; };
 		F48003FB23735ED200548417 /* EditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorView.swift; sourceTree = "<group>"; };
 		F48073AD2380D4A2006DBBFA /* EditorAtomicWordGroupLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorAtomicWordGroupLayer.swift; sourceTree = "<group>"; };
 		F48073B02380DB7F006DBBFA /* EditorDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorDataSource.swift; sourceTree = "<group>"; };
@@ -116,6 +120,7 @@
 				F492B1B6235F560C00CCE9E5 /* Offset Tree */,
 				F4DF9C8D2354E33100ECA3C9 /* FileAccessor.swift */,
 				F48725EC2355FA9400959C4A /* ByteOrder.swift */,
+				F47D251D2385CAA600F75663 /* File.swift */,
 			);
 			path = "Hex Editor";
 			sourceTree = "<group>";
@@ -180,6 +185,7 @@
 				F492B1B9235F564B00CCE9E5 /* OffsetTreeNode.swift */,
 				F4253D24235FB23B008063D7 /* OffsetTreeElementStorage.swift */,
 				F4253D26235FB25A008063D7 /* LinearOffsetTreeElementStorage.swift */,
+				F449964323844619000AE3E7 /* DataOffsetTreeElementStorage.swift */,
 			);
 			path = "Offset Tree";
 			sourceTree = "<group>";
@@ -300,7 +306,9 @@
 				F4DF9C8E2354E33100ECA3C9 /* FileAccessor.swift in Sources */,
 				F4F162C22361C76600337EAA /* DocumentViewController.swift in Sources */,
 				F4169FC12354B9BE00CF0F2C /* AtomicWordGroup.swift in Sources */,
+				F47D251E2385CAA600F75663 /* File.swift in Sources */,
 				F488B1E6236CEC7800C2170A /* EditorContentView.swift in Sources */,
+				F449964423844619000AE3E7 /* DataOffsetTreeElementStorage.swift in Sources */,
 				F4169F9E2354B41600CF0F2C /* SceneDelegate.swift in Sources */,
 				F48003FC23735ED200548417 /* EditorView.swift in Sources */,
 			);

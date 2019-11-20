@@ -22,3 +22,14 @@ struct AtomicWordGroupManager<T: AtomicWordGroup> {
 		T.update(for: changedRange, lengthDelta: lengthDelta, in: &self)
 	}
 }
+
+extension AtomicWordGroupManager: EditorDataSource {
+	var totalWordCount: Int {
+		return 1000
+	}
+
+	func atomicWordGroup(at wordIndex: Int) -> (text: String, size: Int) {
+		let data = groups[wordIndex]!
+		return (text: data.value, size: data.size)
+	}
+}

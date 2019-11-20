@@ -12,8 +12,11 @@ protocol Sizeable {
 
 protocol OffsetTreeElementStorage {
 	associatedtype Element: Sizeable
+	associatedtype Elements: Collection where Elements.Element == Element
 	
 	init(initialElement: Element)
+
+	init(initialElements: Elements)
 
 	subscript(_ offset: Int) -> Element? { get }
 	

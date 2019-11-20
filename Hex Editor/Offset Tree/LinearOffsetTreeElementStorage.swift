@@ -7,10 +7,16 @@
 //
 
 struct LinearOffsetTreeElementStorage<Element: Sizeable>: OffsetTreeElementStorage {
-	var elements: [Element] = []
+	typealias Elements = [Element]
+
+	var elements: Elements = []
 	
 	init(initialElement: Element) {
 		elements = [initialElement]
+	}
+
+	init(initialElements: Elements) {
+		elements = initialElements
 	}
 
 	subscript(_ offset: Int) -> Element? {

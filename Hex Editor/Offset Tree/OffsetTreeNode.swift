@@ -34,6 +34,11 @@ extension OffsetTree {
 				range = offset..<(offset + initialElement.size)
 				elementStorage = ElementStorage(initialElement: initialElement)
 			}
+
+			init(offset: Int, initialElements: Elements) {
+				range = offset..<(offset + initialElements.reduce(0) { $0 + $1.size }) // TODO: Use range of Node.init
+				elementStorage = ElementStorage(initialElements: initialElements)
+			}
 		}
 		
 		var pairs: [Pair]
@@ -47,7 +52,14 @@ extension OffsetTree {
 			firstChild = nil
 			isLeaf = true
 		}
-		
+
+		init(initialElements: Elements, range: Range<Int>) {
+			let initialPair = Pair(offset: range.startIndex, initialElements: initialElements)
+			pairs = [initialPair]
+			firstChild = nil
+			isLeaf = true
+		}
+
 		init(pairs: [Pair]) {
 			self.pairs = pairs
 			firstChild = nil

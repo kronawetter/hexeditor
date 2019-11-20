@@ -8,6 +8,7 @@
 
 struct OffsetTree<ElementStorage: OffsetTreeElementStorage> {
 	typealias Element = ElementStorage.Element
+	typealias Elements = ElementStorage.Elements
 	typealias Index = Int
 	
 	var root: Node? = nil
@@ -23,6 +24,14 @@ struct OffsetTree<ElementStorage: OffsetTreeElementStorage> {
 			let range = offset..<(offset + element.size)
 			root = Node(initialElement: element, range: range)
 		}
+	}
+
+	mutating func insert(_ elements: Elements, offset: Int) {
+		// TODO: Add support for inserting multiple elements when tree is non-empty
+		precondition(root == nil)
+
+		let range = offset..<(offset + elements.reduce(0) { $0 + $1.size }) // TODO: Inefficient in case of constant sized elements
+		root = Node(initialElements: elements, range: range)
 	}
 
 	func find(offset: Int) -> (node: Node, elementStorage: ElementStorage, offset: Int)? {
@@ -68,7 +77,7 @@ extension OffsetTree {
 	}
 }
 
-extension OffsetTree: FileAccessor where ElementStorage == LinearOffsetTreeElementStorage<UInt8> {
+/*extension OffsetTree: FileAccessor where ElementStorage == LinearOffsetTreeElementStorage<UInt8> {
 	func iterator<ReturnedElement: FixedWidthInteger>(for offset: Index) -> AnyIterator<ReturnedElement> {
 		let bytesPerWord = MemoryLayout<ReturnedElement>.stride
 
@@ -93,6 +102,37 @@ extension OffsetTree: FileAccessor where ElementStorage == LinearOffsetTreeEleme
 			currentOffset += bytesPerWord
 
 			return elementStorage.elements.withUnsafeBytes {
+				return $0.bindMemory(to: ReturnedElement.self)
+			} [index / bytesPerWord]
+		}
+	}
+}*/
+
+extension OffsetTree: FileAccessor where ElementStorage == DataOffsetTreeElementStorage {
+	func iterator<ReturnedElement: FixedWidthInteger>(for offset: Index) -> AnyIterator<ReturnedElement> {
+		let bytesPerWord = MemoryLayout<ReturnedElement>.stride
+
+		precondition(offset.isMultiple(of: bytesPerWord))
+
+		let iterator = FileAccessorIterator<ReturnedElement>(tree: self, currentOffset: offset / bytesPerWord)
+
+		return AnyIterator(iterator)
+	}
+
+	struct FileAccessorIterator<ReturnedElement: FixedWidthInteger>: IteratorProtocol {
+		let tree: OffsetTree
+		var currentOffset: Int
+
+		mutating func next() -> ReturnedElement? {
+			let bytesPerWord = MemoryLayout<ReturnedElement>.stride
+
+			guard let (_, elementStorage, index) = tree.find(offset: currentOffset) else {
+				return nil
+			}
+
+			currentOffset += bytesPerWord
+
+			return elementStorage.data.withUnsafeBytes {
 				return $0.bindMemory(to: ReturnedElement.self)
 			} [index / bytesPerWord]
 		}
