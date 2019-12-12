@@ -131,23 +131,34 @@ class EditorContentView: UIView {
 
 		var lastLineHeight = estimatedLineHeight // TODO: Calculate actual height of last line
 
-		func frame(for size: CGSize) -> CGRect {
-			var newFrame = CGRect(x: lastFrame.maxX, y: lastFrame.minY, width: size.width, height: size.height)
-			
-			if newFrame.maxX > (bounds.maxX - contentInsets.right) {
-				// Line break
-				// TODO: Line break should work differently, should first fill all remaining space in current line
-				newFrame.origin.x = contentInsets.left
-				newFrame.origin.y += lastLineHeight
+		func frames(for size: CGSize) -> [CGRect] {
+			let unbrokenFrame = CGRect(x: lastFrame.maxX, y: lastFrame.minY, width: size.width, height: size.height)
+			var frames: [CGRect] = []
+
+			var remainingWidth = unbrokenFrame.width
+			var currentOrigin = unbrokenFrame.origin
+			while remainingWidth > 0 {
+				let availableWidth = bounds.maxX - contentInsets.right - currentOrigin.x
+
+				if availableWidth > 0 {
+					let size = CGSize(width: min(remainingWidth, availableWidth), height: size.height)
+					let frame = CGRect(origin: currentOrigin, size: size)
+
+					frames.append(frame)
+					remainingWidth -= frame.width
+				}
+
+				currentOrigin.x = contentInsets.left
+				currentOrigin.y += lastLineHeight
 			}
 
-			return newFrame
+			return frames
 		}
 
 		var currentOffset = initialOffset
 		let scale = UIScreen.main.scale
 
-		while currentOffset < dataSource.totalWordCount {
+		layout: while currentOffset < dataSource.totalWordCount {
 			// TODO: Once introduced, convert from presentation offset to file offset
 			let wordGroup = dataSource.atomicWordGroup(at: currentOffset)
 
@@ -155,24 +166,27 @@ class EditorContentView: UIView {
 			// TODO: Pass current font to image generation
 			let image = cache.image(for: AtomicWordGroupLayerData(text: wordGroup.text, size: wordGroup.size))
 
-			let newFrame = frame(for: CGSize(width: widthPerWord * CGFloat(wordGroup.size), height: CGFloat(image.height) / scale))
+			let newFrames = frames(for: CGSize(width: widthPerWord * CGFloat(wordGroup.size), height: CGFloat(image.height) / scale))
 
-			if newFrame.intersects(visibleRect) {
-				let sublayer = EditorAtomicWordGroupLayer(wordOffset: currentOffset)
-				sublayer.contents = image
-				sublayer.contentsGravity = .topLeft
-				sublayer.contentsScale = scale
-				sublayer.isOpaque = true
-				sublayer.frame = newFrame
+			for newFrame in newFrames {
+				// TODO: Decide what should be the content of each layer when word group has multiple frames
+				if newFrame.intersects(visibleRect) {
+					let sublayer = EditorAtomicWordGroupLayer(wordOffset: currentOffset)
+					sublayer.contents = image
+					sublayer.contentsGravity = .topLeft
+					sublayer.contentsScale = scale
+					sublayer.isOpaque = true
+					sublayer.frame = newFrame
 
-				lastFrame = newFrame
+					lastFrame = newFrame
 
-				wordGroupSublayers.append(sublayer)
-				layer.addSublayer(sublayer)
+					wordGroupSublayers.append(sublayer)
+					layer.addSublayer(sublayer)
 
-				currentOffset += wordGroup.size
-			} else {
-				break
+					currentOffset += wordGroup.size
+				} else {
+					break layout
+				}
 			}
 		}
 	}
