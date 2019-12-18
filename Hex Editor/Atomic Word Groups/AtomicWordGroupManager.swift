@@ -28,8 +28,8 @@ extension AtomicWordGroupManager: EditorDataSource {
 		return 1000
 	}
 
-	func atomicWordGroup(at wordIndex: Int) -> (text: String, size: Int) {
+	func atomicWordGroup(at wordIndex: Int) -> EditorDataSource.AtomicWordGroup {
 		let data = groups[wordIndex]!
-		return (text: data.value, size: data.size)
+		return (text: data.value, range: data.range)
 	}
 }

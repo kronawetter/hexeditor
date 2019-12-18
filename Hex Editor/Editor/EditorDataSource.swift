@@ -7,6 +7,8 @@
 //
 
 protocol EditorDataSource {
+	typealias AtomicWordGroup = (text: String, range: Range<Int>)
+
 	var totalWordCount: Int { get }
-	func atomicWordGroup(at wordIndex: Int) -> (text: String, size: Int)
+	func atomicWordGroup(at wordIndex: Int) -> AtomicWordGroup
 }

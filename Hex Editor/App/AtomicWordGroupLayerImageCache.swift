@@ -8,28 +8,33 @@
 
 import UIKit
 
-struct AtomicWordGroupLayerData: Hashable {
-	let text: String
-	let size: Int
-}
-
 struct AtomicWordGroupLayerImageCache {
-	private var cache: [AtomicWordGroupLayerData: CGImage] = [:]
+	private struct LayerMeta: Hashable {
+		let text: String
+		let size: Int
+	}
+
+	private var cache: [LayerMeta: CGImage] = [:]
 	private static let textAttributes: [NSAttributedString.Key : NSObject] = [.foregroundColor : UIColor.label, .font : UIFont.monospacedSystemFont(ofSize: 14.0, weight: .regular)]
 
-	mutating func image(for data: AtomicWordGroupLayerData) -> CGImage {
-		if let image = cache[data] {
+	mutating func image(text: String, size: Int) -> CGImage {
+		let meta = LayerMeta(text: text, size: size)
+		return image(for: meta)
+	}
+
+	private mutating func image(for meta: LayerMeta) -> CGImage {
+		if let image = cache[meta] {
 			return image
 		}
 
-		let image = generateImage(for: data)
-		cache[data] = image
+		let image = generateImage(for: meta)
+		cache[meta] = image
 
 		return image
 	}
 
-	private func generateImage(for data: AtomicWordGroupLayerData) -> CGImage {
-		let attributedString = NSAttributedString(string: data.text, attributes: Self.textAttributes)
+	private func generateImage(for meta: LayerMeta) -> CGImage {
+		let attributedString = NSAttributedString(string: meta.text, attributes: Self.textAttributes)
 		let line = CTLineCreateWithAttributedString(attributedString)
 		let bounds = CTLineGetBoundsWithOptions(line, [])
 

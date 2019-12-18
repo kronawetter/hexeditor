@@ -119,7 +119,7 @@ class EditorContentView: UIView {
 			let wordGroup = dataSource.atomicWordGroup(at: lastSublayer.wordOffset)
 
 			lastFrame = lastSublayer.frame
-			initialOffset = (lastSublayer.wordOffset + wordGroup.size)
+			initialOffset = (lastSublayer.wordOffset + wordGroup.range.count)
 		} else {
 			let wordOffset = max(estimatedWordOffset(at: visibleRect.origin), 0)
 			precondition(wordOffset % wordsPerLine == 0)
@@ -160,16 +160,17 @@ class EditorContentView: UIView {
 
 		layout: while currentOffset < dataSource.totalWordCount {
 			// TODO: Once introduced, convert from presentation offset to file offset
-			let wordGroup = dataSource.atomicWordGroup(at: currentOffset)
+			let wordGroup = dataSource.atomicWordGroup(at: currentOffset) // TODO: Make return type a struct with member function `size`, so wordGroup.range.count can be replaced with wordGroup.size
 
 			// TODO: Request image asynchronously
 			// TODO: Pass current font to image generation
-			let image = cache.image(for: AtomicWordGroupLayerData(text: wordGroup.text, size: wordGroup.size))
+			let image = cache.image(text: wordGroup.text, size: wordGroup.range.count)
 
-			let newFrames = frames(for: CGSize(width: widthPerWord * CGFloat(wordGroup.size), height: CGFloat(image.height) / scale))
+			let clippedWordsAtBegin = currentOffset - wordGroup.range.lowerBound
+			let newFrames = frames(for: CGSize(width: widthPerWord * CGFloat(wordGroup.range.count - clippedWordsAtBegin), height: CGFloat(image.height) / scale))
 
 			for newFrame in newFrames {
-				// TODO: Decide what should be the content of each layer when word group has multiple frames
+				// TODO: Use correct portion of content image based on current frame, contentRect might be usable, but requires conversion to unit coordinates/sizes
 				if newFrame.intersects(visibleRect) {
 					let sublayer = EditorAtomicWordGroupLayer(wordOffset: currentOffset)
 					sublayer.contents = image
@@ -183,7 +184,7 @@ class EditorContentView: UIView {
 					wordGroupSublayers.append(sublayer)
 					layer.addSublayer(sublayer)
 
-					currentOffset += wordGroup.size
+					currentOffset += wordGroup.range.count
 				} else {
 					break layout
 				}
