@@ -51,18 +51,48 @@ class EditorContentView: UIView {
 
 	private var widthPerWord: CGFloat {
 		// TODO: Get width of characters
-		return font.pointSize * 1.25
+		return round(font.pointSize * 1.25)
+	}
+
+	private var wordGroupSpacingWidth: CGFloat {
+		return round(widthPerWord * 0.3)
+	}
+
+	private var wordsPerWordSpacingGroup = 2 // TODO: Make non-constant and public/internal
+
+	private var widthPerWordSpacingGroup: CGFloat {
+		return widthPerWord * CGFloat(wordsPerWordSpacingGroup) + wordGroupSpacingWidth
+	}
+
+	private var wordSpacingGroupsPerLine: Int {
+		let width = bounds.width - contentInsets.left - contentInsets.right
+
+		return Int((width + wordGroupSpacingWidth) / widthPerWordSpacingGroup)
 	}
 
 	private var wordsPerLine: Int {
-		return Int((bounds.width - contentInsets.left - contentInsets.right) / widthPerWord)
+		return wordSpacingGroupsPerLine * wordsPerWordSpacingGroup
 	}
 
-	func width(for wordsPerLine: Int) -> CGFloat {
-		return CGFloat(wordsPerLine) * widthPerWord + contentInsets.left + contentInsets.right
+	func size(for wordsPerLine: Int) -> CGSize {
+		assert(wordsPerLine.isMultiple(of: wordsPerWordSpacingGroup))
+		let wordSpacingGroupsPerLine = wordsPerLine / wordsPerWordSpacingGroup
+
+		guard let dataSource = dataSource else {
+			return .zero
+		}
+
+		let lineCount = Int(ceil(Double(dataSource.totalWordCount) / Double(wordsPerLine)))
+
+		let width = CGFloat(wordSpacingGroupsPerLine) * widthPerWordSpacingGroup - wordGroupSpacingWidth + contentInsets.left + contentInsets.right
+		let height = CGFloat(lineCount) * estimatedLineHeight + contentInsets.top + contentInsets.bottom
+
+		return CGSize(width: width, height: height)
 	}
 
 	private func estimatedWordOffset(for point: CGPoint) -> (offset: Int, origin: CGPoint) {
+		assert(point.x == .zero)
+
 		let offset = Int((max(point.y, .zero) - contentInsets.top) / estimatedLineHeight) * wordsPerLine
 		let x = contentInsets.left
 		let y = CGFloat(offset / wordsPerLine) * estimatedLineHeight + contentInsets.top
@@ -132,7 +162,7 @@ class EditorContentView: UIView {
 			sublayer.contentsGravity = .topLeft
 			sublayer.contentsScale = scale
 			sublayer.isOpaque = true
-			sublayer.frame = CGRect(x: CGFloat(wordOffsetInLine) * widthPerWord + origin.x, y: origin.y + offsetFromYOrigin, width: CGFloat(group.totalSize - group.offset) * widthPerWord, height: lineHeight)
+			sublayer.frame = CGRect(x: origin.x + CGFloat(wordOffsetInLine) * widthPerWord + CGFloat(wordOffsetInLine / wordsPerWordSpacingGroup) * wordGroupSpacingWidth, y: origin.y + offsetFromYOrigin, width: CGFloat(group.totalSize - group.offset) * widthPerWord, height: lineHeight) // TODO: Width is incorrect if a multi-word group spans across multiple word spacing groups
 
 			layer.addSublayer(sublayer)
 
@@ -176,19 +206,19 @@ class EditorContentView: UIView {
 		}
 	}
 
-	override func sizeThatFits(_ size: CGSize) -> CGSize {
+	/*override func sizeThatFits(_ size: CGSize) -> CGSize {
 		guard let dataSource = dataSource else {
 			return .zero
 		}
 
-		let wordCount = dataSource.totalWordCount
 		let maximumWidth = size.width - contentInsets.left - contentInsets.right
-		let wordsPerLine = floor(maximumWidth / widthPerWord)
-		let lineCount = ceil(CGFloat(wordCount) / wordsPerLine)
+		let wordSpacingGroupsPerLine = Int((maximumWidth + wordGroupSpacingWidth) / widthPerWordSpacingGroup)
+		let wordsPerLine = wordSpacingGroupsPerLine * wordsPerWordSpacingGroup
+		let lineCount = Int(ceil(Double(dataSource.totalWordCount) / Double(wordsPerLine)))
 
-		let width = wordsPerLine * widthPerWord + contentInsets.left + contentInsets.right
-		let height = lineCount * estimatedLineHeight + contentInsets.top + contentInsets.bottom
+		let width = self.width(for: wordsPerLine)
+		let height = CGFloat(lineCount) * estimatedLineHeight + contentInsets.top + contentInsets.bottom
 
 		return CGSize(width: width, height: height)
-	}
+	}*/
 }
