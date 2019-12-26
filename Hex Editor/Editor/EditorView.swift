@@ -65,7 +65,7 @@ class EditorView: UIScrollView {
 
 		let totalContentWidth = contentViews.map { $0.size(for: bytesPerLine).width }.reduce(.zero) { $0 + $1 } + separatorViewSize.width * CGFloat(separatorViews.count)
 
-		var origin = CGPoint(x: (bounds.width - totalContentWidth) / 2.0, y: .zero)
+		var origin = CGPoint(x: max((bounds.width - totalContentWidth) / 2.0, .zero), y: .zero)
 		var separatorViewsIterator = separatorViews.makeIterator()
 
 		backgroundView.frame.origin = CGPoint(x: origin.x, y: contentOffset.y)
@@ -93,7 +93,7 @@ class EditorView: UIScrollView {
 
 		layoutNextSeparator()
 		
-		contentSize = CGSize(width: totalContentWidth, height: contentViews.map { $0.frame.height }.max() ?? .zero)
+		contentSize = CGSize(width: max(bounds.width, totalContentWidth), height: contentViews.map { $0.frame.height }.max() ?? .zero)
 
 		super.layoutSubviews()
 	}
