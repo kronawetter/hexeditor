@@ -54,8 +54,8 @@ class DocumentViewController: UIViewController {
 		editorView.translatesAutoresizingMaskIntoConstraints = false
 		editorView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
 		editorView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
-		editorView.widthAnchor.constraint(equalTo: view.widthAnchor).isActive = true
-		editorView.heightAnchor.constraint(equalTo: view.heightAnchor).isActive = true
+		editorView.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
+		editorView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
 
 		navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Files", style: .plain, target: self, action: #selector(close))
 	}
