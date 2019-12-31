@@ -102,10 +102,33 @@ class EditorContentView: UIView {
 
 	private var cache = AtomicWordGroupLayerImageCache()
 
+	private let tapGestureRecognizer = UITapGestureRecognizer(target: nil, action: nil)
+
+	private let textInteraction = UITextInteraction(for: .editable)
+
+	var inputDelegate: UITextInputDelegate? = nil
+
+	private var selection: Range<Int>? = 0..<0 {
+		willSet {
+			inputDelegate?.selectionWillChange(self)
+		}
+		didSet {
+			print(selection)
+			inputDelegate?.selectionDidChange(self)
+		}
+	}
+
 	override init(frame: CGRect) {
 		super.init(frame: frame)
 
 		backgroundColor = .systemBackground
+
+		tapGestureRecognizer.addTarget(self, action: #selector(tap(sender:)))
+		tapGestureRecognizer.isEnabled = true
+		addGestureRecognizer(tapGestureRecognizer)
+
+		textInteraction.textInput = self
+		addInteraction(textInteraction)
 	}
 	
 	required init?(coder: NSCoder) {
@@ -145,7 +168,7 @@ class EditorContentView: UIView {
 
 		let scale = UIScreen.main.scale
 		let lineHeight = groups.map { CGFloat($0.image.height) / scale }.max()!
-
+		
 		let offsetFromYOrigin: CGFloat
 		switch reference {
 		case .topLeft:
@@ -206,6 +229,31 @@ class EditorContentView: UIView {
 		}
 	}
 
+	override var canBecomeFirstResponder: Bool {
+		true
+	}
+
+	@objc func tap(sender: UITapGestureRecognizer) {
+		if !isFirstResponder && canBecomeFirstResponder {
+			becomeFirstResponder()
+		}
+	}
+
+	private func rectForAtomicWordGroup(at offset: Int) -> CGRect? {
+		guard let dataSource = dataSource, let sublayers = layer.sublayers else {
+			return nil
+		}
+
+		let wordGroup = dataSource.atomicWordGroup(at: offset)
+
+		if let sublayer = sublayers.first(where: { ($0 as? EditorAtomicWordGroupLayer)?.wordOffset == wordGroup.range.startIndex }) {
+			return sublayer.frame
+		} else {
+			// TODO: Estimate rect
+			return nil
+		}
+	}
+
 	/*override func sizeThatFits(_ size: CGSize) -> CGSize {
 		guard let dataSource = dataSource else {
 			return .zero
@@ -221,4 +269,315 @@ class EditorContentView: UIView {
 
 		return CGSize(width: width, height: height)
 	}*/
+}
+
+extension EditorContentView: UIKeyInput {
+	var hasText: Bool {
+		true
+	}
+
+	func insertText(_ text: String) {
+		print(text)
+	}
+
+	func deleteBackward() {
+
+	}
+}
+
+extension EditorContentView: UITextInput {
+	class Tokenizer: NSObject, UITextInputTokenizer {
+		func rangeEnclosingPosition(_ position: UITextPosition, with granularity: UITextGranularity, inDirection direction: UITextDirection) -> UITextRange? {
+			nil
+		}
+
+		func isPosition(_ position: UITextPosition, atBoundary granularity: UITextGranularity, inDirection direction: UITextDirection) -> Bool {
+			false
+		}
+
+		func position(from position: UITextPosition, toBoundary granularity: UITextGranularity, inDirection direction: UITextDirection) -> UITextPosition? {
+			nil
+		}
+
+		func isPosition(_ position: UITextPosition, withinTextUnit granularity: UITextGranularity, inDirection direction: UITextDirection) -> Bool {
+			false
+		}
+	}
+
+	class TextPosition: UITextPosition {
+		let index: Int
+
+		init(_ index: Int) {
+			self.index = index
+		}
+	}
+
+	class TextRange: UITextRange {
+		let range: Range<Int>
+
+		init(_ range: Range<Int>) {
+			self.range = range
+		}
+
+		override var isEmpty: Bool {
+			range.isEmpty
+		}
+
+		override var start: UITextPosition {
+			TextPosition(range.startIndex)
+		}
+
+		override var end: UITextPosition {
+			TextPosition(range.endIndex)
+		}
+	}
+
+	class TextSelectionRect: UITextSelectionRect {
+		private let _rect: CGRect
+		private let _containsStart: Bool
+		private let _containsEnd: Bool
+
+		init(rect: CGRect, containsStart: Bool, containsEnd: Bool) {
+			_rect = rect
+			_containsStart = containsStart
+			_containsEnd = containsEnd
+		}
+
+		override var rect: CGRect {
+			_rect
+		}
+
+		override var writingDirection: NSWritingDirection {
+			.leftToRight
+		}
+
+		override var containsStart: Bool {
+			_containsStart
+		}
+
+		override var containsEnd: Bool {
+			_containsEnd
+		}
+
+		override var isVertical: Bool {
+			false
+		}
+	}
+
+	func text(in range: UITextRange) -> String? {
+		""
+	}
+
+	func replace(_ range: UITextRange, withText text: String) {
+
+	}
+
+	var selectedTextRange: UITextRange? {
+		get {
+			guard let selection = selection else {
+				return nil
+			}
+
+			return TextRange(selection)
+		}
+		set(selectedTextRange) {
+			let selectedTextRange = selectedTextRange as! TextRange?
+
+			selection = selectedTextRange?.range ?? nil
+		}
+	}
+
+	var markedTextRange: UITextRange? {
+		nil
+	}
+
+	var markedTextStyle: [NSAttributedString.Key : Any]? {
+		get {
+			nil
+		}
+		set(markedTextStyle) {
+
+		}
+	}
+
+	func setMarkedText(_ markedText: String?, selectedRange: NSRange) {
+
+	}
+
+	func unmarkText() {
+
+	}
+
+	var beginningOfDocument: UITextPosition {
+		TextPosition(0)
+	}
+
+	var endOfDocument: UITextPosition {
+		TextPosition(dataSource?.totalWordCount ?? 0)
+	}
+
+	func textRange(from fromPosition: UITextPosition, to toPosition: UITextPosition) -> UITextRange? {
+		// When selecting text via drag gesture, function might get called with unintialized arguments, so arguments are not force-casted
+		guard let fromPosition = fromPosition as? TextPosition, let toPosition = toPosition as? TextPosition else {
+			return nil
+		}
+
+		return TextRange(fromPosition.index..<toPosition.index)
+	}
+
+	func position(from position: UITextPosition, offset: Int) -> UITextPosition? {
+		let position = position as! TextPosition
+
+		guard let dataSource = dataSource else {
+			return nil
+		}
+
+		// TODO: Handle multi-word groups
+		let newIndex = position.index + offset
+
+		if (0..<dataSource.totalWordCount).contains(newIndex) {
+			return TextPosition(newIndex)
+		} else {
+			return nil
+		}
+	}
+
+	func position(from position: UITextPosition, in direction: UITextLayoutDirection, offset: Int) -> UITextPosition? {
+		let position = position as! TextPosition
+
+		// TODO: Handle multi-word groups
+		// TODO: "Return nil if the computed text position is less than 0 or greater than the length of the backing string."
+		switch direction {
+		case .right:
+			return TextPosition(min(position.index + offset, dataSource?.totalWordCount ?? 0))
+		case .left:
+			return TextPosition(max(position.index - offset, 0))
+		case .up:
+			return TextPosition(max(position.index - offset * wordsPerLine, 0))
+		case .down:
+			return TextPosition(min(position.index + offset * wordsPerLine, dataSource?.totalWordCount ?? 0))
+		@unknown default:
+			assertionFailure()
+			return nil
+		}
+	}
+
+	func compare(_ position: UITextPosition, to other: UITextPosition) -> ComparisonResult {
+		let position = position as! TextPosition
+		let other = other as! TextPosition
+
+		if position.index < other.index {
+			return .orderedAscending
+		} else if position.index > other.index {
+			return .orderedDescending
+		} else {
+			return .orderedSame
+		}
+	}
+
+	func offset(from: UITextPosition, to toPosition: UITextPosition) -> Int {
+		let from = from as! TextPosition
+		let toPosition = toPosition as! TextPosition
+
+		// TODO: UTF-16 characters?!
+		return toPosition.index - from.index
+	}
+
+	var tokenizer: UITextInputTokenizer {
+		Tokenizer()
+	}
+
+	func position(within range: UITextRange, farthestIn direction: UITextLayoutDirection) -> UITextPosition? {
+		// TODO
+		switch direction {
+		case .left:
+			fallthrough
+		case .up:
+			return range.start
+		case .right:
+			fallthrough
+		case .down:
+			return range.end
+		@unknown default:
+			assertionFailure()
+			return nil
+		}
+	}
+
+	func characterRange(byExtending position: UITextPosition, in direction: UITextLayoutDirection) -> UITextRange? {
+		let position = position as! TextPosition
+
+		guard let dataSource = dataSource else {
+			return nil
+		}
+
+		// TODO check whether select from cursor to begin/end of line/document shortcuts work
+		switch direction {
+		case .left:
+			return TextRange(((position.index / wordsPerLine) * wordsPerLine)..<position.index)
+		case .up:
+			return TextRange(0..<position.index)
+		case .right:
+			return TextRange(position.index..<min((position.index / wordsPerLine) * (wordsPerLine + 1), dataSource.totalWordCount))
+		case .down:
+			return TextRange(position.index..<dataSource.totalWordCount)
+		@unknown default:
+			assertionFailure()
+			return nil
+		}
+	}
+
+	func baseWritingDirection(for position: UITextPosition, in direction: UITextStorageDirection) -> NSWritingDirection {
+		.leftToRight
+	}
+
+	func setBaseWritingDirection(_ writingDirection: NSWritingDirection, for range: UITextRange) {
+
+	}
+
+	func firstRect(for range: UITextRange) -> CGRect {
+		guard let range = range as? TextRange else {
+			return .zero
+		}
+
+		let offsetAtStartOfFirstRect = range.range.startIndex
+		let offsetAtEndOfLine = ((range.range.startIndex / wordsPerLine) + 1) * wordsPerLine - 1 // Last offset still included in line
+		let offsetAtEndOfFirstRect = min(offsetAtEndOfLine, range.range.endIndex)
+
+		if let rectAtStartOfFirstRect = rectForAtomicWordGroup(at: offsetAtStartOfFirstRect), let rectAtEndOfFirstRect = rectForAtomicWordGroup(at: offsetAtEndOfFirstRect) {
+			return rectAtStartOfFirstRect.union(rectAtEndOfFirstRect)
+		} else {
+			return .zero
+		}
+	}
+
+	func caretRect(for position: UITextPosition) -> CGRect {
+		let position = position as! TextPosition
+
+		guard let rect = rectForAtomicWordGroup(at: position.index) else {
+			// TODO
+			return CGRect(x: contentInsets.left, y: contentInsets.top, width: 2.0, height: estimatedLineHeight)//.zero
+		}
+
+		print(rect)
+		return CGRect(x: rect.minX, y: rect.minY, width: 2.0, height: rect.height)
+	}
+
+	func selectionRects(for range: UITextRange) -> [UITextSelectionRect] {
+		let rect = firstRect(for: range)
+		print(rect)
+		return [TextSelectionRect(rect: rect, containsStart: true, containsEnd: true)]
+	}
+
+	func closestPosition(to point: CGPoint) -> UITextPosition? {
+		nil
+	}
+
+	func closestPosition(to point: CGPoint, within range: UITextRange) -> UITextPosition? {
+		nil
+	}
+
+	func characterRange(at point: CGPoint) -> UITextRange? {
+		nil
+	}
 }
