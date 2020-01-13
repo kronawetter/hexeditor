@@ -254,6 +254,48 @@ class EditorContentView: UIView {
 		}
 	}
 
+	private func rectsForAtomicWordGroups(in range: Range<Int>) -> [CGRect] {
+		// First rect
+		let firstRect: CGRect?
+
+		let offsetAtStartOfFirstRect = range.startIndex
+		let offsetAtEndOfFirstLine = ((offsetAtStartOfFirstRect / wordsPerLine) + 1) * wordsPerLine - 1 // Last offset still included in line
+		let offsetAtEndOfFirstRect = min(offsetAtEndOfFirstLine, range.endIndex)
+
+		if let rectAtStartOfFirstRect = rectForAtomicWordGroup(at: offsetAtStartOfFirstRect), let rectAtEndOfFirstRect = rectForAtomicWordGroup(at: offsetAtEndOfFirstRect) {
+			firstRect = rectAtStartOfFirstRect.union(rectAtEndOfFirstRect)
+		} else {
+			firstRect = nil
+		}
+
+		// Last rect
+		let lastRect: CGRect?
+
+		let offsetAtEndOfLastRect = range.endIndex
+		if offsetAtEndOfLastRect > offsetAtEndOfFirstRect {
+			let offsetAtStartOfLastRect = (offsetAtEndOfLastRect / wordsPerLine) * wordsPerLine
+
+			if let rectAtStartOfLastRect = rectForAtomicWordGroup(at: offsetAtStartOfLastRect), let rectAtEndOfLastRect = rectForAtomicWordGroup(at: offsetAtEndOfLastRect) {
+				lastRect = rectAtStartOfLastRect.union(rectAtEndOfLastRect)
+			} else {
+				lastRect = nil
+			}
+		} else {
+		   lastRect = nil
+		}
+
+		// Middle rect
+		let middleRect: CGRect?
+
+		if let firstRect = firstRect, let lastRect = lastRect, lastRect.maxY > firstRect.maxY {
+			middleRect = CGRect(x: lastRect.minX, y: firstRect.maxY, width: firstRect.maxX - lastRect.minX, height: lastRect.minY - firstRect.maxY)
+		} else {
+			middleRect = nil
+		}
+
+		return [firstRect, middleRect, lastRect].compactMap { $0 }
+	}
+
 	/*override func sizeThatFits(_ size: CGSize) -> CGSize {
 		guard let dataSource = dataSource else {
 			return .zero
@@ -540,15 +582,7 @@ extension EditorContentView: UITextInput {
 			return .zero
 		}
 
-		let offsetAtStartOfFirstRect = range.range.startIndex
-		let offsetAtEndOfLine = ((range.range.startIndex / wordsPerLine) + 1) * wordsPerLine - 1 // Last offset still included in line
-		let offsetAtEndOfFirstRect = min(offsetAtEndOfLine, range.range.endIndex)
-
-		if let rectAtStartOfFirstRect = rectForAtomicWordGroup(at: offsetAtStartOfFirstRect), let rectAtEndOfFirstRect = rectForAtomicWordGroup(at: offsetAtEndOfFirstRect) {
-			return rectAtStartOfFirstRect.union(rectAtEndOfFirstRect)
-		} else {
-			return .zero
-		}
+		return rectsForAtomicWordGroups(in: range.range).first ?? .zero
 	}
 
 	func caretRect(for position: UITextPosition) -> CGRect {
@@ -564,9 +598,16 @@ extension EditorContentView: UITextInput {
 	}
 
 	func selectionRects(for range: UITextRange) -> [UITextSelectionRect] {
-		let rect = firstRect(for: range)
-		print(rect)
-		return [TextSelectionRect(rect: rect, containsStart: true, containsEnd: true)]
+		let range = range as! TextRange
+
+		let rects = rectsForAtomicWordGroups(in: range.range)
+		
+		return rects.enumerated().map { (index, rect) in
+			let containsStart = index == rects.startIndex
+			let containsEnd = index == rects.endIndex - 1
+
+			return TextSelectionRect(rect: rect, containsStart: containsStart, containsEnd: containsEnd)
+		}
 	}
 
 	func closestPosition(to point: CGPoint) -> UITextPosition? {
