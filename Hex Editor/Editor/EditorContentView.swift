@@ -137,7 +137,7 @@ class EditorContentView: UIView {
 	
 	private func removeSublayersOutsideVisibleRect() {
 		if let sublayers = layer.sublayers {
-			sublayers.filter { !$0.frame.intersects(visibleRect) } .forEach { $0.removeFromSuperlayer() }
+			sublayers.filter { $0 is EditorAtomicWordGroupLayer && !$0.frame.intersects(visibleRect) } .forEach { $0.removeFromSuperlayer() }
 		}
 	}
 
