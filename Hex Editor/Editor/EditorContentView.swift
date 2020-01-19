@@ -100,6 +100,13 @@ class EditorContentView: UIView {
 		return (offset: offset, origin: CGPoint(x: x, y: y))
 	}
 
+	private func estimatedFrame(for offset: Int) -> CGRect {
+		// TODO: Handle multi-word groups
+
+		let (lineOffset, offsetInLine) = offset.quotientAndRemainder(dividingBy: wordsPerLine)
+		return CGRect(x: CGFloat(offsetInLine) * widthPerWord + CGFloat(offsetInLine / wordsPerWordSpacingGroup) * wordGroupSpacingWidth + contentInsets.left, y: CGFloat(lineOffset) * estimatedLineHeight, width: widthPerWord, height: estimatedLineHeight)
+	}
+
 	private var cache = AtomicWordGroupLayerImageCache()
 
 	private let tapGestureRecognizer = UITapGestureRecognizer(target: nil, action: nil)
@@ -113,7 +120,7 @@ class EditorContentView: UIView {
 			inputDelegate?.selectionWillChange(self)
 		}
 		didSet {
-			print(selection)
+			print(selection as Any)
 			inputDelegate?.selectionDidChange(self)
 		}
 	}
@@ -128,7 +135,20 @@ class EditorContentView: UIView {
 		addGestureRecognizer(tapGestureRecognizer)
 
 		textInteraction.textInput = self
+	}
+
+	override func becomeFirstResponder() -> Bool {
 		addInteraction(textInteraction)
+
+		return super.becomeFirstResponder()
+	}
+
+	override func resignFirstResponder() -> Bool {
+		defer {
+			removeInteraction(textInteraction)
+		}
+
+		return super.resignFirstResponder()
 	}
 	
 	required init?(coder: NSCoder) {
@@ -173,7 +193,6 @@ class EditorContentView: UIView {
 		switch reference {
 		case .topLeft:
 			offsetFromYOrigin = self.lineSpacing
-
 		case .bottomLeft:
 			offsetFromYOrigin = -lineHeight - self.lineSpacing
 		}
@@ -235,7 +254,7 @@ class EditorContentView: UIView {
 
 	@objc func tap(sender: UITapGestureRecognizer) {
 		if !isFirstResponder && canBecomeFirstResponder {
-			becomeFirstResponder()
+			_ = becomeFirstResponder()
 		}
 	}
 
@@ -244,13 +263,17 @@ class EditorContentView: UIView {
 			return nil
 		}
 
+		// TODO: Should not be necessary here
+		guard (0..<dataSource.totalWordCount).contains(offset) else {
+			return nil
+		}
+
 		let wordGroup = dataSource.atomicWordGroup(at: offset)
 
 		if let sublayer = sublayers.first(where: { ($0 as? EditorAtomicWordGroupLayer)?.wordOffset == wordGroup.range.startIndex }) {
 			return sublayer.frame
 		} else {
-			// TODO: Estimate rect
-			return nil
+			return estimatedFrame(for: offset)
 		}
 	}
 
@@ -260,7 +283,7 @@ class EditorContentView: UIView {
 
 		let offsetAtStartOfFirstRect = range.startIndex
 		let offsetAtEndOfFirstLine = ((offsetAtStartOfFirstRect / wordsPerLine) + 1) * wordsPerLine - 1 // Last offset still included in line
-		let offsetAtEndOfFirstRect = min(offsetAtEndOfFirstLine, range.endIndex)
+		let offsetAtEndOfFirstRect = min(offsetAtEndOfFirstLine, range.endIndex - 1)
 
 		if let rectAtStartOfFirstRect = rectForAtomicWordGroup(at: offsetAtStartOfFirstRect), let rectAtEndOfFirstRect = rectForAtomicWordGroup(at: offsetAtEndOfFirstRect) {
 			firstRect = rectAtStartOfFirstRect.union(rectAtEndOfFirstRect)
@@ -271,7 +294,7 @@ class EditorContentView: UIView {
 		// Last rect
 		let lastRect: CGRect?
 
-		let offsetAtEndOfLastRect = range.endIndex
+		let offsetAtEndOfLastRect = range.endIndex - 1
 		if offsetAtEndOfLastRect > offsetAtEndOfFirstRect {
 			let offsetAtStartOfLastRect = (offsetAtEndOfLastRect / wordsPerLine) * wordsPerLine
 
@@ -325,24 +348,125 @@ extension EditorContentView: UIKeyInput {
 	func deleteBackward() {
 
 	}
+
+	var isSecureTextEntry: Bool {
+		get {
+			false
+		}
+		set {
+
+		}
+	}
 }
 
 extension EditorContentView: UITextInput {
 	class Tokenizer: NSObject, UITextInputTokenizer {
+		weak var contentView: EditorContentView?
+
 		func rangeEnclosingPosition(_ position: UITextPosition, with granularity: UITextGranularity, inDirection direction: UITextDirection) -> UITextRange? {
-			nil
+			guard let contentView = contentView, let position = position as? TextPosition else {
+				return nil
+			}
+
+			switch granularity {
+			case .character:
+				return TextRange(position.index..<position.index + 1)
+			case .paragraph:
+				fallthrough
+			case .line:
+				return TextRange(((position.index / contentView.wordsPerLine) * contentView.wordsPerLine)..<position.index)
+			case .document:
+				return TextRange(0..<(contentView.dataSource?.totalWordCount ?? 0))
+			default:
+				return nil
+			}
 		}
 
 		func isPosition(_ position: UITextPosition, atBoundary granularity: UITextGranularity, inDirection direction: UITextDirection) -> Bool {
-			false
+			guard let contentView = contentView, let position = position as? TextPosition else {
+				return false
+			}
+
+			switch granularity {
+			case .character:
+				return true
+			case .paragraph:
+				fallthrough
+			case .line:
+				if direction == .storage(.forward) || direction == .layout(.right) || direction == .layout(.down) {
+					return (position.index + 1).isMultiple(of: contentView.wordsPerLine)
+				} else if direction == .storage(.backward) || direction == .layout(.left) || direction == .layout(.up) {
+					return position.index.isMultiple(of: contentView.wordsPerLine)
+				} else {
+					preconditionFailure()
+				}
+			case .document:
+				if direction == .storage(.forward) || direction == .layout(.right) || direction == .layout(.down) {
+					return position.index == contentView.dataSource?.totalWordCount ?? 0
+				} else if direction == .storage(.backward) || direction == .layout(.left) || direction == .layout(.up) {
+					return position.index == 0
+				} else {
+					preconditionFailure()
+				}
+			default:
+				return false
+			}
 		}
 
 		func position(from position: UITextPosition, toBoundary granularity: UITextGranularity, inDirection direction: UITextDirection) -> UITextPosition? {
-			nil
+			guard let contentView = contentView, let position = position as? TextPosition else {
+				return nil
+			}
+
+			switch granularity {
+			case .character:
+				return position
+			case .paragraph:
+				fallthrough
+			case .line:
+				if direction == .storage(.forward) || direction == .layout(.right) || direction == .layout(.down) {
+					return TextPosition((position.index / contentView.wordsPerLine + 1) * contentView.wordsPerLine - 1)
+				} else if direction == .storage(.backward) || direction == .layout(.left) || direction == .layout(.up) {
+					return TextPosition((position.index / contentView.wordsPerLine) * contentView.wordsPerLine)
+				} else {
+					preconditionFailure()
+				}
+			case .document:
+				if direction == .storage(.forward) || direction == .layout(.right) || direction == .layout(.down) {
+					return TextPosition(contentView.dataSource?.totalWordCount ?? 0)
+				} else if direction == .storage(.backward) || direction == .layout(.left) || direction == .layout(.up) {
+					return TextPosition(0)
+				} else {
+					preconditionFailure()
+				}
+			default:
+				return nil
+			}
 		}
 
 		func isPosition(_ position: UITextPosition, withinTextUnit granularity: UITextGranularity, inDirection direction: UITextDirection) -> Bool {
-			false
+			guard let contentView = contentView, let position = position as? TextPosition else {
+				return false
+			}
+
+			switch granularity {
+			case .character:
+				return true
+			case .paragraph:
+				fallthrough
+			case .line:
+				if direction == .storage(.forward) || direction == .layout(.right) || direction == .layout(.down) {
+					return true
+				} else if direction == .storage(.backward) || direction == .layout(.left) || direction == .layout(.up) {
+					return !position.index.isMultiple(of: contentView.wordsPerLine)
+				} else {
+					preconditionFailure()
+				}
+			case .document:
+				return true
+			default:
+				return false
+			}
 		}
 	}
 
@@ -464,13 +588,15 @@ extension EditorContentView: UITextInput {
 			return nil
 		}
 
-		return TextRange(fromPosition.index..<toPosition.index)
+		if fromPosition.index <= toPosition.index {
+			return TextRange(fromPosition.index..<toPosition.index)
+		} else {
+			return TextRange(toPosition.index..<fromPosition.index)
+		}
 	}
 
 	func position(from position: UITextPosition, offset: Int) -> UITextPosition? {
-		let position = position as! TextPosition
-
-		guard let dataSource = dataSource else {
+		guard let position = position as? TextPosition, let dataSource = dataSource else {
 			return nil
 		}
 
@@ -485,7 +611,9 @@ extension EditorContentView: UITextInput {
 	}
 
 	func position(from position: UITextPosition, in direction: UITextLayoutDirection, offset: Int) -> UITextPosition? {
-		let position = position as! TextPosition
+		guard let position = position as? TextPosition else {
+			return nil
+		}
 
 		// TODO: Handle multi-word groups
 		// TODO: "Return nil if the computed text position is less than 0 or greater than the length of the backing string."
@@ -505,8 +633,9 @@ extension EditorContentView: UITextInput {
 	}
 
 	func compare(_ position: UITextPosition, to other: UITextPosition) -> ComparisonResult {
-		let position = position as! TextPosition
-		let other = other as! TextPosition
+		guard let position = position as? TextPosition, let other = other as? TextPosition else {
+			return .orderedSame
+		}
 
 		if position.index < other.index {
 			return .orderedAscending
@@ -518,15 +647,18 @@ extension EditorContentView: UITextInput {
 	}
 
 	func offset(from: UITextPosition, to toPosition: UITextPosition) -> Int {
-		let from = from as! TextPosition
-		let toPosition = toPosition as! TextPosition
+		guard let from = from as? TextPosition, let toPosition = toPosition as? TextPosition else {
+			return 0
+		}
 
 		// TODO: UTF-16 characters?!
 		return toPosition.index - from.index
 	}
 
 	var tokenizer: UITextInputTokenizer {
-		Tokenizer()
+		let tokenizer = Tokenizer()
+		tokenizer.contentView = self
+		return tokenizer
 	}
 
 	func position(within range: UITextRange, farthestIn direction: UITextLayoutDirection) -> UITextPosition? {
@@ -547,9 +679,7 @@ extension EditorContentView: UITextInput {
 	}
 
 	func characterRange(byExtending position: UITextPosition, in direction: UITextLayoutDirection) -> UITextRange? {
-		let position = position as! TextPosition
-
-		guard let dataSource = dataSource else {
+		guard let position = position as? TextPosition, let dataSource = dataSource else {
 			return nil
 		}
 
@@ -586,19 +716,35 @@ extension EditorContentView: UITextInput {
 	}
 
 	func caretRect(for position: UITextPosition) -> CGRect {
-		let position = position as! TextPosition
+		let fallbackRect = CGRect(x: contentInsets.left, y: contentInsets.top, width: 2.0, height: estimatedLineHeight)
 
-		guard let rect = rectForAtomicWordGroup(at: position.index) else {
-			// TODO
-			return CGRect(x: contentInsets.left, y: contentInsets.top, width: 2.0, height: estimatedLineHeight)//.zero
+		guard let position = position as? TextPosition, let dataSource = dataSource else {
+			return fallbackRect
 		}
 
-		print(rect)
-		return CGRect(x: rect.minX, y: rect.minY, width: 2.0, height: rect.height)
+		assert(position.index <= dataSource.totalWordCount)
+		if position.index < dataSource.totalWordCount {
+			guard let rect = rectForAtomicWordGroup(at: position.index) else {
+				return fallbackRect
+			}
+
+			return CGRect(x: rect.minX, y: rect.minY, width: 2.0, height: rect.height)
+		} else {
+			guard let rect = rectForAtomicWordGroup(at: dataSource.totalWordCount - 1) else {
+				return fallbackRect
+			}
+
+			let offsetInLine = position.index % wordsPerLine
+			let wordGroupSpacingRequired = offsetInLine.isMultiple(of: wordsPerWordSpacingGroup)
+
+			return CGRect(x: rect.maxX + (wordGroupSpacingRequired ? wordGroupSpacingWidth : .zero), y: rect.minY, width: 2.0, height: rect.height)
+		}
 	}
 
 	func selectionRects(for range: UITextRange) -> [UITextSelectionRect] {
-		let range = range as! TextRange
+		guard let range = range as? TextRange else {
+			return []
+		}
 
 		let rects = rectsForAtomicWordGroups(in: range.range)
 		
@@ -611,14 +757,35 @@ extension EditorContentView: UITextInput {
 	}
 
 	func closestPosition(to point: CGPoint) -> UITextPosition? {
-		nil
+		// TODO: Hit test is insufficient
+		let point = layer.convert(point, to: layer.superlayer)
+
+		guard let wordGroupLayer = layer.hitTest(point) as? EditorAtomicWordGroupLayer else {
+			return TextPosition(0)
+		}
+
+		return TextPosition(wordGroupLayer.wordOffset)
 	}
 
 	func closestPosition(to point: CGPoint, within range: UITextRange) -> UITextPosition? {
-		nil
+		// TODO: Hit test is insufficient
+		guard let closestPosition = closestPosition(to: point) as? TextPosition, let range = range as? TextRange else {
+			return TextPosition(0)
+		}
+
+		if range.range.contains(closestPosition.index) {
+			return closestPosition
+		} else {
+			return TextPosition(0)
+		}
 	}
 
 	func characterRange(at point: CGPoint) -> UITextRange? {
-		nil
+		// TODO: Hit test is insufficient
+		guard let closestPosition = closestPosition(to: point) as? TextPosition else {
+			return TextRange(0..<0)
+		}
+
+		return TextRange(closestPosition.index..<(closestPosition.index + 1))
 	}
 }
