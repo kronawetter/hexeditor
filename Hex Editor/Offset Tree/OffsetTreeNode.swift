@@ -27,10 +27,10 @@ extension OffsetTree {
 		struct Pair {
 			// TODO: Change var -> let where appropriate
 			var range: Range<Int>
-			var element: Element
+			var element: OffsetTreeElement
 			var child: Child? = nil
 			
-			init(offset: Int, element: Element) {
+			init(offset: Int, element: OffsetTreeElement) {
 				range = offset..<(offset + element.size)
 				self.element = element
 			}
@@ -41,7 +41,7 @@ extension OffsetTree {
 
 		var isLeaf: Bool
 
-		init(initialElement: Element, range: Range<Int>) {
+		init(initialElement: OffsetTreeElement, range: Range<Int>) {
 			let initialPair = Pair(offset: range.startIndex, element: initialElement)
 			pairs = [initialPair]
 			firstChild = nil
@@ -55,27 +55,38 @@ extension OffsetTree {
 		}
 		
 		// Returns pair to insert in parent node after splitting
-		func insert(_ element: Element, offset: Int) -> Pair? {
-			switch index(for: offset) {
+		func insert(_ element: OffsetTreeElement, offset: Int) -> Pair? {
+			switch index(for: offset, reading: true) { // TODO: Check what reading paramater does
 			case .existing(at: let index):
 				let baseOffset = pairs[index].range.startIndex
 				let offsetInElement = offset - baseOffset
-				
-				if pairs[index].element.replace(in: offsetInElement..<offsetInElement, with: element.value(for: 0..<0)!) { // TODO
-					pairs[index].range = pairs[index].range.extended(by: element.size)
-				} else {
-					let newPair = Pair(offset: offset, element: element)
+
+				var firstExistingElement = pairs[index].element
+				let secondExistingElement = firstExistingElement.split(at: offsetInElement)
+
+				let newPair = Pair(offset: offset, element: element)
+
+				if firstExistingElement.size > 0 {
+					let firstExistingPair = Pair(offset: baseOffset, element: firstExistingElement)
+					pairs[index] = firstExistingPair
 					pairs.insert(newPair, at: index + 1)
-
-					if isExceedingMaximumPairCount {
-						return split()
-					} else {
-						return nil
-					}
+				} else {
+					pairs[index] = newPair
 				}
-				
-				return nil
 
+				if secondExistingElement.size > 0 {
+					let secondExistingPair = Pair(offset: newPair.range.endIndex, element: secondExistingElement)
+					pairs.insert(secondExistingPair, at: index + (firstExistingElement.size > 0 ? 2 : 1))
+				}
+
+				// TODO: Current implementation requries that range of other pairs (also of nodes?) are updated. Check whether this can be avoided or implement updating of ranges
+
+				if isExceedingMaximumPairCount {
+					return split()
+				} else {
+					return nil
+				}
+			
 			case .new(before: let index):
 				let newPair = Pair(offset: offset, element: element)
 				pairs.insert(newPair, at: index)
@@ -136,7 +147,7 @@ extension OffsetTree {
 			return pairs.count > 1020
 		}
 
-		func find(offset: Int) -> (node: Node, element: Element, offset: Int)? {
+		func find(offset: Int) -> (node: Node, element: OffsetTreeElement, offset: Int)? {
 			switch index(for: offset, reading: true) {
 			case .descend(to: let index):
 				let (child, baseOffset) = index >= 0 ? pairs[index].child! : firstChild!

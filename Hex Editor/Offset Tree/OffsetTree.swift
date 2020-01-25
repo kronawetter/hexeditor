@@ -6,12 +6,12 @@
 //  Copyright © 2019 Philip Kronawetter. All rights reserved.
 //
 
-struct OffsetTree<Element: OffsetTreeElement> {
+struct OffsetTree {
 	typealias Index = Int
 	
 	var root: Node? = nil
 
-	mutating func insert(_ element: Element, offset: Int) {
+	mutating func insert(_ element: OffsetTreeElement, offset: Int) {
 		if let root = root {
 			if let splitResult = root.insert(element, offset: offset) {
 				let newRoot = Node(pairs: [splitResult])
@@ -24,7 +24,7 @@ struct OffsetTree<Element: OffsetTreeElement> {
 		}
 	}
 
-	func find(offset: Int) -> (node: Node, element: Element, offset: Int)? {
+	func find(offset: Int) -> (node: Node, element: OffsetTreeElement, offset: Int)? {
 		guard let root = root else {
 			return nil
 		}
@@ -32,7 +32,7 @@ struct OffsetTree<Element: OffsetTreeElement> {
 		return root.find(offset: offset)
 	}
 
-	subscript(_ offset: Int) -> Element.Value? {
+	subscript(_ offset: Int) -> OffsetTreeElement.Value? {
 		guard let (_, element, index) = find(offset: offset) else {
 			return nil
 		}

@@ -24,12 +24,6 @@ class EditorContentView: UIView {
 	var visibleRect = CGRect.zero {
 		didSet {
 			if visibleRect != oldValue {
-				// TODO: Handle size change
-				
-				removeSublayersOutsideVisibleRect()
-				addMissingWordGroupSublayersAtBegin()
-				addMissingWordGroupSublayersAtEnd()
-
 				layer.setNeedsLayout()
 			}
 		}
@@ -150,15 +144,31 @@ class EditorContentView: UIView {
 
 		return super.resignFirstResponder()
 	}
+
+	override func layoutSubviews() {
+		inputDelegate?.textWillChange(self)
+
+		removeSublayersOutsideVisibleRect()
+		addMissingWordGroupSublayersAtBegin()
+		addMissingWordGroupSublayersAtEnd()
+
+		super.layoutSubviews()
+
+		inputDelegate?.textDidChange(self)
+	}
 	
 	required init?(coder: NSCoder) {
 		fatalError("init(coder:) has not been implemented")
 	}
-	
-	private func removeSublayersOutsideVisibleRect() {
+
+	private func removeSublayers(filter: (EditorAtomicWordGroupLayer) -> Bool = { _ in true }) {
 		if let sublayers = layer.sublayers {
-			sublayers.filter { $0 is EditorAtomicWordGroupLayer && !$0.frame.intersects(visibleRect) } .forEach { $0.removeFromSuperlayer() }
+			sublayers.filter { $0 is EditorAtomicWordGroupLayer && filter($0 as! EditorAtomicWordGroupLayer) } .forEach { $0.removeFromSuperlayer() }
 		}
+	}
+
+	private func removeSublayersOutsideVisibleRect() {
+		removeSublayers { !$0.frame.intersects(visibleRect) }
 	}
 
 	private enum OriginReferencePoint {
@@ -240,7 +250,7 @@ class EditorContentView: UIView {
 				(offset, origin) = estimatedWordOffset(for: visibleRect.origin)
 			}
 
-			if offset <= dataSource!.totalWordCount, origin.y < visibleRect.maxY {
+			if offset < dataSource!.totalWordCount, origin.y < visibleRect.maxY {
 				layoutLine(offset: offset, origin: origin, reference: .topLeft)
 			} else {
 				break
@@ -342,7 +352,15 @@ extension EditorContentView: UIKeyInput {
 	}
 
 	func insertText(_ text: String) {
-		print(text)
+		guard let selection = selection, dataSource != nil else {
+			return
+		}
+
+		dataSource?.insert(text, at: selection.lowerBound)
+		self.selection = (selection.startIndex + 1)..<(selection.endIndex + 1)
+
+		removeSublayers()
+		setNeedsLayout()
 	}
 
 	func deleteBackward() {
@@ -352,6 +370,15 @@ extension EditorContentView: UIKeyInput {
 	var isSecureTextEntry: Bool {
 		get {
 			false
+		}
+		set {
+
+		}
+	}
+
+	var autocorrectionType: UITextAutocorrectionType {
+		get {
+			.no
 		}
 		set {
 

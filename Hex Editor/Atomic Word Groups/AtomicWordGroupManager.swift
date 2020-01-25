@@ -23,7 +23,7 @@ struct AtomicWordGroupManager<T: AtomicWordGroup> {
 	}
 }
 
-extension AtomicWordGroupManager: EditorDataSource {
+/*extension AtomicWordGroupManager: EditorDataSource {
 	var totalWordCount: Int {
 		return 1000
 	}
@@ -33,4 +33,4 @@ extension AtomicWordGroupManager: EditorDataSource {
 		//let data = groups[wordIndex]!
 		//return (text: data.value, range: data.range)
 	}
-}
+}*/

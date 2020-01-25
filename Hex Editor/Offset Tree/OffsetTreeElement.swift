@@ -6,8 +6,11 @@
 //  Copyright © 2019 Philip Kronawetter. All rights reserved.
 //
 
+import Foundation
+
 protocol OffsetTreeElement {
-	associatedtype Value
+	//associatedtype Value
+	typealias Value = Data
 
 	var size: Int { get }
 	func value(for range: Range<Int>) -> Value? // range relative to offset of node

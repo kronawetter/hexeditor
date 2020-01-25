@@ -9,7 +9,7 @@
 import Foundation
 
 struct File {
-	struct Segment: OffsetTreeElement {
+	struct FileSegment: OffsetTreeElement {
 		typealias Value = Data
 
 		let fileHandle: FileHandle
@@ -20,7 +20,7 @@ struct File {
 		}
 
 		func value(for range: Range<Int>) -> Value? { // range relative to rangeInFile.startIndex (kinda)
-			precondition(range.endIndex < rangeInFile.count)
+			precondition(range.endIndex <= rangeInFile.count)
 			let offset = UInt64(rangeInFile.startIndex + range.startIndex)
 
 			do {
@@ -32,7 +32,7 @@ struct File {
 			return fileHandle.readData(ofLength: range.count)
 		}
 
-		mutating func replace(in range: Range<Int>, with value: Value) -> Bool {
+		func replace(in range: Range<Int>, with value: Value) -> Bool {
 			false
 		}
 
@@ -43,13 +43,37 @@ struct File {
 			let rangeInFileOfSecondSegment = (rangeInFile.startIndex + offset)..<rangeInFile.endIndex
 
 			rangeInFile = rangeInFileOfFirstSegment
-			return Segment(fileHandle: fileHandle, rangeInFile:rangeInFileOfSecondSegment)
+			return Self(fileHandle: fileHandle, rangeInFile:rangeInFileOfSecondSegment)
+		}
+	}
+
+	struct ChangeSegment: OffsetTreeElement {
+		typealias Value = Data
+		var data = Data()
+
+		var size: Int {
+			data.count
+		}
+
+		func value(for range: Range<Int>) -> Self.Value? {
+			data
+		}
+
+		mutating func replace(in range: Range<Int>, with value: Self.Value) -> Bool {
+			data.replaceSubrange(range, with: value)
+			return true
+		}
+
+		mutating func split(at offset: Int) -> File.ChangeSegment {
+			let new = data.dropFirst(offset)
+			data.removeLast(data.count - offset)
+			return Self(data: new)
 		}
 	}
 
 	let url: URL
 	var size: Int
-	var contents = OffsetTree<Segment>()
+	var contents = OffsetTree/*<Data>*/()
 	let fileHandle: FileHandle
 
 	init(url: URL) throws {
@@ -58,7 +82,7 @@ struct File {
 		size = (try url.resourceValues(forKeys: [.fileSizeKey])).fileSize!
 		fileHandle = try FileHandle(forUpdating: url)
 
-		let segment = Segment(fileHandle: fileHandle, rangeInFile: 0..<size)
+		let segment = FileSegment(fileHandle: fileHandle, rangeInFile: 0..<size)
 		contents.insert(segment, offset: 0)
 	}
 }
@@ -70,5 +94,14 @@ extension File: EditorDataSource {
 
 	func atomicWordGroup(at wordIndex: Int) -> EditorDataSource.AtomicWordGroup {
 		return (text: String(format: "%02X", contents[wordIndex]!.first!), range: wordIndex..<(wordIndex + 1))
+	}
+
+	mutating func insert(_ text: String, at wordIndex: Int) {
+		let data = Data(text.utf8)
+
+		let element = ChangeSegment(data: data)
+		contents.insert(element, offset: wordIndex)
+
+		size += data.count
 	}
 }
