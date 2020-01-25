@@ -45,6 +45,8 @@ class DocumentViewController: UIViewController {
 
 	private var editorView = EditorView()
 
+	private var keyboardObservers: [Any] = []
+
 	// MARK: View Lifecycle
 
 	override func loadView() {
@@ -60,9 +62,33 @@ class DocumentViewController: UIViewController {
 		navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Files", style: .plain, target: self, action: #selector(close))
 	}
 
+	override func viewWillAppear(_ animated: Bool) {
+		super.viewWillAppear(animated)
+
+		keyboardObservers = [NotificationCenter.default.addObserver(self, selector: #selector(keyboardChange(_:)), name: UIResponder.keyboardWillShowNotification, object: nil), NotificationCenter.default.addObserver(self, selector: #selector(keyboardChange(_:)), name: UIResponder.keyboardWillChangeFrameNotification, object: nil), NotificationCenter.default.addObserver(self, selector: #selector(keyboardChange(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)]
+	}
+
+	override func viewDidDisappear(_ animated: Bool) {
+		super.viewDidDisappear(animated)
+
+		keyboardObservers.forEach { NotificationCenter.default.removeObserver($0) }
+		keyboardObservers = []
+	}
+
 	// MARK: Button Actions
 
 	@objc func close() {
 		dismiss(animated: true, completion: nil)
+	}
+
+	// MARK: Keyboard Events
+
+	@objc private func keyboardChange(_ notication: Notification) {
+		guard let keyboardFrame = (notication.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue else {
+			return
+		}
+
+		editorView.contentInset.bottom = keyboardFrame.height
+		editorView.verticalScrollIndicatorInsets.bottom = keyboardFrame.height
 	}
 }
