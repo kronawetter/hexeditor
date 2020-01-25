@@ -8,10 +8,10 @@
 
 import UIKit
 
-struct Test: Sizeable {
+/*struct Test: Sizeable {
 	let value: Int
 	let size: Int
-}
+}*/
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {

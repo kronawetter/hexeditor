@@ -6,7 +6,7 @@
 //  Copyright © 2019 Philip Kronawetter. All rights reserved.
 //
 
-protocol AtomicWordGroup: Sizeable {
+protocol AtomicWordGroup {
 	associatedtype DataSource: FileAccessor
 	typealias Index = DataSource.Index
 

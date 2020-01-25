@@ -24,11 +24,11 @@ class DocumentViewController: UIViewController {
 				file = try! File(url: documentURL)
 				navigationItem.title = documentURL.lastPathComponent
 
-				atomicWordGroupManager = AtomicWordGroupManager<UnicodeAtomicWordGroup<UTF8, ByteOrder.BigEndian, OffsetTree<DataOffsetTreeElementStorage>>>(dataSource: file!.data)
-				atomicWordGroupManager!.create(for: 0..<file!.size)
+				//atomicWordGroupManager = AtomicWordGroupManager<UnicodeAtomicWordGroup<UTF8, ByteOrder.BigEndian, OffsetTree<DataOffsetTreeElementStorage>>>(dataSource: file!.data)
+				//atomicWordGroupManager!.create(for: 0..<1000)//file!.size)
 
 				editorView.hexDataSource = file
-				editorView.textDataSource = atomicWordGroupManager
+				editorView.textDataSource = file//atomicWordGroupManager
 			}
 		}
 	}
@@ -41,7 +41,7 @@ class DocumentViewController: UIViewController {
 
 	private var file: File?
 
-	private var atomicWordGroupManager: AtomicWordGroupManager<UnicodeAtomicWordGroup<UTF8, ByteOrder.BigEndian, OffsetTree<DataOffsetTreeElementStorage>>>?
+	//private var atomicWordGroupManager: AtomicWordGroupManager<UnicodeAtomicWordGroup<UTF8, ByteOrder.BigEndian, OffsetTree<DataOffsetTreeElementStorage>>>?
 
 	private var editorView = EditorView()
 

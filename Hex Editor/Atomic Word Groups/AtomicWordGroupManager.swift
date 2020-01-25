@@ -8,10 +8,10 @@
 
 struct AtomicWordGroupManager<T: AtomicWordGroup> {
 	let dataSource: T.DataSource
-	var groups = OffsetTree<LinearOffsetTreeElementStorage<T>>()
+	//var groups = OffsetTree<LinearOffsetTreeElementStorage<T>>()
 	
 	mutating func insert(_ group: T) {
-		groups.insert(group, offset: group.range.startIndex) // TODO: No need to save full range
+		//groups.insert(group, offset: group.range.startIndex) // TODO: No need to save full range
 	}
 	
 	mutating func create(for rangeOfInterest: Range<T.Index>) {
@@ -29,7 +29,8 @@ extension AtomicWordGroupManager: EditorDataSource {
 	}
 
 	func atomicWordGroup(at wordIndex: Int) -> EditorDataSource.AtomicWordGroup {
-		let data = groups[wordIndex]!
-		return (text: data.value, range: data.range)
+		return (text: "\(wordIndex)", range: wordIndex..<wordIndex + 1)
+		//let data = groups[wordIndex]!
+		//return (text: data.value, range: data.range)
 	}
 }
