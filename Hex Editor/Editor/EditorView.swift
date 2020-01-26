@@ -96,6 +96,8 @@ class EditorView: UIScrollView {
 		contentSize = CGSize(width: max(bounds.width, totalContentWidth), height: contentViews.map { $0.frame.height }.max() ?? .zero)
 
 		super.layoutSubviews()
+
+		// TODO: align lines
 	}
 
 	required init?(coder: NSCoder) {

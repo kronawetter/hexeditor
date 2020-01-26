@@ -65,21 +65,31 @@ extension OffsetTree {
 				let secondExistingElement = firstExistingElement.split(at: offsetInElement)
 
 				let newPair = Pair(offset: offset, element: element)
+				var index = index
 
 				if firstExistingElement.size > 0 {
 					let firstExistingPair = Pair(offset: baseOffset, element: firstExistingElement)
 					pairs[index] = firstExistingPair
-					pairs.insert(newPair, at: index + 1)
+					index += 1
+
+					pairs.insert(newPair, at: index)
+					index += 1
 				} else {
 					pairs[index] = newPair
+					index += 1
 				}
 
 				if secondExistingElement.size > 0 {
 					let secondExistingPair = Pair(offset: newPair.range.endIndex, element: secondExistingElement)
-					pairs.insert(secondExistingPair, at: index + (firstExistingElement.size > 0 ? 2 : 1))
+					pairs.insert(secondExistingPair, at: index)
+					index += 1
 				}
 
-				// TODO: Current implementation requries that range of other pairs (also of nodes?) are updated. Check whether this can be avoided or implement updating of ranges
+				// TODO: Clean up updating range of subsequent pairs (including their nodes)
+				for index2 in index..<pairs.endIndex {
+					pairs[index2].range = pairs[index2].range + newPair.range.count
+					pairs[index2].child?.baseOffset += newPair.range.count
+				}
 
 				if isExceedingMaximumPairCount {
 					return split()
@@ -90,6 +100,12 @@ extension OffsetTree {
 			case .new(before: let index):
 				let newPair = Pair(offset: offset, element: element)
 				pairs.insert(newPair, at: index)
+
+				// TODO: Clean up updating range of subsequent pairs (including their nodes)
+				for index2 in (index + 1)..<pairs.endIndex {
+					pairs[index2].range = pairs[index2].range + newPair.range.count
+					pairs[index2].child?.baseOffset += newPair.range.count
+				}
 				
 				if isExceedingMaximumPairCount {
 					return split()

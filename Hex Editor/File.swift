@@ -56,7 +56,7 @@ struct File {
 		}
 
 		func value(for range: Range<Int>) -> Self.Value? {
-			data
+			data[range]
 		}
 
 		mutating func replace(in range: Range<Int>, with value: Self.Value) -> Bool {
@@ -96,12 +96,14 @@ extension File: EditorDataSource {
 		return (text: String(format: "%02X", contents[wordIndex]!.first!), range: wordIndex..<(wordIndex + 1))
 	}
 
-	mutating func insert(_ text: String, at wordIndex: Int) {
+	mutating func insert(_ text: String, at wordIndex: Int) -> Int {
 		let data = Data(text.utf8)
 
 		let element = ChangeSegment(data: data)
 		contents.insert(element, offset: wordIndex)
 
 		size += data.count
+
+		return data.count
 	}
 }

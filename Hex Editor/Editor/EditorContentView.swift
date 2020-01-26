@@ -356,8 +356,8 @@ extension EditorContentView: UIKeyInput {
 			return
 		}
 
-		dataSource?.insert(text, at: selection.lowerBound)
-		self.selection = (selection.startIndex + 1)..<(selection.endIndex + 1)
+		let insertedWordGroups = dataSource!.insert(text, at: selection.lowerBound)
+		self.selection = (selection.startIndex + insertedWordGroups)..<(selection.endIndex + insertedWordGroups)
 
 		removeSublayers()
 		setNeedsLayout()
