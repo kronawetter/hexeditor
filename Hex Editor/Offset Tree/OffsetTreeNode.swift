@@ -56,47 +56,10 @@ extension OffsetTree {
 		
 		// Returns pair to insert in parent node after splitting
 		func insert(_ element: OffsetTreeElement, offset: Int) -> Pair? {
-			switch index(for: offset, reading: true) { // TODO: Check what reading paramater does
-			case .existing(at: let index):
-				let baseOffset = pairs[index].range.startIndex
-				let offsetInElement = offset - baseOffset
+			switch index(for: offset, includeStartIndex: false, includeEndIndex: false) {
+			case .existing(at: _):
+				preconditionFailure()
 
-				var firstExistingElement = pairs[index].element
-				let secondExistingElement = firstExistingElement.split(at: offsetInElement)
-
-				let newPair = Pair(offset: offset, element: element)
-				var index = index
-
-				if firstExistingElement.size > 0 {
-					let firstExistingPair = Pair(offset: baseOffset, element: firstExistingElement)
-					pairs[index] = firstExistingPair
-					index += 1
-
-					pairs.insert(newPair, at: index)
-					index += 1
-				} else {
-					pairs[index] = newPair
-					index += 1
-				}
-
-				if secondExistingElement.size > 0 {
-					let secondExistingPair = Pair(offset: newPair.range.endIndex, element: secondExistingElement)
-					pairs.insert(secondExistingPair, at: index)
-					index += 1
-				}
-
-				// TODO: Clean up updating range of subsequent pairs (including their nodes)
-				for index2 in index..<pairs.endIndex {
-					pairs[index2].range = pairs[index2].range + newPair.range.count
-					pairs[index2].child?.baseOffset += newPair.range.count
-				}
-
-				if isExceedingMaximumPairCount {
-					return split()
-				} else {
-					return nil
-				}
-			
 			case .new(before: let index):
 				let newPair = Pair(offset: offset, element: element)
 				pairs.insert(newPair, at: index)
@@ -106,37 +69,92 @@ extension OffsetTree {
 					pairs[index2].range = pairs[index2].range + newPair.range.count
 					pairs[index2].child?.baseOffset += newPair.range.count
 				}
-				
+
 				if isExceedingMaximumPairCount {
-					return split()
+					return splitPair()
 				} else {
 					return nil
 				}
-			
+
 			case .descend(to: let index):
 				let (child, baseOffset) = index >= 0 ? pairs[index].child! : firstChild!
 				let newOffset = offset - baseOffset
 
-				if var splitResult = child.insert(element, offset: newOffset) {
-					// TODO: This should be done as part of split()
-					splitResult.range = splitResult.range + baseOffset
-					splitResult.child?.baseOffset += baseOffset
-
-					let index = pairs.enumerated().filter { $1.range.startIndex > offset }.first?.offset ?? pairs.endIndex // TOOD: Perform binary search
-					pairs.insert(splitResult, at: index)
-					
-					isLeaf = !(firstChild != nil || pairs.first(where: { $0.child != nil }) != nil)
-				}
+				let descendIndex = index
 				
+				if var pairSplittingResult = child.insert(element, offset: newOffset) {
+					// TODO: This should be done as part of splitPair()
+					pairSplittingResult.range = pairSplittingResult.range + baseOffset
+					pairSplittingResult.child?.baseOffset += baseOffset
+
+					let index = pairs.enumerated().filter { ($1.range.startIndex + element.size) > offset }.first?.offset ?? pairs.endIndex // TOOD: Perform binary search
+					pairs.insert(pairSplittingResult, at: index)
+
+					// TODO: Is search necessary or is inseration index always descendIndex + 1?
+					//assert(index == descendIndex + 1)
+
+					isLeaf = !(firstChild != nil || pairs.first(where: { $0.child != nil }) != nil)
+
+					// TODO: Clean up updating range of subsequent pairs (including their nodes)
+					for index2 in (index + 1)..<pairs.endIndex {
+						pairs[index2].range = pairs[index2].range + element.size
+						pairs[index2].child?.baseOffset += element.size
+					}
+				} else {
+					// TODO: Clean up updating range of subsequent pairs (including their nodes)
+					for index2 in (index + 1)..<pairs.endIndex {
+						pairs[index2].range = pairs[index2].range + element.size
+						pairs[index2].child?.baseOffset += element.size
+					}
+				}
+
 				if isExceedingMaximumPairCount {
-					return split()
+					return splitPair()
 				} else {
 					return nil
 				}
 			}
 		}
-				
-		func split() -> Pair {
+
+		func split(at offset: Int) -> (newElement: OffsetTreeElement?, pairSplittingResult: Pair?) {
+			switch index(for: offset, includeStartIndex: false, includeEndIndex: false) {
+			case .existing(at: let index):
+				let baseOffset = pairs[index].range.startIndex
+				let offsetInElement = offset - baseOffset
+
+				//if offset != pairs[index].range.startIndex && offset != pairs[index].range.endIndex {
+					pairs[index].range = baseOffset..<offset
+					let newElement = pairs[index].element.split(at: offsetInElement)
+					return (newElement: newElement, pairSplittingResult: (isExceedingMaximumPairCount ? splitPair() : nil))
+				//} else {
+				//	return (newElement: nil, pairSplittingResult: nil)
+				//}
+
+			case .new(before: _):
+				return (newElement: nil, pairSplittingResult: nil)
+
+			case .descend(to: let index):
+				let (child, baseOffset) = index >= 0 ? pairs[index].child! : firstChild!
+				let newOffset = offset - baseOffset
+
+				let (newElement, pairSplittingResult) = child.split(at: newOffset)
+
+				if var pairSplittingResult = pairSplittingResult {
+					// TODO: This should be done as part of splitPair()
+					pairSplittingResult.range = pairSplittingResult.range + baseOffset
+					pairSplittingResult.child?.baseOffset += baseOffset
+
+					let index = pairs.enumerated().filter { $1.range.startIndex > offset }.first?.offset ?? pairs.endIndex // TOOD: Perform binary search
+					pairs.insert(pairSplittingResult, at: index)
+
+					isLeaf = !(firstChild != nil || pairs.first(where: { $0.child != nil }) != nil)
+				}
+
+				return (newElement: newElement, pairSplittingResult: (isExceedingMaximumPairCount ? splitPair() : nil))
+			}
+		}
+
+		func splitPair() -> Pair {
 			let indexOfSeparatingPair = pairs.count / 2
 			let separatingPair = pairs[indexOfSeparatingPair]
 			let baseOffsetOfSeparatingPair = separatingPair.range.lowerBound
@@ -160,11 +178,11 @@ extension OffsetTree {
 		}
 				
 		var isExceedingMaximumPairCount: Bool {
-			return pairs.count > 1020
+			return pairs.count > 3//1020
 		}
 
 		func find(offset: Int) -> (node: Node, element: OffsetTreeElement, offset: Int)? {
-			switch index(for: offset, reading: true) {
+			switch index(for: offset, includeStartIndex: true, includeEndIndex: false) {
 			case .descend(to: let index):
 				let (child, baseOffset) = index >= 0 ? pairs[index].child! : firstChild!
 				let newOffset = offset - baseOffset
@@ -172,7 +190,7 @@ extension OffsetTree {
 				return child.find(offset: newOffset)
 
 			case .new(before: _):
-				return nil
+				preconditionFailure()
 
 			case .existing(at: let index):
 				let baseOffset = pairs[index].range.startIndex
@@ -187,8 +205,8 @@ extension OffsetTree {
 			case new(before: Int)
 			case descend(to: Int)
 		}
-		
-		func index(for offset: Int, reading: Bool = false) -> IndexResult {
+
+		func index(for offset: Int, includeStartIndex: Bool, includeEndIndex: Bool) -> IndexResult {
 			var leftBound = pairs.startIndex
 			var rightBound = pairs.endIndex - 1
 			
@@ -198,8 +216,10 @@ extension OffsetTree {
 				let nextIndex = pairs.index(after: index)
 				let nextPair = nextIndex < pairs.endIndex ? pairs[nextIndex] : nil
 
-				if offset >= currentPair.range.startIndex {
-					if (reading && offset < currentPair.range.endIndex) || (!reading && offset <= currentPair.range.endIndex) {
+				if offset > currentPair.range.startIndex || (includeStartIndex && offset == currentPair.range.startIndex) {
+					if offset < currentPair.range.endIndex {
+						return .existing(at: index)
+					} else if includeEndIndex && offset == currentPair.range.endIndex {
 						return .existing(at: index)
 					} else if let nextPair = nextPair {
 						if offset < nextPair.range.startIndex {
@@ -210,13 +230,19 @@ extension OffsetTree {
 							}
 						} else {
 						   leftBound = pairs.index(after: index)
-					   }
+						}
 					} else {
 						if isLeaf {
-							return .new(before: pairs.index(after: index))
+							return .new(before: nextIndex)
 						} else {
 							return .descend(to: index)
 						}
+					}
+				} else if !includeStartIndex && offset == currentPair.range.startIndex {
+					if isLeaf {
+						return .new(before: index)
+					} else {
+						return .descend(to: index - 1)
 					}
 				} else {
 					rightBound = pairs.index(before: index)

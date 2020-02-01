@@ -13,14 +13,34 @@ struct OffsetTree {
 
 	mutating func insert(_ element: OffsetTreeElement, offset: Int) {
 		if let root = root {
-			if let splitResult = root.insert(element, offset: offset) {
-				let newRoot = Node(pairs: [splitResult])
+			if let pairSplittingResult = root.insert(element, offset: offset) {
+				let newRoot = Node(pairs: [pairSplittingResult])
 				newRoot.firstChild = (node: root, baseOffset: 0)
+				newRoot.isLeaf = false
 				self.root = newRoot
 			}
 		} else {
 			let range = offset..<(offset + element.size)
 			root = Node(initialElement: element, range: range)
+		}
+	}
+
+	mutating func split(at offset: Int) {
+		guard let root = root else {
+			return
+		}
+
+		let (newElement, pairSplittingResult) = root.split(at: offset)
+
+		if let pairSplittingResult = pairSplittingResult {
+			let newRoot = Node(pairs: [pairSplittingResult])
+			newRoot.firstChild = (node: root, baseOffset: 0)
+			newRoot.isLeaf = false
+			self.root = newRoot
+		}
+
+		if let newElement = newElement {
+			insert(newElement, offset: offset)
 		}
 	}
 

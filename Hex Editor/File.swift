@@ -99,6 +99,7 @@ extension File: EditorDataSource {
 	mutating func insert(_ text: String, at wordIndex: Int) -> Int {
 		let data = Data(text.utf8)
 
+		contents.split(at: wordIndex)
 		let element = ChangeSegment(data: data)
 		contents.insert(element, offset: wordIndex)
 
