@@ -80,18 +80,14 @@ extension OffsetTree {
 				let (child, baseOffset) = index >= 0 ? pairs[index].child! : firstChild!
 				let newOffset = offset - baseOffset
 
-				let descendIndex = index
-				
 				if var pairSplittingResult = child.insert(element, offset: newOffset) {
 					// TODO: This should be done as part of splitPair()
 					pairSplittingResult.range = pairSplittingResult.range + baseOffset
 					pairSplittingResult.child?.baseOffset += baseOffset
-
-					let index = pairs.enumerated().filter { ($1.range.startIndex + element.size) > offset }.first?.offset ?? pairs.endIndex // TOOD: Perform binary search
+					
+					//let index = pairs.enumerated().filter { ($1.range.startIndex + element.size) > offset }.first?.offset ?? pairs.endIndex // TOOD: Perform binary search
+					let index = pairs.enumerated().filter { $1.range.startIndex > pairSplittingResult.range.startIndex }.first?.offset ?? pairs.endIndex // TOOD: Perform binary search
 					pairs.insert(pairSplittingResult, at: index)
-
-					// TODO: Is search necessary or is inseration index always descendIndex + 1?
-					//assert(index == descendIndex + 1)
 
 					isLeaf = !(firstChild != nil || pairs.first(where: { $0.child != nil }) != nil)
 
@@ -116,41 +112,45 @@ extension OffsetTree {
 			}
 		}
 
-		func split(at offset: Int) -> (newElement: OffsetTreeElement?, pairSplittingResult: Pair?) {
+		func split(at offset: Int) -> OffsetTreeElement? {
 			switch index(for: offset, includeStartIndex: false, includeEndIndex: false) {
 			case .existing(at: let index):
 				let baseOffset = pairs[index].range.startIndex
 				let offsetInElement = offset - baseOffset
 
-				//if offset != pairs[index].range.startIndex && offset != pairs[index].range.endIndex {
-					pairs[index].range = baseOffset..<offset
-					let newElement = pairs[index].element.split(at: offsetInElement)
-					return (newElement: newElement, pairSplittingResult: (isExceedingMaximumPairCount ? splitPair() : nil))
-				//} else {
-				//	return (newElement: nil, pairSplittingResult: nil)
-				//}
+				pairs[index].range = baseOffset..<offset
+				let newElement = pairs[index].element.split(at: offsetInElement)
+				pairs[index].child?.baseOffset -= newElement.size
+
+				// TODO: Clean up updating range of subsequent pairs (including their nodes)
+				for index2 in (index + 1)..<pairs.endIndex {
+					pairs[index2].range = pairs[index2].range - newElement.size
+					pairs[index2].child?.baseOffset -= newElement.size
+				}
+
+				return newElement
 
 			case .new(before: _):
-				return (newElement: nil, pairSplittingResult: nil)
+				return nil
 
 			case .descend(to: let index):
 				let (child, baseOffset) = index >= 0 ? pairs[index].child! : firstChild!
 				let newOffset = offset - baseOffset
 
-				let (newElement, pairSplittingResult) = child.split(at: newOffset)
+				let newElement = child.split(at: newOffset)
 
-				if var pairSplittingResult = pairSplittingResult {
-					// TODO: This should be done as part of splitPair()
-					pairSplittingResult.range = pairSplittingResult.range + baseOffset
-					pairSplittingResult.child?.baseOffset += baseOffset
-
-					let index = pairs.enumerated().filter { $1.range.startIndex > offset }.first?.offset ?? pairs.endIndex // TOOD: Perform binary search
-					pairs.insert(pairSplittingResult, at: index)
-
-					isLeaf = !(firstChild != nil || pairs.first(where: { $0.child != nil }) != nil)
+				if let newElement = newElement {
+					// TODO: Is this also necessary here?
+					// pairs[index].child?.baseOffset -= newElement.size
+					
+					// TODO: Clean up updating range of subsequent pairs (including their nodes)
+					for index2 in (index + 1)..<pairs.endIndex {
+						pairs[index2].range = pairs[index2].range - newElement.size
+						pairs[index2].child?.baseOffset -= newElement.size
+					}
 				}
 
-				return (newElement: newElement, pairSplittingResult: (isExceedingMaximumPairCount ? splitPair() : nil))
+				return newElement
 			}
 		}
 

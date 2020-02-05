@@ -6,12 +6,12 @@
 //  Copyright © 2019 Philip Kronawetter. All rights reserved.
 //
 
-struct OffsetTree {
+/*struct*/ class OffsetTree {
 	typealias Index = Int
 	
 	var root: Node? = nil
 
-	mutating func insert(_ element: OffsetTreeElement, offset: Int) {
+	/*mutating*/ func insert(_ element: OffsetTreeElement, offset: Int) {
 		if let root = root {
 			if let pairSplittingResult = root.insert(element, offset: offset) {
 				let newRoot = Node(pairs: [pairSplittingResult])
@@ -23,28 +23,31 @@ struct OffsetTree {
 			let range = offset..<(offset + element.size)
 			root = Node(initialElement: element, range: range)
 		}
+
+		withUnsafePointer(to: root) {
+			print("Insert at offset \(offset): \($0)")
+		}
 	}
 
-	mutating func split(at offset: Int) {
+	/*mutating*/ func split(at offset: Int) {
 		guard let root = root else {
 			return
 		}
 
-		let (newElement, pairSplittingResult) = root.split(at: offset)
-
-		if let pairSplittingResult = pairSplittingResult {
-			let newRoot = Node(pairs: [pairSplittingResult])
-			newRoot.firstChild = (node: root, baseOffset: 0)
-			newRoot.isLeaf = false
-			self.root = newRoot
+		if let newElement = root.split(at: offset) {
+			insert(newElement, offset: offset)
 		}
 
-		if let newElement = newElement {
-			insert(newElement, offset: offset)
+		withUnsafePointer(to: root) {
+			print("Split at offset \(offset): \($0)")
 		}
 	}
 
 	func find(offset: Int) -> (node: Node, element: OffsetTreeElement, offset: Int)? {
+		withUnsafePointer(to: root) {
+			print("Find at offset \(offset): \($0)")
+		}
+
 		guard let root = root else {
 			return nil
 		}
@@ -60,7 +63,7 @@ struct OffsetTree {
 		return element.value(for: index..<(index + 1))
 	}
 
-	mutating func clear() {
+	/*mutating*/ func clear() {
 		root = nil
 	}
 }

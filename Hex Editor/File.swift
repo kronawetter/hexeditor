@@ -56,7 +56,7 @@ struct File {
 		}
 
 		func value(for range: Range<Int>) -> Self.Value? {
-			data[range]
+			return data[range]
 		}
 
 		mutating func replace(in range: Range<Int>, with value: Self.Value) -> Bool {
@@ -67,7 +67,7 @@ struct File {
 		mutating func split(at offset: Int) -> File.ChangeSegment {
 			let new = data.dropFirst(offset)
 			data.removeLast(data.count - offset)
-			return Self(data: new)
+			return Self(data: Data(new))
 		}
 	}
 
