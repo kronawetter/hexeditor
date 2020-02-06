@@ -23,10 +23,6 @@
 			let range = offset..<(offset + element.size)
 			root = Node(initialElement: element, range: range)
 		}
-
-		withUnsafePointer(to: root) {
-			print("Insert at offset \(offset): \($0)")
-		}
 	}
 
 	/*mutating*/ func split(at offset: Int) {
@@ -37,17 +33,9 @@
 		if let newElement = root.split(at: offset) {
 			insert(newElement, offset: offset)
 		}
-
-		withUnsafePointer(to: root) {
-			print("Split at offset \(offset): \($0)")
-		}
 	}
 
 	func find(offset: Int) -> (node: Node, element: OffsetTreeElement, offset: Int)? {
-		withUnsafePointer(to: root) {
-			print("Find at offset \(offset): \($0)")
-		}
-
 		guard let root = root else {
 			return nil
 		}

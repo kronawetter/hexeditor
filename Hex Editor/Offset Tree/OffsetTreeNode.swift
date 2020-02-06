@@ -84,18 +84,16 @@ extension OffsetTree {
 					// TODO: This should be done as part of splitPair()
 					pairSplittingResult.range = pairSplittingResult.range + baseOffset
 					pairSplittingResult.child?.baseOffset += baseOffset
-					
-					//let index = pairs.enumerated().filter { ($1.range.startIndex + element.size) > offset }.first?.offset ?? pairs.endIndex // TOOD: Perform binary search
-					let index = pairs.enumerated().filter { $1.range.startIndex > pairSplittingResult.range.startIndex }.first?.offset ?? pairs.endIndex // TOOD: Perform binary search
-					pairs.insert(pairSplittingResult, at: index)
 
-					isLeaf = !(firstChild != nil || pairs.first(where: { $0.child != nil }) != nil)
-
-					// TODO: Clean up updating range of subsequent pairs (including their nodes)
 					for index2 in (index + 1)..<pairs.endIndex {
 						pairs[index2].range = pairs[index2].range + element.size
 						pairs[index2].child?.baseOffset += element.size
 					}
+
+					let pairSplittingResultIndex = pairs.enumerated().filter { $1.range.startIndex > pairSplittingResult.range.startIndex }.first?.offset ?? pairs.endIndex // TOOD: Perform binary search
+					pairs.insert(pairSplittingResult, at: pairSplittingResultIndex)
+
+					isLeaf = !(firstChild != nil || pairs.first(where: { $0.child != nil }) != nil)
 				} else {
 					// TODO: Clean up updating range of subsequent pairs (including their nodes)
 					for index2 in (index + 1)..<pairs.endIndex {
@@ -142,7 +140,7 @@ extension OffsetTree {
 				if let newElement = newElement {
 					// TODO: Is this also necessary here?
 					// pairs[index].child?.baseOffset -= newElement.size
-					
+
 					// TODO: Clean up updating range of subsequent pairs (including their nodes)
 					for index2 in (index + 1)..<pairs.endIndex {
 						pairs[index2].range = pairs[index2].range - newElement.size
@@ -190,7 +188,7 @@ extension OffsetTree {
 				return child.find(offset: newOffset)
 
 			case .new(before: _):
-				preconditionFailure()
+				return nil//preconditionFailure()
 
 			case .existing(at: let index):
 				let baseOffset = pairs[index].range.startIndex
