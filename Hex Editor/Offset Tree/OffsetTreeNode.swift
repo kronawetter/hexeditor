@@ -90,7 +90,21 @@ extension OffsetTree {
 						pairs[index2].child?.baseOffset += element.size
 					}
 
-					let pairSplittingResultIndex = pairs.enumerated().filter { $1.range.startIndex > pairSplittingResult.range.startIndex }.first?.offset ?? pairs.endIndex // TOOD: Perform binary search
+					var leftBound = pairs.startIndex
+					var rightBound = pairs.endIndex
+
+					while leftBound < rightBound {
+						let index = (leftBound + rightBound) / 2
+						let pair = pairs[index]
+
+						if pair.range.startIndex > pairSplittingResult.range.startIndex {
+							rightBound = index
+						} else {
+							leftBound = pairs.index(after: index)
+						}
+					}
+					
+					let pairSplittingResultIndex = (leftBound + rightBound) / 2
 					pairs.insert(pairSplittingResult, at: pairSplittingResultIndex)
 
 					isLeaf = !(firstChild != nil || pairs.first(where: { $0.child != nil }) != nil)
