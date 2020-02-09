@@ -86,16 +86,16 @@ class DocumentViewController: UIViewController {
 		for _ in 0..<100 {
 			let offset = Int.random(in: 0..<(file!.size + 1))
 			_ = file?.insert("\(offset)", at: offset)
-			editorView.hexDataSource = file
 		}
+		editorView.hexDataSource = file
 	}
 
 	@objc func removeData() {
 		for _ in 0..<file!.size {
 			let offset = Int.random(in: 0..<file!.size)
 			_ = file?.remove(at: offset)
-			editorView.hexDataSource = file
 		}
+		editorView.hexDataSource = file
 	}
 
 	// MARK: Keyboard Events

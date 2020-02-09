@@ -36,7 +36,7 @@
 
 		if let root = root {
 			if !root.isLeaf {
-				print("Rebalancing of root")
+				//print("Rebalancing of root")
 				root.rebalance(index: -1)
 			}
 

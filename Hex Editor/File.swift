@@ -110,9 +110,9 @@ extension File: EditorDataSource {
 
 		size += data.count
 
-		for offset in 0..<size {
-			assert(contents.find(offset: offset) != nil)
-		}
+		/*for offset in 0..<size {
+			precondition(contents.find(offset: offset) != nil)
+		}*/
 
 		/*debugContents.split(at: wordIndex)
 		let debugElement = ChangeSegment(data: Data(data))
@@ -122,18 +122,30 @@ extension File: EditorDataSource {
 	}
 
 	mutating func remove(at wordIndex: Int) {
-		print("--- Remove at \(wordIndex) ---")
+		//print("--- Remove at \(wordIndex) ---")
 		contents.split(at: wordIndex)
 		contents.split(at: wordIndex + 1)
 		contents.remove(at: wordIndex)
 
 		size -= 1
 
-		for offset in 0..<size {
-			assert(contents.find(offset: offset) != nil)
+		/*var missing = false
+		if didRebalance {
+			for offset in 0..<size {
+				if contents.find(offset: offset) == nil {
+					missing = true
+					print("Missing at \(offset)")
+				}
+				//precondition(contents.find(offset: offset) != nil)
+			}
+			didRebalance = false
 		}
 
-		/*debugContents.split(at: wordIndex)
+		if missing {
+			raise(SIGINT)
+		}
+
+		debugContents.split(at: wordIndex)
 		debugContents.split(at: wordIndex + 1)
 		debugContents.remove(at: wordIndex)*/
 	}

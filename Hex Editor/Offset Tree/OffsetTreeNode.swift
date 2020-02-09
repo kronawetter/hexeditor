@@ -6,6 +6,8 @@
 //  Copyright © 2019 Philip Kronawetter. All rights reserved.
 //
 
+//var didRebalance = false
+
 extension Range where Bound: Numeric {
 	static func +(range: Range, offset: Bound) -> Range {
 		return Range(uncheckedBounds: (lower: range.lowerBound + offset, upper: range.upperBound + offset))
@@ -185,15 +187,15 @@ extension OffsetTree {
 					pairs.remove(at: index)
 
 					if pairs.isEmpty {
-						print("Removed leaf pair -> empty node")
+						//print("Removed leaf pair -> empty node")
 					} else {
-						print("Removed leaf pair -> non-empty node")
+						//print("Removed leaf pair -> non-empty node")
 					}
 				} else {
-					print("Finding right-most child for non-leaf pair removal")
+					//print("Finding right-most child for non-leaf pair removal")
 					let childContainingNewParentElement = index > 0 ? pairs[index - 1].child! : firstChild!
 					let newParentElement = childContainingNewParentElement.node.remove(at: offset - childContainingNewParentElement.baseOffset - 1)
-					print("Found right-most child for non-leaf pair removal")
+					//print("Found right-most child for non-leaf pair removal")
 
 					let newRange = (offset - newParentElement.size)..<offset
 
@@ -202,7 +204,7 @@ extension OffsetTree {
 					pairs[index].child = pairWithElementToRemove.child // can be removed
 					pairs[index].child?.baseOffset -= removedElement.size
 
-					print("Removed non-leaf pair")
+					//print("Removed non-leaf pair")
 
 					rebalance(index: index - 1)
 				}
@@ -213,7 +215,7 @@ extension OffsetTree {
 				let (child, baseOffset) = index >= 0 ? pairs[index].child! : firstChild!
 				let newOffset = offset - baseOffset
 
-				print("Descended")
+				//print("Descended")
 				let removedElement = child.remove(at: newOffset)
 
 				for index2 in (index + 1)..<pairs.endIndex {
@@ -230,6 +232,8 @@ extension OffsetTree {
 			let (child, baseOffset) = index >= 0 ? pairs[index].child! : firstChild!
 
 			if child.pairCountStatus == .insufficent {
+				//didRebalance = true
+
 				let leftSibbling: Child?
 				if index == 0 {
 					leftSibbling = firstChild!
@@ -260,7 +264,7 @@ extension OffsetTree {
 					rightSibbling.node.pairs.removeFirst()
 					rightSibbling.node.firstChild = childOfNewParentPair
 
-					print("Rotated left")
+					//print("Rotated left")
 				} else if let leftSibbling = leftSibbling, leftSibbling.node.pairCountStatus == .sufficient {
 					// Rotate right
 
@@ -269,8 +273,9 @@ extension OffsetTree {
 					let childOfNewParentPair = newParentPair.child
 
 					newParentPair.range = newParentPair.range + leftSibbling.baseOffset
-					newParentPair.child = (node: child, baseOffset: 0)
+					newParentPair.child = (node: child, baseOffset: baseOffset)
 
+					oldParentPair.range = oldParentPair.range - baseOffset
 					oldParentPair.child = child.firstChild
 					oldParentPair.child?.baseOffset += baseOffset
 
@@ -281,7 +286,7 @@ extension OffsetTree {
 					pairs[index] = newParentPair
 					leftSibbling.node.pairs.removeLast()
 
-					print("Rotated right")
+					//print("Rotated right")
 				} else {
 					// Merge
 
@@ -303,21 +308,25 @@ extension OffsetTree {
 					modifiedParentPair.child = parentPair.child!.node.firstChild
 					modifiedParentPair.child?.baseOffset += parentPair.child!.baseOffset - receivingChild.baseOffset
 
+					if let lastEndIndex = receivingChild.node.pairs.last?.range.endIndex {
+						assert(lastEndIndex == modifiedParentPair.range.startIndex)
+					}
 					receivingChild.node.pairs.append(modifiedParentPair)
 
 					for pair in parentPair.child!.node.pairs {
 						var pair = pair
 						pair.range = pair.range + parentPair.child!.baseOffset - receivingChild.baseOffset
 						pair.child?.baseOffset += parentPair.child!.baseOffset - receivingChild.baseOffset
+						assert(receivingChild.node.pairs.last!.range.endIndex == pair.range.startIndex)
 						receivingChild.node.pairs.append(pair)
 					}
 
 					pairs.remove(at: parentPairIndex)
 
-					print("Merged, node now has \(pairs.count) pair(s), receiving node now has \(receivingChild.node.pairs.count) pair(s)")
+					//print("Merged, node now has \(pairs.count) pair(s), receiving node now has \(receivingChild.node.pairs.count) pair(s)")
 				}
 			} else {
-				print("No rebalancing required")
+				//print("No rebalancing required")
 			}
 		}
 
@@ -344,7 +353,7 @@ extension OffsetTree {
 			return newPair
 		}
 
-		static let maximumPairCount = 3
+		static let maximumPairCount = 1000
 
 		enum PairCountStatus {
 			case insufficent
@@ -439,7 +448,7 @@ extension OffsetTree {
 				}
 			}
 			
-			precondition(offset < pairs.first!.range.startIndex)
+			assert(offset < pairs.first!.range.startIndex)
 			if isLeaf {
 				return .new(before: pairs.startIndex)
 			} else {
