@@ -60,6 +60,7 @@ class DocumentViewController: UIViewController {
 		editorView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
 
 		navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Files", style: .plain, target: self, action: #selector(close))
+		navigationItem.rightBarButtonItems = [UIBarButtonItem(title: "Remove Data", style: .plain, target: self, action: #selector(removeData)), UIBarButtonItem(title: "Insert Data", style: .plain, target: self, action: #selector(insertData))]
 	}
 
 	override func viewWillAppear(_ animated: Bool) {
@@ -79,6 +80,22 @@ class DocumentViewController: UIViewController {
 
 	@objc func close() {
 		dismiss(animated: true, completion: nil)
+	}
+
+	@objc func insertData() {
+		for _ in 0..<100 {
+			let offset = Int.random(in: 0..<(file!.size + 1))
+			_ = file?.insert("\(offset)", at: offset)
+			editorView.hexDataSource = file
+		}
+	}
+
+	@objc func removeData() {
+		for _ in 0..<file!.size {
+			let offset = Int.random(in: 0..<file!.size)
+			_ = file?.remove(at: offset)
+			editorView.hexDataSource = file
+		}
 	}
 
 	// MARK: Keyboard Events

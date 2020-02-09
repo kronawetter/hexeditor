@@ -34,9 +34,16 @@
 	/*mutating*/ func remove(at offset: Int) {
 		_ = root?.remove(at: offset)
 
-		if let root = root, root.pairs.isEmpty {
+		if let root = root {
+			if !root.isLeaf {
+				print("Rebalancing of root")
+				root.rebalance(index: -1)
+			}
+
 			// wrong -> only works when merged node is first child
-			self.root = root.firstChild?.node
+			if root.pairs.isEmpty {
+				self.root = root.firstChild?.node
+			}
 		}
 	}
 
