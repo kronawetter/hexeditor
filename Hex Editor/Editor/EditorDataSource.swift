@@ -12,4 +12,5 @@ protocol EditorDataSource {
 	var totalWordCount: Int { get }
 	func atomicWordGroup(at wordIndex: Int) -> AtomicWordGroup
 	mutating func insert(_ text: String, at wordIndex: Int) -> Int // returns number of inserted word groups
+	mutating func remove(at wordIndex: Int)
 }

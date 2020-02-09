@@ -75,7 +75,7 @@ struct File {
 	var size: Int
 	var contents = OffsetTree/*<Data>*/()
 	let fileHandle: FileHandle
-	//var debugContents = OffsetTree/*<Data>*/()
+	var debugContents = OffsetTree/*<Data>*/()
 
 	init(url: URL) throws {
 		self.url = url
@@ -86,8 +86,8 @@ struct File {
 		let segment = FileSegment(fileHandle: fileHandle, rangeInFile: 0..<size)
 		contents.insert(segment, offset: 0)
 
-		/*let debugSegment = FileSegment(fileHandle: fileHandle, rangeInFile: 0..<size)
-		debugContents.insert(debugSegment, offset: 0)*/
+		let debugSegment = FileSegment(fileHandle: fileHandle, rangeInFile: 0..<size)
+		debugContents.insert(debugSegment, offset: 0)
 	}
 }
 
@@ -121,5 +121,25 @@ extension File: EditorDataSource {
 		debugContents.insert(debugElement, offset: wordIndex)*/
 
 		return data.count
+	}
+
+	mutating func remove(at wordIndex: Int) {
+		contents.split(at: wordIndex)
+		contents.split(at: wordIndex + 1)
+		contents.remove(at: wordIndex)
+
+		size -= 1
+
+		var missingItem = false
+		for offset in 0..<size {
+			if contents.find(offset: offset) == nil {
+				print("Missing item at \(offset)")
+				missingItem = true
+			}
+		}
+
+		debugContents.split(at: wordIndex)
+		debugContents.split(at: wordIndex + 1)
+		debugContents.remove(at: wordIndex)
 	}
 }

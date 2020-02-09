@@ -364,7 +364,15 @@ extension EditorContentView: UIKeyInput {
 	}
 
 	func deleteBackward() {
+		guard let selection = selection, selection.startIndex > 0, dataSource != nil else {
+			return
+		}
 
+		dataSource!.remove(at: selection.startIndex - 1)
+		self.selection = (selection.startIndex - 1)..<(selection.startIndex - 1)
+
+		removeSublayers()
+		setNeedsLayout()
 	}
 
 	var isSecureTextEntry: Bool {

@@ -166,6 +166,189 @@ extension OffsetTree {
 			}
 		}
 
+		// Returns size of removed element
+		func remove(at offset: Int) -> Int {
+			switch index(for: offset, includeStartIndex: true, includeEndIndex: false) {
+			case .new(before: _):
+				preconditionFailure()
+
+			case .existing(at: let index):
+				let pairWithElementToRemove = pairs[index]
+				let sizeOfRemovedElement = pairWithElementToRemove.element.size
+
+				for index2 in (index + 1)..<pairs.endIndex {
+					pairs[index2].range = pairs[index2].range - sizeOfRemovedElement
+					pairs[index2].child?.baseOffset -= sizeOfRemovedElement
+				}
+
+				if isLeaf {
+					pairs.remove(at: index)
+
+					if pairs.isEmpty {
+						print("Removed leaf pair -> empty node")
+					} else {
+						print("Removed leaf pair -> non-empty node")
+					}
+				} else {
+					let childNode = index > 0 ? pairs[index - 1].child!.node : firstChild!.node
+					let removedPair = childNode.removeLast(parent: self, index: index - 1)
+
+					let oldRange = removedPair.range
+					let newRange = (offset - oldRange.count)..<offset
+					//let baseOffsetDifference = newRange.startIndex - oldRange.startIndex
+
+					let index = min(index, pairs.endIndex - 1)
+					pairs[index] = removedPair
+					pairs[index].range = newRange
+					pairs[index].child = pairWithElementToRemove.child
+					pairs[index].child?.baseOffset -= sizeOfRemovedElement//+= baseOffsetDifference - sizeOfRemovedElement
+
+					print("Removed non-leaf pair")
+				}
+
+				return sizeOfRemovedElement
+
+			case .descend(let index):
+				let (child, baseOffset) = index >= 0 ? pairs[index].child! : firstChild!
+				let newOffset = offset - baseOffset
+
+				print("Descended")
+				let sizeOfRemovedElement = child.remove(at: newOffset)
+
+				for index2 in (index + 1)..<pairs.endIndex {
+					pairs[index2].range = pairs[index2].range - sizeOfRemovedElement
+					pairs[index2].child?.baseOffset -= sizeOfRemovedElement
+				}
+
+				rebalance(index: index)
+
+				return sizeOfRemovedElement
+			}
+		}
+
+		func rebalance(index: Int) {
+			let (child, baseOffset) = index >= 0 ? pairs[index].child! : firstChild!
+
+			if child.pairCountStatus == .insufficent {
+				let leftSibbling: Child?
+				if index == 0 {
+					leftSibbling = firstChild!
+				} else if index > 0 {
+					leftSibbling = pairs[index - 1].child!
+				} else {
+					leftSibbling = nil
+				}
+				let rightSibbling = index < pairs.endIndex - 1 ? pairs[index + 1].child! : nil
+
+				if let rightSibbling = rightSibbling, rightSibbling.node.pairCountStatus == .sufficient {
+					// Rotate left
+
+					var oldParentPair = pairs[index + 1]
+					var newParentPair = rightSibbling.node.pairs.first!
+					let childOfNewParentPair = newParentPair.child
+
+					newParentPair.range = newParentPair.range + rightSibbling.baseOffset
+					newParentPair.child = oldParentPair.child
+
+					oldParentPair.range = oldParentPair.range - baseOffset
+					oldParentPair.child = rightSibbling.node.firstChild
+					oldParentPair.child?.baseOffset += rightSibbling.baseOffset
+
+					child.pairs.append(oldParentPair)
+
+					pairs[index + 1] = newParentPair
+					rightSibbling.node.pairs.removeFirst()
+					rightSibbling.node.firstChild = childOfNewParentPair
+
+					print("Rotated left")
+				} else if let leftSibbling = leftSibbling, leftSibbling.node.pairCountStatus == .sufficient {
+					// Rotate right
+
+					var oldParentPair = pairs[index]
+					var newParentPair = leftSibbling.node.pairs.last!
+					let childOfNewParentPair = newParentPair.child
+
+					newParentPair.range = newParentPair.range + leftSibbling.baseOffset
+					newParentPair.child = (node: child, baseOffset: 0)
+
+					oldParentPair.child = child.firstChild
+					oldParentPair.child?.baseOffset += baseOffset
+
+					child.firstChild = childOfNewParentPair
+					child.firstChild?.baseOffset += leftSibbling.baseOffset
+					child.pairs.insert(oldParentPair, at: 0)
+
+					pairs[index] = newParentPair
+					leftSibbling.node.pairs.removeLast()
+
+					print("Rotated right")
+				} else {
+					// Merge
+
+					let parentPairIndex: Int
+					let receivingChild: Child
+
+					if index >= 0 {
+						parentPairIndex = index
+						receivingChild = index > 0 ? pairs[index - 1].child! : firstChild!
+					} else {
+						parentPairIndex = 0
+						receivingChild = firstChild!
+					}
+
+					let parentPair = pairs[parentPairIndex]
+
+					// "- receivingChild.baseOffset" added to fix testRemoveAllElements2
+
+					var modifiedParentPair = parentPair
+					modifiedParentPair.range = modifiedParentPair.range - receivingChild.baseOffset
+					modifiedParentPair.child = parentPair.child!.node.firstChild
+					modifiedParentPair.child?.baseOffset += parentPair.child!.baseOffset - receivingChild.baseOffset
+
+					receivingChild.node.pairs.append(modifiedParentPair)
+
+					for pair in parentPair.child!.node.pairs {
+						var pair = pair
+						pair.range = pair.range + parentPair.child!.baseOffset - receivingChild.baseOffset
+						pair.child?.baseOffset += parentPair.child!.baseOffset - receivingChild.baseOffset
+						receivingChild.node.pairs.append(pair)
+					}
+
+					pairs.remove(at: parentPairIndex)
+
+					print("Merged")
+				}
+			} else {
+				print("No rebalancing required")
+			}
+		}
+
+		func removeLast(parent: Node, index: Int) -> Pair {
+			var node = self
+			var currentParent = parent
+			var index = index
+
+			while !node.isLeaf {
+				currentParent = node
+				index = node.pairs.endIndex - 1
+				node = node.pairs.last!.child!.node
+			}
+
+			let removedPair = node.pairs.removeLast()
+
+			if node.pairs.isEmpty, currentParent !== parent {
+				/*print("-> Removing empty node")
+				if index >= 0 {
+					parent.pairs[index].child = nil
+				} else {
+					parent.firstChild = nil
+				}*/
+				currentParent.rebalance(index: index)
+			}
+
+			return removedPair
+		}
+
 		func splitPair() -> Pair {
 			let indexOfSeparatingPair = pairs.count / 2
 			let separatingPair = pairs[indexOfSeparatingPair]
@@ -188,12 +371,35 @@ extension OffsetTree {
 			pairs.removeSubrange(indexOfSeparatingPair..<pairs.endIndex)
 			return newPair
 		}
-				
-		var isExceedingMaximumPairCount: Bool {
-			return pairs.count > 3//1020
+
+		static let maximumPairCount = 3
+
+		enum PairCountStatus {
+			case insufficent
+			case barelySufficient
+			case sufficient
+			case exceeding
 		}
 
-		func find(offset: Int) -> (node: Node, element: OffsetTreeElement, offset: Int)? {
+		var pairCountStatus: PairCountStatus {
+			let minimumPairCount = (Self.maximumPairCount - 1) / 2
+			let maximumPairCount = Self.maximumPairCount
+			if pairs.count < minimumPairCount {
+				return .insufficent
+			} else if pairs.count == minimumPairCount {
+				return .barelySufficient
+			} else if pairs.count <= maximumPairCount {
+				return .sufficient
+			} else {
+				return .exceeding
+			}
+		}
+
+		var isExceedingMaximumPairCount: Bool {
+			return pairCountStatus == .exceeding
+		}
+
+		func find(offset: Int) -> (node: Node, pairIndex: Int, offset: Int)? {
 			switch index(for: offset, includeStartIndex: true, includeEndIndex: false) {
 			case .descend(to: let index):
 				let (child, baseOffset) = index >= 0 ? pairs[index].child! : firstChild!
@@ -208,7 +414,7 @@ extension OffsetTree {
 				let baseOffset = pairs[index].range.startIndex
 				let newOffset = offset - baseOffset
 
-				return (node: self, element: pairs[index].element, offset: newOffset)
+				return (node: self, pairIndex: index, offset: newOffset)
 			}
 		}
 

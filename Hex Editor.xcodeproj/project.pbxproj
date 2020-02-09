@@ -11,7 +11,6 @@
 		F4169F9E2354B41600CF0F2C /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4169F9D2354B41600CF0F2C /* SceneDelegate.swift */; };
 		F4169FA22354B41B00CF0F2C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F4169FA12354B41B00CF0F2C /* Assets.xcassets */; };
 		F4169FA82354B41B00CF0F2C /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F4169FA62354B41B00CF0F2C /* LaunchScreen.storyboard */; };
-		F4169FB32354B41B00CF0F2C /* HexEditorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4169FB22354B41B00CF0F2C /* HexEditorTests.swift */; };
 		F4169FBF2354B99200CF0F2C /* AtomicWordGroupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4169FBE2354B99200CF0F2C /* AtomicWordGroupManager.swift */; };
 		F4169FC12354B9BE00CF0F2C /* AtomicWordGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4169FC02354B9BE00CF0F2C /* AtomicWordGroup.swift */; };
 		F4169FC32354B9D100CF0F2C /* UnicodeAtomicWordGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4169FC22354B9D100CF0F2C /* UnicodeAtomicWordGroup.swift */; };
@@ -29,6 +28,10 @@
 		F492B1BA235F564B00CCE9E5 /* OffsetTreeNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = F492B1B9235F564B00CCE9E5 /* OffsetTreeNode.swift */; };
 		F4DF9C8E2354E33100ECA3C9 /* FileAccessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4DF9C8D2354E33100ECA3C9 /* FileAccessor.swift */; };
 		F4F162C22361C76600337EAA /* DocumentViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4F162C12361C76600337EAA /* DocumentViewController.swift */; };
+		F4F1D59523EF239E00C9CA4B /* OffsetTreeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4F1D59423EF239E00C9CA4B /* OffsetTreeTests.swift */; };
+		F4F1D59623EF23A400C9CA4B /* OffsetTree.swift in Sources */ = {isa = PBXBuildFile; fileRef = F492B1B7235F563000CCE9E5 /* OffsetTree.swift */; };
+		F4F1D59723EF23A400C9CA4B /* OffsetTreeNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = F492B1B9235F564B00CCE9E5 /* OffsetTreeNode.swift */; };
+		F4F1D59823EF23A400C9CA4B /* OffsetTreeElement.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4253D24235FB23B008063D7 /* OffsetTreeElement.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -49,7 +52,6 @@
 		F4169FA72354B41B00CF0F2C /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		F4169FA92354B41B00CF0F2C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		F4169FAE2354B41B00CF0F2C /* Hex Editor Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "Hex Editor Tests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		F4169FB22354B41B00CF0F2C /* HexEditorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HexEditorTests.swift; sourceTree = "<group>"; };
 		F4169FB42354B41B00CF0F2C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		F4169FBE2354B99200CF0F2C /* AtomicWordGroupManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AtomicWordGroupManager.swift; sourceTree = "<group>"; };
 		F4169FC02354B9BE00CF0F2C /* AtomicWordGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AtomicWordGroup.swift; sourceTree = "<group>"; };
@@ -68,6 +70,7 @@
 		F492B1B9235F564B00CCE9E5 /* OffsetTreeNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OffsetTreeNode.swift; sourceTree = "<group>"; };
 		F4DF9C8D2354E33100ECA3C9 /* FileAccessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileAccessor.swift; sourceTree = "<group>"; };
 		F4F162C12361C76600337EAA /* DocumentViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentViewController.swift; sourceTree = "<group>"; };
+		F4F1D59423EF239E00C9CA4B /* OffsetTreeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OffsetTreeTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -124,8 +127,8 @@
 		F4169FB12354B41B00CF0F2C /* Hex Editor Tests */ = {
 			isa = PBXGroup;
 			children = (
-				F4169FB22354B41B00CF0F2C /* HexEditorTests.swift */,
 				F4169FB42354B41B00CF0F2C /* Info.plist */,
+				F4F1D59423EF239E00C9CA4B /* OffsetTreeTests.swift */,
 			);
 			path = "Hex Editor Tests";
 			sourceTree = "<group>";
@@ -310,7 +313,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F4169FB32354B41B00CF0F2C /* HexEditorTests.swift in Sources */,
+				F4F1D59723EF23A400C9CA4B /* OffsetTreeNode.swift in Sources */,
+				F4F1D59823EF23A400C9CA4B /* OffsetTreeElement.swift in Sources */,
+				F4F1D59623EF23A400C9CA4B /* OffsetTree.swift in Sources */,
+				F4F1D59523EF239E00C9CA4B /* OffsetTreeTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
