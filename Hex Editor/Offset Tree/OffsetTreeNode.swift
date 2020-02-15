@@ -24,15 +24,16 @@ extension Range where Bound: Numeric {
 
 extension OffsetTree {
 	class Node {
+		typealias Element = AnyOffsetTreeElement<Value>
 		typealias Child = (node: Node, baseOffset: Int)
 
 		struct Pair {
 			// TODO: Change var -> let where appropriate
 			var range: Range<Int>
-			var element: OffsetTreeElement
+			var element: Element
 			var child: Child? = nil
 			
-			init(offset: Int, element: OffsetTreeElement) {
+			init(offset: Int, element: Element) {
 				range = offset..<(offset + element.size)
 				self.element = element
 			}
@@ -43,7 +44,7 @@ extension OffsetTree {
 
 		var isLeaf: Bool
 
-		init(initialElement: OffsetTreeElement, range: Range<Int>) {
+		init(initialElement: Element, range: Range<Int>) {
 			let initialPair = Pair(offset: range.startIndex, element: initialElement)
 			pairs = [initialPair]
 			firstChild = nil
@@ -57,7 +58,7 @@ extension OffsetTree {
 		}
 		
 		// Returns pair to insert in parent node after splitting
-		func insert(_ element: OffsetTreeElement, offset: Int) -> Pair? {
+		func insert(_ element: Element, offset: Int) -> Pair? {
 			switch index(for: offset, includeStartIndex: false, includeEndIndex: false) {
 			case .existing(at: _):
 				preconditionFailure()
@@ -126,7 +127,7 @@ extension OffsetTree {
 			}
 		}
 
-		func split(at offset: Int) -> OffsetTreeElement? {
+		func split(at offset: Int) -> Element? {
 			switch index(for: offset, includeStartIndex: false, includeEndIndex: false) {
 			case .existing(at: let index):
 				let baseOffset = pairs[index].range.startIndex
@@ -169,7 +170,7 @@ extension OffsetTree {
 		}
 
 		// Returns removed element
-		func remove(at offset: Int) -> OffsetTreeElement {
+		func remove(at offset: Int) -> Element {
 			switch index(for: offset, includeStartIndex: true, includeEndIndex: false) {
 			case .new(before: _):
 				preconditionFailure()
@@ -353,7 +354,7 @@ extension OffsetTree {
 			return newPair
 		}
 
-		static let maximumPairCount = 1000
+		let maximumPairCount = 1000
 
 		enum PairCountStatus {
 			case insufficent
@@ -363,8 +364,7 @@ extension OffsetTree {
 		}
 
 		var pairCountStatus: PairCountStatus {
-			let minimumPairCount = (Self.maximumPairCount - 1) / 2
-			let maximumPairCount = Self.maximumPairCount
+			let minimumPairCount = (maximumPairCount - 1) / 2
 			if pairs.count < minimumPairCount {
 				return .insufficent
 			} else if pairs.count == minimumPairCount {

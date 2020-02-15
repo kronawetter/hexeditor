@@ -6,14 +6,14 @@
 //  Copyright © 2019 Philip Kronawetter. All rights reserved.
 //
 
-/*struct*/ class OffsetTree {
-	typealias Index = Int
-	
+/*struct*/ class OffsetTree<Value: Collection> {
 	var root: Node? = nil
 
-	/*mutating*/ func insert(_ element: OffsetTreeElement, offset: Int) {
+	/*mutating*/ func insert<T: OffsetTreeElement>(_ element: T, offset: Int) where T.Value == Value {
+		let typeErasedElement = AnyOffsetTreeElement.make(element)
+
 		if root != nil {
-			if let pairSplittingResult = root!.insert(element, offset: offset) {
+			if let pairSplittingResult = root!.insert(typeErasedElement, offset: offset) {
 				let newRoot = Node(pairs: [pairSplittingResult])
 				newRoot.firstChild = (node: root!, baseOffset: 0)
 				newRoot.isLeaf = false
@@ -21,7 +21,7 @@
 			}
 		} else {
 			let range = offset..<(offset + element.size)
-			root = Node(initialElement: element, range: range)
+			root = Node(initialElement: typeErasedElement, range: range)
 		}
 	}
 
@@ -51,15 +51,43 @@
 		return root?.find(offset: offset)
 	}
 
-	subscript(_ offset: Int) -> OffsetTreeElement.Value? {
+	func value(at offset: Int) -> Value.Element? {
 		guard let (node, pairIndex, index) = find(offset: offset) else {
 			return nil
 		}
 
-		return node.pairs[pairIndex].element.value(for: index..<(index + 1))
+		return node.pairs[pairIndex].element.value(for: index..<(index + 1))?.first
+	}
+
+	subscript(_ offset: Int) -> Value.Element? {
+		return value(at: offset)
 	}
 
 	/*mutating*/ func clear() {
 		root = nil
+	}
+}
+
+extension OffsetTree {
+	struct Iterator: IteratorProtocol {
+		private let offsetTree: OffsetTree
+		private var offset: Int
+
+		init(_ offsetTree: OffsetTree, at offset: Int) {
+			self.offsetTree = offsetTree
+			self.offset = offset
+		}
+
+		mutating func next() -> Value.Element? {
+			defer {
+				offset += 1
+			}
+
+			return offsetTree.value(at: offset)
+		}
+	}
+
+	func iterator(startingAt offset: Int) -> OffsetTree.Iterator {
+		Iterator(self, at: offset)
 	}
 }

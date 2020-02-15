@@ -73,9 +73,8 @@ struct File {
 
 	let url: URL
 	var size: Int
-	var contents = OffsetTree/*<Data>*/()
+	var contents = OffsetTree<Data>()
 	let fileHandle: FileHandle
-	//var debugContents = OffsetTree/*<Data>*/()
 
 	init(url: URL) throws {
 		self.url = url
@@ -85,9 +84,6 @@ struct File {
 
 		let segment = FileSegment(fileHandle: fileHandle, rangeInFile: 0..<size)
 		contents.insert(segment, offset: 0)
-
-		/*let debugSegment = FileSegment(fileHandle: fileHandle, rangeInFile: 0..<size)
-		debugContents.insert(debugSegment, offset: 0)*/
 	}
 }
 
@@ -97,12 +93,11 @@ extension File: EditorDataSource {
 	}
 
 	func atomicWordGroup(at wordIndex: Int) -> EditorDataSource.AtomicWordGroup {
-		return (text: String(format: "%02X", contents[wordIndex]!.first!), range: wordIndex..<(wordIndex + 1))
+		return (text: String(format: "%02X", contents[wordIndex]!), range: wordIndex..<(wordIndex + 1))
 	}
 
 	mutating func insert(_ text: String, at wordIndex: Int) -> Int {
 		let data = Data(text.utf8)
-		//let data = Data((text + text + text + text + text).utf8)
 
 		contents.split(at: wordIndex)
 		let element = ChangeSegment(data: data)
@@ -110,43 +105,14 @@ extension File: EditorDataSource {
 
 		size += data.count
 
-		/*for offset in 0..<size {
-			precondition(contents.find(offset: offset) != nil)
-		}*/
-
-		/*debugContents.split(at: wordIndex)
-		let debugElement = ChangeSegment(data: Data(data))
-		debugContents.insert(debugElement, offset: wordIndex)*/
-
 		return data.count
 	}
 
 	mutating func remove(at wordIndex: Int) {
-		//print("--- Remove at \(wordIndex) ---")
 		contents.split(at: wordIndex)
 		contents.split(at: wordIndex + 1)
 		contents.remove(at: wordIndex)
 
 		size -= 1
-
-		/*var missing = false
-		if didRebalance {
-			for offset in 0..<size {
-				if contents.find(offset: offset) == nil {
-					missing = true
-					print("Missing at \(offset)")
-				}
-				//precondition(contents.find(offset: offset) != nil)
-			}
-			didRebalance = false
-		}
-
-		if missing {
-			raise(SIGINT)
-		}
-
-		debugContents.split(at: wordIndex)
-		debugContents.split(at: wordIndex + 1)
-		debugContents.remove(at: wordIndex)*/
 	}
 }
