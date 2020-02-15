@@ -18,7 +18,7 @@ class EditorView: UIScrollView {
 		return [hexContentView, textContentView]
 	}
 
-	var hexDataSource: EditorDataSource? {
+	var hexDataSource: EditorViewDataSource? {
 		get {
 			return hexContentView.dataSource
 		}
@@ -28,13 +28,31 @@ class EditorView: UIScrollView {
 		}
 	}
 
-	var textDataSource: EditorDataSource? {
+	var textDataSource: EditorViewDataSource? {
 		get {
 			return textContentView.dataSource
 		}
 		set {
 			textContentView.dataSource = newValue
 			setNeedsLayout()
+		}
+	}
+
+	var hexDelegate: EditorViewDelegate? {
+		get {
+			return hexContentView.delegate
+		}
+		set {
+			hexContentView.delegate = newValue
+		}
+	}
+
+	var textDelegate: EditorViewDelegate? {
+		get {
+			return textContentView.delegate
+		}
+		set {
+			textContentView.delegate = newValue
 		}
 	}
 
@@ -52,6 +70,7 @@ class EditorView: UIScrollView {
 		backgroundView.backgroundColor = .systemBackground
 		addSubview(backgroundView)
 
+		textContentView.wordsPerWordSpacingGroup = bytesPerLine
 		contentViews.forEach { addSubview($0) }
 
 		separatorViews.forEach { $0.backgroundColor = .separator }

@@ -85,27 +85,13 @@ struct File {
 		let segment = FileSegment(fileHandle: fileHandle, rangeInFile: 0..<size)
 		contents.insert(segment, offset: 0)
 	}
-}
 
-extension File: EditorDataSource {
-	var totalWordCount: Int {
-		return size
-	}
-
-	func atomicWordGroup(at wordIndex: Int) -> EditorDataSource.AtomicWordGroup {
-		return (text: String(format: "%02X", contents[wordIndex]!), range: wordIndex..<(wordIndex + 1))
-	}
-
-	mutating func insert(_ text: String, at wordIndex: Int) -> Int {
-		let data = Data(text.utf8)
-
+	mutating func insert(_ data: Data, at wordIndex: Int) {
 		contents.split(at: wordIndex)
 		let element = ChangeSegment(data: data)
 		contents.insert(element, offset: wordIndex)
 
 		size += data.count
-
-		return data.count
 	}
 
 	mutating func remove(at wordIndex: Int) {
@@ -114,5 +100,22 @@ extension File: EditorDataSource {
 		contents.remove(at: wordIndex)
 
 		size -= 1
+	}
+}
+
+extension File: EditorViewDataSource {
+	var totalWordCount: Int {
+		return size
+	}
+
+	func atomicWordGroup(at wordIndex: Int) -> EditorViewDataSource.AtomicWordGroup {
+		return (text: String(format: "%02X", contents[wordIndex]!), range: wordIndex..<(wordIndex + 1))
+	}
+}
+
+extension File: FileAccessor {
+	func iterator<ReturnedElement>(for offset: Self.Index) -> AnyIterator<ReturnedElement> where ReturnedElement : FixedWidthInteger {
+		// TODO: Only supports UInt8 as ReturnedElement
+		AnyIterator(contents.iterator(startingAt: offset)) as! AnyIterator<ReturnedElement>
 	}
 }

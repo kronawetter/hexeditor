@@ -22,13 +22,12 @@ class DocumentViewController: UIViewController {
 				precondition(isPermitted)
 
 				file = try! File(url: documentURL)
+				atomicWordGroupManager = AtomicWordGroupManager(dataSource: file!)
+				atomicWordGroupManager?.create(for: 0..<file!.size)
 				navigationItem.title = documentURL.lastPathComponent
 
-				//atomicWordGroupManager = AtomicWordGroupManager<UnicodeAtomicWordGroup<UTF8, ByteOrder.BigEndian, OffsetTree<DataOffsetTreeElementStorage>>>(dataSource: file!.data)
-				//atomicWordGroupManager!.create(for: 0..<1000)//file!.size)
-
 				editorView.hexDataSource = file
-				editorView.textDataSource = file//atomicWordGroupManager
+				editorView.textDataSource = atomicWordGroupManager
 			}
 		}
 	}
@@ -41,7 +40,7 @@ class DocumentViewController: UIViewController {
 
 	private var file: File?
 
-	//private var atomicWordGroupManager: AtomicWordGroupManager<UnicodeAtomicWordGroup<UTF8, ByteOrder.BigEndian, OffsetTree<DataOffsetTreeElementStorage>>>?
+	private var atomicWordGroupManager: AtomicWordGroupManager<UnicodeAtomicWordGroup<UTF8, ByteOrder.LittleEndian, File>>? = nil
 
 	private var editorView = EditorView()
 
@@ -53,6 +52,8 @@ class DocumentViewController: UIViewController {
 		super.loadView()
 
 		view.addSubview(editorView)
+		editorView.hexDelegate = self
+		editorView.textDelegate = self
 		editorView.translatesAutoresizingMaskIntoConstraints = false
 		editorView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
 		editorView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
@@ -60,7 +61,7 @@ class DocumentViewController: UIViewController {
 		editorView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
 
 		navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Files", style: .plain, target: self, action: #selector(close))
-		navigationItem.rightBarButtonItems = [UIBarButtonItem(title: "Remove Data", style: .plain, target: self, action: #selector(removeData)), UIBarButtonItem(title: "Insert Data", style: .plain, target: self, action: #selector(insertData))]
+		//navigationItem.rightBarButtonItems = [UIBarButtonItem(title: "Remove Data", style: .plain, target: self, action: #selector(removeData)), UIBarButtonItem(title: "Insert Data", style: .plain, target: self, action: #selector(insertData))]
 	}
 
 	override func viewWillAppear(_ animated: Bool) {
@@ -82,7 +83,7 @@ class DocumentViewController: UIViewController {
 		dismiss(animated: true, completion: nil)
 	}
 
-	@objc func insertData() {
+	/*@objc func insertData() {
 		for _ in 0..<100 {
 			let offset = Int.random(in: 0..<(file!.size + 1))
 			_ = file?.insert("\(offset)", at: offset)
@@ -96,7 +97,7 @@ class DocumentViewController: UIViewController {
 			_ = file?.remove(at: offset)
 		}
 		editorView.hexDataSource = file
-	}
+	}*/
 
 	// MARK: Keyboard Events
 
@@ -116,5 +117,30 @@ class DocumentViewController: UIViewController {
 	@objc private func keyboardWillHide(_ notication: Notification) {
 		editorView.contentInset.bottom = .zero
 		editorView.verticalScrollIndicatorInsets.bottom = .zero
+	}
+}
+
+extension DocumentViewController: EditorViewDelegate {
+	func editorView(_ editorView: EditorView, didInsert text: String, at offset: Int) -> Int {
+		let data = Data(text.utf8)
+		file!.insert(data, at: offset)
+
+		// TODO: Make editor data flow work better with copy-on-write behavior and remove these ugly workarounds
+		atomicWordGroupManager = AtomicWordGroupManager(dataSource: file!)
+		atomicWordGroupManager!.create(for: 0..<file!.size)
+		editorView.hexDataSource = file
+		editorView.textDataSource = atomicWordGroupManager
+
+		return data.count
+	}
+
+	func editorView(_ editorView: EditorView, didDeleteAt offset: Int) {
+		file!.remove(at: offset)
+
+		// TODO: Make editor data flow work better with copy-on-write behavior and remove these ugly workarounds
+		atomicWordGroupManager = AtomicWordGroupManager(dataSource: file!)
+		atomicWordGroupManager!.create(for: 0..<file!.size)
+		editorView.hexDataSource = file
+		editorView.textDataSource = atomicWordGroupManager
 	}
 }

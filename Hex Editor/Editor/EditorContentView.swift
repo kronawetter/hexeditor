@@ -11,15 +11,19 @@ import UIKit
 class EditorContentView: UIView {
 	var font = UIFont.monospacedSystemFont(ofSize: 14.0, weight: .regular) {
 		didSet {
+			removeSublayers()
 			setNeedsLayout()
 		}
 	}
 
-	var dataSource: EditorDataSource? = nil {
+	var dataSource: EditorViewDataSource? = nil {
 		didSet {
+			removeSublayers()
 			setNeedsLayout()
 		}
 	}
+
+	var delegate: EditorViewDelegate? = nil
 
 	var visibleRect = CGRect.zero {
 		didSet {
@@ -31,6 +35,7 @@ class EditorContentView: UIView {
 
 	var contentInsets = UIEdgeInsets(top: 2.0, left: 10.0, bottom: 10.0, right: 10.0) {
 		didSet {
+			removeSublayers()
 			setNeedsLayout()
 		}
 	}
@@ -52,7 +57,12 @@ class EditorContentView: UIView {
 		return round(widthPerWord * 0.3)
 	}
 
-	private var wordsPerWordSpacingGroup = 2 // TODO: Make non-constant and public/internal
+	var wordsPerWordSpacingGroup = 2 {
+		didSet {
+			removeSublayers()
+			setNeedsLayout()
+		}
+	}
 
 	private var widthPerWordSpacingGroup: CGFloat {
 		return widthPerWord * CGFloat(wordsPerWordSpacingGroup) + wordGroupSpacingWidth
@@ -352,27 +362,21 @@ extension EditorContentView: UIKeyInput {
 	}
 
 	func insertText(_ text: String) {
-		guard let selection = selection, dataSource != nil else {
+		guard let selection = selection else {
 			return
 		}
 
-		let insertedWordGroups = dataSource!.insert(text, at: selection.lowerBound)
+		let insertedWordGroups = delegate?.editorView(superview as! EditorView, didInsert: text, at: selection.lowerBound) ?? 0
 		self.selection = (selection.startIndex + insertedWordGroups)..<(selection.endIndex + insertedWordGroups)
-
-		removeSublayers()
-		setNeedsLayout()
 	}
 
 	func deleteBackward() {
-		guard let selection = selection, selection.startIndex > 0, dataSource != nil else {
+		guard let selection = selection, selection.startIndex > 0 else {
 			return
 		}
 
-		dataSource!.remove(at: selection.startIndex - 1)
+		delegate?.editorView(superview as! EditorView, didDeleteAt: selection.startIndex - 1)
 		self.selection = (selection.startIndex - 1)..<(selection.startIndex - 1)
-
-		removeSublayers()
-		setNeedsLayout()
 	}
 
 	var isSecureTextEntry: Bool {

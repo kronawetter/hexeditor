@@ -8,29 +8,52 @@
 
 struct AtomicWordGroupManager<T: AtomicWordGroup> {
 	let dataSource: T.DataSource
-	//var groups = OffsetTree<LinearOffsetTreeElementStorage<T>>()
+	var groups = OffsetTree<[T]>()
+
+	struct Element: OffsetTreeElement {
+		typealias Value = [T]
+
+		let value: T
+
+		var size: Int {
+			value.size
+		}
+
+		func value(for range: Range<Int>) -> [T]? {
+			[value]
+		}
+
+		func replace(in range: Range<Int>, with value: [T]) -> Bool {
+			preconditionFailure()
+		}
+
+		func split(at offset: Int) -> AtomicWordGroupManager<T>.Element {
+			preconditionFailure()
+		}
+	}
 	
 	mutating func insert(_ group: T) {
-		//groups.insert(group, offset: group.range.startIndex) // TODO: No need to save full range
+		let element = Element(value: group)
+		groups.insert(element, offset: group.range.startIndex)
 	}
 	
 	mutating func create(for rangeOfInterest: Range<T.Index>) {
+		groups.clear()
 		T.create(for: rangeOfInterest, in: &self)
 	}
 	
-	mutating func update(for changedRange: Range<T.Index>, lengthDelta: T.Index) {
+	/*mutating func update(for changedRange: Range<T.Index>, lengthDelta: T.Index) {
 		T.update(for: changedRange, lengthDelta: lengthDelta, in: &self)
-	}
+	}*/
 }
 
-/*extension AtomicWordGroupManager: EditorDataSource {
+extension AtomicWordGroupManager: EditorViewDataSource {
 	var totalWordCount: Int {
-		return 1000
+		100
 	}
 
-	func atomicWordGroup(at wordIndex: Int) -> EditorDataSource.AtomicWordGroup {
-		return (text: "\(wordIndex)", range: wordIndex..<wordIndex + 1)
-		//let data = groups[wordIndex]!
-		//return (text: data.value, range: data.range)
+	func atomicWordGroup(at wordIndex: Int) -> EditorViewDataSource.AtomicWordGroup {
+		let data = groups[wordIndex]!
+		return (text: data.value, range: data.range)
 	}
-}*/
+}

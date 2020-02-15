@@ -17,10 +17,11 @@
 		F4253D25235FB23B008063D7 /* OffsetTreeElement.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4253D24235FB23B008063D7 /* OffsetTreeElement.swift */; };
 		F435EE552370B72500A09FB3 /* AtomicWordGroupLayerImageCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = F435EE542370B72500A09FB3 /* AtomicWordGroupLayerImageCache.swift */; };
 		F4520074235510CA00B51AE1 /* DocumentBrowserViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4520073235510CA00B51AE1 /* DocumentBrowserViewController.swift */; };
+		F47C28D123F8916700259EC3 /* EditorViewDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F47C28D023F8916700259EC3 /* EditorViewDelegate.swift */; };
 		F47D251E2385CAA600F75663 /* File.swift in Sources */ = {isa = PBXBuildFile; fileRef = F47D251D2385CAA600F75663 /* File.swift */; };
 		F48003FC23735ED200548417 /* EditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48003FB23735ED200548417 /* EditorView.swift */; };
 		F48073AE2380D4A2006DBBFA /* EditorAtomicWordGroupLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48073AD2380D4A2006DBBFA /* EditorAtomicWordGroupLayer.swift */; };
-		F48073B12380DB7F006DBBFA /* EditorDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48073B02380DB7F006DBBFA /* EditorDataSource.swift */; };
+		F48073B12380DB7F006DBBFA /* EditorViewDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48073B02380DB7F006DBBFA /* EditorViewDataSource.swift */; };
 		F48725ED2355FA9400959C4A /* ByteOrder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48725EC2355FA9400959C4A /* ByteOrder.swift */; };
 		F488B1E6236CEC7800C2170A /* EditorContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F488B1E5236CEC7800C2170A /* EditorContentView.swift */; };
 		F48BC76023550998006338F6 /* ExtendedUnicodeCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48BC75F23550998006338F6 /* ExtendedUnicodeCodec.swift */; };
@@ -59,10 +60,11 @@
 		F4253D24235FB23B008063D7 /* OffsetTreeElement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OffsetTreeElement.swift; sourceTree = "<group>"; };
 		F435EE542370B72500A09FB3 /* AtomicWordGroupLayerImageCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AtomicWordGroupLayerImageCache.swift; sourceTree = "<group>"; };
 		F4520073235510CA00B51AE1 /* DocumentBrowserViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentBrowserViewController.swift; sourceTree = "<group>"; };
+		F47C28D023F8916700259EC3 /* EditorViewDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorViewDelegate.swift; sourceTree = "<group>"; };
 		F47D251D2385CAA600F75663 /* File.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = File.swift; sourceTree = "<group>"; };
 		F48003FB23735ED200548417 /* EditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorView.swift; sourceTree = "<group>"; };
 		F48073AD2380D4A2006DBBFA /* EditorAtomicWordGroupLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorAtomicWordGroupLayer.swift; sourceTree = "<group>"; };
-		F48073B02380DB7F006DBBFA /* EditorDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorDataSource.swift; sourceTree = "<group>"; };
+		F48073B02380DB7F006DBBFA /* EditorViewDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorViewDataSource.swift; sourceTree = "<group>"; };
 		F48725EC2355FA9400959C4A /* ByteOrder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ByteOrder.swift; sourceTree = "<group>"; };
 		F488B1E5236CEC7800C2170A /* EditorContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorContentView.swift; sourceTree = "<group>"; };
 		F48BC75F23550998006338F6 /* ExtendedUnicodeCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtendedUnicodeCodec.swift; sourceTree = "<group>"; };
@@ -172,7 +174,8 @@
 				F48003FB23735ED200548417 /* EditorView.swift */,
 				F488B1E5236CEC7800C2170A /* EditorContentView.swift */,
 				F48073AD2380D4A2006DBBFA /* EditorAtomicWordGroupLayer.swift */,
-				F48073B02380DB7F006DBBFA /* EditorDataSource.swift */,
+				F48073B02380DB7F006DBBFA /* EditorViewDataSource.swift */,
+				F47C28D023F8916700259EC3 /* EditorViewDelegate.swift */,
 			);
 			path = Editor;
 			sourceTree = "<group>";
@@ -288,10 +291,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				F435EE552370B72500A09FB3 /* AtomicWordGroupLayerImageCache.swift in Sources */,
+				F47C28D123F8916700259EC3 /* EditorViewDelegate.swift in Sources */,
 				F48725ED2355FA9400959C4A /* ByteOrder.swift in Sources */,
 				F4520074235510CA00B51AE1 /* DocumentBrowserViewController.swift in Sources */,
 				F492B1B8235F563000CCE9E5 /* OffsetTree.swift in Sources */,
-				F48073B12380DB7F006DBBFA /* EditorDataSource.swift in Sources */,
+				F48073B12380DB7F006DBBFA /* EditorViewDataSource.swift in Sources */,
 				F4253D25235FB23B008063D7 /* OffsetTreeElement.swift in Sources */,
 				F48BC76023550998006338F6 /* ExtendedUnicodeCodec.swift in Sources */,
 				F492B1BA235F564B00CCE9E5 /* OffsetTreeNode.swift in Sources */,
