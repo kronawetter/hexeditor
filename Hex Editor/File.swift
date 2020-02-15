@@ -108,7 +108,7 @@ extension File: EditorViewDataSource {
 		return size
 	}
 
-	func atomicWordGroup(at wordIndex: Int) -> EditorViewDataSource.AtomicWordGroup {
+	func atomicWordGroup(at wordIndex: Int) -> EditorViewDataSource.AtomicWordGroup? {
 		return (text: String(format: "%02X", contents[wordIndex]!), range: wordIndex..<(wordIndex + 1))
 	}
 }

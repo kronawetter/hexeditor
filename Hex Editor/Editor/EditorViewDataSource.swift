@@ -10,5 +10,5 @@ protocol EditorViewDataSource {
 	typealias AtomicWordGroup = (text: String, range: Range<Int>)
 
 	var totalWordCount: Int { get }
-	func atomicWordGroup(at wordIndex: Int) -> AtomicWordGroup
+	func atomicWordGroup(at wordIndex: Int) -> AtomicWordGroup?
 }

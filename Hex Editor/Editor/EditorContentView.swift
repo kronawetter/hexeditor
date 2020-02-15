@@ -196,7 +196,7 @@ class EditorContentView: UIView {
 		var groups: [(offset: Int, totalSize: Int, image: CGImage)] = []
 		var currentOffset = offset
 		while currentOffset < upperBound {
-			let wordGroup = dataSource.atomicWordGroup(at: currentOffset) // TODO: Make return type a struct with member function `size`, so wordGroup.range.count can be replaced with wordGroup.size
+			let wordGroup = dataSource.atomicWordGroup(at: currentOffset) ?? (text: "", range: currentOffset..<(currentOffset + 1))// TODO: Make return type a struct with member function `size`, so wordGroup.range.count can be replaced with wordGroup.size
 
 			let offset1 = currentOffset - wordGroup.range.lowerBound
 			let totalSize = wordGroup.range.count // TODO: groups.map { $0.totalSize }.sum() can be greater than upperBound - lowerBound
@@ -283,14 +283,7 @@ class EditorContentView: UIView {
 			return nil
 		}
 
-		// TODO: Should not be necessary here
-		guard (0..<dataSource.totalWordCount).contains(offset) else {
-			return nil
-		}
-
-		let wordGroup = dataSource.atomicWordGroup(at: offset)
-
-		if let sublayer = sublayers.first(where: { ($0 as? EditorAtomicWordGroupLayer)?.wordOffset == wordGroup.range.startIndex }) {
+		if let wordGroup = dataSource.atomicWordGroup(at: offset), let sublayer = sublayers.first(where: { ($0 as? EditorAtomicWordGroupLayer)?.wordOffset == wordGroup.range.startIndex }) {
 			return sublayer.frame
 		} else {
 			return estimatedFrame(for: offset)
@@ -337,6 +330,15 @@ class EditorContentView: UIView {
 		}
 
 		return [firstRect, middleRect, lastRect].compactMap { $0 }
+	}
+
+	var offsetRangeOfVisibleWordGroups: Range<Int> {
+		guard let sublayers = layer.sublayers else {
+			return 0..<0
+		}
+
+		let offsets = sublayers.compactMap { ($0 as? EditorAtomicWordGroupLayer)?.wordOffset }
+		return (offsets.min() ?? 0)..<(offsets.max() ?? 0)
 	}
 
 	/*override func sizeThatFits(_ size: CGSize) -> CGSize {

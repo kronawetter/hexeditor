@@ -23,7 +23,8 @@ class DocumentViewController: UIViewController {
 
 				file = try! File(url: documentURL)
 				atomicWordGroupManager = AtomicWordGroupManager(dataSource: file!)
-				atomicWordGroupManager?.create(for: 0..<file!.size)
+				currentAtomicWordGroupManagerRange = editorView.offsetRangeOfVisibleWordGroups
+				atomicWordGroupManager?.create(for: currentAtomicWordGroupManagerRange)
 				navigationItem.title = documentURL.lastPathComponent
 
 				editorView.hexDataSource = file
@@ -42,6 +43,8 @@ class DocumentViewController: UIViewController {
 
 	private var atomicWordGroupManager: AtomicWordGroupManager<UnicodeAtomicWordGroup<UTF8, ByteOrder.LittleEndian, File>>? = nil
 
+	private var currentAtomicWordGroupManagerRange = 0..<0
+
 	private var editorView = EditorView()
 
 	private var keyboardObservers: [Any] = []
@@ -52,6 +55,7 @@ class DocumentViewController: UIViewController {
 		super.loadView()
 
 		view.addSubview(editorView)
+		editorView.delegate = self
 		editorView.hexDelegate = self
 		editorView.textDelegate = self
 		editorView.translatesAutoresizingMaskIntoConstraints = false
@@ -120,6 +124,20 @@ class DocumentViewController: UIViewController {
 	}
 }
 
+extension DocumentViewController: UIScrollViewDelegate {
+	func scrollViewDidScroll(_ scrollView: UIScrollView) {
+		let visibleRange = editorView.offsetRangeOfVisibleWordGroups
+		
+		if visibleRange.lowerBound < currentAtomicWordGroupManagerRange.lowerBound || visibleRange.upperBound >= currentAtomicWordGroupManagerRange.upperBound {
+			// TODO: Make editor data flow work better with copy-on-write behavior and remove these ugly workarounds
+			atomicWordGroupManager = AtomicWordGroupManager(dataSource: file!)
+			currentAtomicWordGroupManagerRange = max(0, visibleRange.lowerBound - 1000)..<min(file!.totalWordCount, visibleRange.upperBound + 1000)
+			atomicWordGroupManager?.create(for: currentAtomicWordGroupManagerRange)
+			editorView.textDataSource = atomicWordGroupManager
+		}
+	}
+}
+
 extension DocumentViewController: EditorViewDelegate {
 	func editorView(_ editorView: EditorView, didInsert text: String, at offset: Int) -> Int {
 		let data = Data(text.utf8)
@@ -127,7 +145,8 @@ extension DocumentViewController: EditorViewDelegate {
 
 		// TODO: Make editor data flow work better with copy-on-write behavior and remove these ugly workarounds
 		atomicWordGroupManager = AtomicWordGroupManager(dataSource: file!)
-		atomicWordGroupManager!.create(for: 0..<file!.size)
+		currentAtomicWordGroupManagerRange = editorView.offsetRangeOfVisibleWordGroups
+		atomicWordGroupManager?.create(for: currentAtomicWordGroupManagerRange)
 		editorView.hexDataSource = file
 		editorView.textDataSource = atomicWordGroupManager
 
@@ -139,7 +158,8 @@ extension DocumentViewController: EditorViewDelegate {
 
 		// TODO: Make editor data flow work better with copy-on-write behavior and remove these ugly workarounds
 		atomicWordGroupManager = AtomicWordGroupManager(dataSource: file!)
-		atomicWordGroupManager!.create(for: 0..<file!.size)
+		currentAtomicWordGroupManagerRange = editorView.offsetRangeOfVisibleWordGroups
+		atomicWordGroupManager?.create(for: currentAtomicWordGroupManagerRange)
 		editorView.hexDataSource = file
 		editorView.textDataSource = atomicWordGroupManager
 	}

@@ -119,6 +119,12 @@ class EditorView: UIScrollView {
 		// TODO: align lines
 	}
 
+	var offsetRangeOfVisibleWordGroups: Range<Int> {
+		let ranges = contentViews.map { $0.offsetRangeOfVisibleWordGroups }
+
+		return (ranges.map { $0.lowerBound }.min() ?? 0)..<(ranges.map { $0.upperBound }.max() ?? 0)
+	}
+
 	required init?(coder: NSCoder) {
 		fatalError("init(coder:) has not been implemented")
 	}

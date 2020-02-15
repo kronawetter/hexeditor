@@ -9,5 +9,6 @@
 protocol FileAccessor {
 	typealias Index = Int
 
+	var size: Int { get }
 	func iterator<ReturnedElement: FixedWidthInteger>(for offset: Index) -> AnyIterator<ReturnedElement>
 }

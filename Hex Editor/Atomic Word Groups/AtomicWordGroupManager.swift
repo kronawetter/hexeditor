@@ -49,11 +49,16 @@ struct AtomicWordGroupManager<T: AtomicWordGroup> {
 
 extension AtomicWordGroupManager: EditorViewDataSource {
 	var totalWordCount: Int {
-		100
+		// TODO: This only works when word size is constantly 1 byte
+		//       Ideally, AtomicWordGroupManager doesn't need to know how many words exist in the data source as this might be expensive to compute
+		dataSource.size
 	}
 
-	func atomicWordGroup(at wordIndex: Int) -> EditorViewDataSource.AtomicWordGroup {
-		let data = groups[wordIndex]!
+	func atomicWordGroup(at wordIndex: Int) -> EditorViewDataSource.AtomicWordGroup? {
+		guard let data = groups[wordIndex] else {
+			return nil
+		}
+
 		return (text: data.value, range: data.range)
 	}
 }
