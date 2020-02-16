@@ -66,6 +66,8 @@ class EditorView: UIScrollView {
 		separatorViews.forEach { addSubview($0) }
 	}
 
+	private var contentViewLayoutFinishedCounter = 0
+
 	override func layoutSubviews() {
 		assert(separatorViews.count == contentViews.count + 1)
 
@@ -103,9 +105,9 @@ class EditorView: UIScrollView {
 		
 		contentSize = CGSize(width: max(bounds.width, totalContentWidth), height: contentViews.map { $0.frame.height }.max() ?? .zero)
 
+		contentViewLayoutFinishedCounter = 0
 		super.layoutSubviews()
 
-		editorDelegate?.editorView(self, didChangeVisibleWordGroupTo: offsetRangeOfVisibleWordGroups)
 		// TODO: align lines
 	}
 
@@ -115,6 +117,13 @@ class EditorView: UIScrollView {
 
 	func delete(at offset: Int, in contentView: EditorContentView) {
 		editorDelegate?.editorView(self, didDeleteAt: offset, in: contentViewEnumValue(for: contentView))
+	}
+
+	func contentViewDidLayout(_ contentView: EditorContentView) {
+		contentViewLayoutFinishedCounter += 1
+		if contentViewLayoutFinishedCounter == contentViews.count {
+			editorDelegate?.editorView(self, didChangeVisibleWordGroupTo: offsetRangeOfVisibleWordGroups)
+		}
 	}
 
 	func contentViewEnumValue(for contentView: EditorContentView) -> ContentView {

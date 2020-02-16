@@ -163,6 +163,8 @@ class EditorContentView: UIView {
 		super.layoutSubviews()
 
 		inputDelegate?.textDidChange(self)
+
+		(superview as! EditorView).contentViewDidLayout(self)
 	}
 	
 	required init?(coder: NSCoder) {
