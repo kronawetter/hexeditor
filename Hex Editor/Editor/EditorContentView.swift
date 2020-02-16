@@ -22,9 +22,7 @@ class EditorContentView: UIView {
 			setNeedsLayout()
 		}
 	}
-
-	var delegate: EditorViewDelegate? = nil
-
+	
 	var visibleRect = CGRect.zero {
 		didSet {
 			if visibleRect != oldValue {
@@ -196,7 +194,7 @@ class EditorContentView: UIView {
 		var groups: [(offset: Int, totalSize: Int, image: CGImage)] = []
 		var currentOffset = offset
 		while currentOffset < upperBound {
-			let wordGroup = dataSource.atomicWordGroup(at: currentOffset) ?? (text: "", range: currentOffset..<(currentOffset + 1))// TODO: Make return type a struct with member function `size`, so wordGroup.range.count can be replaced with wordGroup.size
+			let wordGroup = dataSource.atomicWordGroup(at: currentOffset) ?? (text: "░", range: currentOffset..<(currentOffset + 1))// TODO: Make return type a struct with member function `size`, so wordGroup.range.count can be replaced with wordGroup.size
 
 			let offset1 = currentOffset - wordGroup.range.lowerBound
 			let totalSize = wordGroup.range.count // TODO: groups.map { $0.totalSize }.sum() can be greater than upperBound - lowerBound
@@ -368,7 +366,7 @@ extension EditorContentView: UIKeyInput {
 			return
 		}
 
-		let insertedWordGroups = delegate?.editorView(superview as! EditorView, didInsert: text, at: selection.lowerBound) ?? 0
+		let insertedWordGroups = (superview as! EditorView).insert(text: text, at: selection.startIndex, in: self)
 		self.selection = (selection.startIndex + insertedWordGroups)..<(selection.endIndex + insertedWordGroups)
 	}
 
@@ -377,7 +375,7 @@ extension EditorContentView: UIKeyInput {
 			return
 		}
 
-		delegate?.editorView(superview as! EditorView, didDeleteAt: selection.startIndex - 1)
+		(superview as! EditorView).delete(at: selection.startIndex - 1, in: self)
 		self.selection = (selection.startIndex - 1)..<(selection.startIndex - 1)
 	}
 

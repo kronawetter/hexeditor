@@ -19,28 +19,23 @@ struct UnicodeAtomicWordGroup<Codec: ExtendedUnicodeCodec, Endianness: _ByteOrde
 		var currentIndex = startIndex
 		
 		loop: while currentIndex < rangeOfInterest.upperBound {
-			let group: Self?
-
 			switch parser.parseScalar(from: &iterator) {
 			case .emptyInput:
 				break loop
 				
 			case .error(length: let length):
 				if rangeOfInterest.contains(currentIndex) {
-					group = UnicodeAtomicWordGroup(range: currentIndex..<(currentIndex + length), value: "�")
-				} else {
-					group = nil
+					let group = UnicodeAtomicWordGroup(range: currentIndex..<(currentIndex + length), value: "�")
+					manager.insert(group)
 				}
+				currentIndex += length
 
 			case .valid(let result):
 				let scalar = Codec.decode(result)
 				let length = Codec.width(scalar)
 				let string = scalar.properties.isWhitespace ? "" : String(scalar)
-
-				group = UnicodeAtomicWordGroup(range: currentIndex..<(currentIndex + length), value: string)
-			}
-
-			if let group = group {
+				
+				let group = UnicodeAtomicWordGroup(range: currentIndex..<(currentIndex + length), value: string)
 				manager.insert(group)
 				currentIndex += group.size
 			}

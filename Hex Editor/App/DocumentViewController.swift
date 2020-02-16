@@ -55,9 +55,7 @@ class DocumentViewController: UIViewController {
 		super.loadView()
 
 		view.addSubview(editorView)
-		editorView.delegate = self
-		editorView.hexDelegate = self
-		editorView.textDelegate = self
+		editorView.editorDelegate = self
 		editorView.translatesAutoresizingMaskIntoConstraints = false
 		editorView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
 		editorView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
@@ -65,7 +63,6 @@ class DocumentViewController: UIViewController {
 		editorView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
 
 		navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Files", style: .plain, target: self, action: #selector(close))
-		//navigationItem.rightBarButtonItems = [UIBarButtonItem(title: "Remove Data", style: .plain, target: self, action: #selector(removeData)), UIBarButtonItem(title: "Insert Data", style: .plain, target: self, action: #selector(insertData))]
 	}
 
 	override func viewWillAppear(_ animated: Bool) {
@@ -86,22 +83,6 @@ class DocumentViewController: UIViewController {
 	@objc func close() {
 		dismiss(animated: true, completion: nil)
 	}
-
-	/*@objc func insertData() {
-		for _ in 0..<100 {
-			let offset = Int.random(in: 0..<(file!.size + 1))
-			_ = file?.insert("\(offset)", at: offset)
-		}
-		editorView.hexDataSource = file
-	}
-
-	@objc func removeData() {
-		for _ in 0..<file!.size {
-			let offset = Int.random(in: 0..<file!.size)
-			_ = file?.remove(at: offset)
-		}
-		editorView.hexDataSource = file
-	}*/
 
 	// MARK: Keyboard Events
 
@@ -124,22 +105,8 @@ class DocumentViewController: UIViewController {
 	}
 }
 
-extension DocumentViewController: UIScrollViewDelegate {
-	func scrollViewDidScroll(_ scrollView: UIScrollView) {
-		let visibleRange = editorView.offsetRangeOfVisibleWordGroups
-		
-		if visibleRange.lowerBound < currentAtomicWordGroupManagerRange.lowerBound || visibleRange.upperBound >= currentAtomicWordGroupManagerRange.upperBound {
-			// TODO: Make editor data flow work better with copy-on-write behavior and remove these ugly workarounds
-			atomicWordGroupManager = AtomicWordGroupManager(dataSource: file!)
-			currentAtomicWordGroupManagerRange = max(0, visibleRange.lowerBound - 1000)..<min(file!.totalWordCount, visibleRange.upperBound + 1000)
-			atomicWordGroupManager?.create(for: currentAtomicWordGroupManagerRange)
-			editorView.textDataSource = atomicWordGroupManager
-		}
-	}
-}
-
 extension DocumentViewController: EditorViewDelegate {
-	func editorView(_ editorView: EditorView, didInsert text: String, at offset: Int) -> Int {
+	func editorView(_ editorView: EditorView, didInsert text: String, at offset: Int, in contentView: EditorView.ContentView) -> Int {
 		let data = Data(text.utf8)
 		file!.insert(data, at: offset)
 
@@ -153,7 +120,7 @@ extension DocumentViewController: EditorViewDelegate {
 		return data.count
 	}
 
-	func editorView(_ editorView: EditorView, didDeleteAt offset: Int) {
+	func editorView(_ editorView: EditorView, didDeleteAt offset: Int, in contentView: EditorView.ContentView) {
 		file!.remove(at: offset)
 
 		// TODO: Make editor data flow work better with copy-on-write behavior and remove these ugly workarounds
@@ -162,5 +129,17 @@ extension DocumentViewController: EditorViewDelegate {
 		atomicWordGroupManager?.create(for: currentAtomicWordGroupManagerRange)
 		editorView.hexDataSource = file
 		editorView.textDataSource = atomicWordGroupManager
+	}
+
+	func editorView(_ editorView: EditorView, didChangeVisibleWordGroupTo range: Range<Int>) {
+		let missingWordGroupsAtBegin = max(0, currentAtomicWordGroupManagerRange.lowerBound - range.lowerBound)
+		let missingWordGroupsAtEnd = max(0, range.upperBound - currentAtomicWordGroupManagerRange.upperBound)
+
+		if missingWordGroupsAtBegin > 0 || missingWordGroupsAtEnd > 0 {
+			atomicWordGroupManager = AtomicWordGroupManager(dataSource: file!)
+			atomicWordGroupManager!.create(for: range.lowerBound..<range.upperBound)
+			currentAtomicWordGroupManagerRange = range.lowerBound..<range.upperBound
+			editorView.textDataSource = atomicWordGroupManager
+		}
 	}
 }

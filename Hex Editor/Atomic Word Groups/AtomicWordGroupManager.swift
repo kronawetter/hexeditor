@@ -34,11 +34,12 @@ struct AtomicWordGroupManager<T: AtomicWordGroup> {
 	
 	mutating func insert(_ group: T) {
 		let element = Element(value: group)
-		groups.insert(element, offset: group.range.startIndex)
+		if groups[group.range.startIndex] == nil {
+			groups.insert(element, offset: group.range.startIndex)
+		}
 	}
 	
 	mutating func create(for rangeOfInterest: Range<T.Index>) {
-		groups.clear()
 		T.create(for: rangeOfInterest, in: &self)
 	}
 	

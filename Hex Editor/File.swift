@@ -8,11 +8,42 @@
 
 import Foundation
 
+class FileContents {
+	let fileHandle: FileHandle
+	var cache = Data()
+	var rangeInCache = 0..<0
+
+	init(fileHandle: FileHandle) {
+		self.fileHandle = fileHandle
+	}
+
+	func invalidateCache() {
+		cache = Data()
+		rangeInCache = 0..<0
+	}
+
+	subscript(_ range: Range<Int>) -> Data {
+		get {
+			if range.lowerBound < rangeInCache.lowerBound || range.upperBound > rangeInCache.upperBound {
+				let offset = max(0, range.lowerBound - 10000)
+				try! fileHandle.seek(toOffset: UInt64(offset))
+
+				cache = fileHandle.readData(ofLength: range.upperBound + 10000)
+				rangeInCache = offset..<(offset + cache.count)
+			}
+
+			return cache[range - rangeInCache.lowerBound]
+		}
+	}
+}
+
 struct File {
+	var fileCache = Data()
+
 	struct FileSegment: OffsetTreeElement {
 		typealias Value = Data
 
-		let fileHandle: FileHandle
+		let fileContents: FileContents
 		var rangeInFile: Range<Int>
 
 		var size: Int {
@@ -21,15 +52,7 @@ struct File {
 
 		func value(for range: Range<Int>) -> Value? { // range relative to rangeInFile.startIndex (kinda)
 			precondition(range.endIndex <= rangeInFile.count)
-			let offset = UInt64(rangeInFile.startIndex + range.startIndex)
-
-			do {
-				try fileHandle.seek(toOffset: offset)
-			} catch _ {
-				return nil
-			}
-
-			return fileHandle.readData(ofLength: range.count)
+			return fileContents[range + rangeInFile.startIndex]
 		}
 
 		func replace(in range: Range<Int>, with value: Value) -> Bool {
@@ -43,7 +66,7 @@ struct File {
 			let rangeInFileOfSecondSegment = (rangeInFile.startIndex + offset)..<rangeInFile.endIndex
 
 			rangeInFile = rangeInFileOfFirstSegment
-			return Self(fileHandle: fileHandle, rangeInFile:rangeInFileOfSecondSegment)
+			return Self(fileContents: fileContents, rangeInFile:rangeInFileOfSecondSegment)
 		}
 	}
 
@@ -74,15 +97,16 @@ struct File {
 	let url: URL
 	var size: Int
 	var contents = OffsetTree<Data>()
-	let fileHandle: FileHandle
+	let fileContents: FileContents
 
 	init(url: URL) throws {
 		self.url = url
 
 		size = (try url.resourceValues(forKeys: [.fileSizeKey])).fileSize!
-		fileHandle = try FileHandle(forUpdating: url)
+		let fileHandle = try FileHandle(forUpdating: url)
+		fileContents = FileContents(fileHandle: fileHandle)
 
-		let segment = FileSegment(fileHandle: fileHandle, rangeInFile: 0..<size)
+		let segment = FileSegment(fileContents: fileContents, rangeInFile: 0..<size)
 		contents.insert(segment, offset: 0)
 	}
 

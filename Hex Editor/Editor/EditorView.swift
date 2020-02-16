@@ -9,6 +9,11 @@
 import UIKit
 
 class EditorView: UIScrollView {
+	enum ContentView {
+		case hex
+		case text
+	}
+
 	private let hexContentView = EditorContentView()
 	private let textContentView = EditorContentView()
 	private let separatorViews = [UIView(), UIView(), UIView()]
@@ -38,23 +43,7 @@ class EditorView: UIScrollView {
 		}
 	}
 
-	var hexDelegate: EditorViewDelegate? {
-		get {
-			return hexContentView.delegate
-		}
-		set {
-			hexContentView.delegate = newValue
-		}
-	}
-
-	var textDelegate: EditorViewDelegate? {
-		get {
-			return textContentView.delegate
-		}
-		set {
-			textContentView.delegate = newValue
-		}
-	}
+	var editorDelegate: EditorViewDelegate? = nil
 
 	var bytesPerLine = 16 {
 		didSet {
@@ -116,11 +105,38 @@ class EditorView: UIScrollView {
 
 		super.layoutSubviews()
 
+		editorDelegate?.editorView(self, didChangeVisibleWordGroupTo: offsetRangeOfVisibleWordGroups)
 		// TODO: align lines
 	}
 
+	func insert(text: String, at offset: Int, in contentView: EditorContentView) -> Int {
+		editorDelegate?.editorView(self, didInsert: text, at: offset, in: contentViewEnumValue(for: contentView)) ?? 0
+	}
+
+	func delete(at offset: Int, in contentView: EditorContentView) {
+		editorDelegate?.editorView(self, didDeleteAt: offset, in: contentViewEnumValue(for: contentView))
+	}
+
+	func contentViewEnumValue(for contentView: EditorContentView) -> ContentView {
+		if contentView === hexContentView {
+			return .hex
+		} else if contentView === textContentView {
+			return .text
+		} else {
+			preconditionFailure()
+		}
+	}
+
 	var offsetRangeOfVisibleWordGroups: Range<Int> {
-		let ranges = contentViews.map { $0.offsetRangeOfVisibleWordGroups }
+		let ranges = contentViews.compactMap { view -> Range<Int>? in
+			let range = view.offsetRangeOfVisibleWordGroups
+
+			if range.isEmpty {
+				return nil
+			} else {
+				return range
+			}
+		}
 
 		return (ranges.map { $0.lowerBound }.min() ?? 0)..<(ranges.map { $0.upperBound }.max() ?? 0)
 	}
