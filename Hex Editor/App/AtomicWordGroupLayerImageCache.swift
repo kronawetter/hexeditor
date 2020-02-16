@@ -42,15 +42,15 @@ struct AtomicWordGroupLayerImageCache {
 		let height = max(bounds.height, 1.0)
 
 		let scale = UIScreen.main.scale
-		let context = CGContext(data: nil, width: Int(width * scale), height: Int(height * scale), bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGImageAlphaInfo.none.rawValue)!
+		let context = CGContext(data: nil, width: Int(width * scale), height: Int(height * scale), bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.noneSkipFirst.rawValue)!
 		context.scaleBy(x: scale, y: scale)
 
 		context.setFillColor(UIColor.systemBackground.cgColor)
 		context.fill(CGRect(x: .zero, y: .zero, width: width, height: height))
 
+		context.textPosition.y = -bounds.minY
 		CTLineDraw(line, context)
 
 		return context.makeImage()!
-
 	}
 }
