@@ -107,8 +107,6 @@ class EditorView: UIScrollView {
 
 		contentViewLayoutFinishedCounter = 0
 		super.layoutSubviews()
-
-		// TODO: align lines
 	}
 
 	func insert(text: String, at offset: Int, in contentView: EditorContentView) -> Int {
@@ -122,8 +120,14 @@ class EditorView: UIScrollView {
 	func contentViewDidLayout(_ contentView: EditorContentView) {
 		contentViewLayoutFinishedCounter += 1
 		if contentViewLayoutFinishedCounter == contentViews.count {
+			// Not needed for now as Emojis have same height as regular characters
+			// alignVisibleWordGroupsInContentViews()
 			editorDelegate?.editorView(self, didChangeVisibleWordGroupTo: offsetRangeOfVisibleWordGroups)
 		}
+	}
+
+	func alignVisibleWordGroupsInContentViews() {
+		hexContentView.alignVisibleAtomicWordGroup(to: textContentView.rectsOfVisibleAtomicWordGroups)
 	}
 
 	func contentViewEnumValue(for contentView: EditorContentView) -> ContentView {
@@ -138,7 +142,8 @@ class EditorView: UIScrollView {
 
 	var offsetRangeOfVisibleWordGroups: Range<Int> {
 		let ranges = contentViews.compactMap { view -> Range<Int>? in
-			let range = view.offsetRangeOfVisibleWordGroups
+			let offsets = view.rectsOfVisibleAtomicWordGroups.keys
+			let range = (offsets.min() ?? 0)..<(offsets.max() ?? 0)
 
 			if range.isEmpty {
 				return nil

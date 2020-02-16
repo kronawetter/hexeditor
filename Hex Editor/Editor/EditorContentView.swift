@@ -207,7 +207,8 @@ class EditorContentView: UIView {
 		}
 
 		let scale = UIScreen.main.scale
-		let lineHeight = groups.map { CGFloat($0.image.height) / scale }.max()!
+		// TODO: No need for dynamic line height for now as Emojis have same height as regular characters
+		let lineHeight = estimatedLineHeight - lineSpacing//groups.map { CGFloat($0.image.height) / scale }.max()!
 		
 		let offsetFromYOrigin: CGFloat
 		switch reference {
@@ -219,24 +220,27 @@ class EditorContentView: UIView {
 
 		var wordOffsetInLine = 0
 		for group in groups {
+			let globalOffset = offset + wordOffsetInLine
+			let remainingSizeInLine = wordsPerLine - wordOffsetInLine
+			let offsetWithinGroup = group.offset
+			let remainingSizeOfGroup = group.totalSize - offsetWithinGroup
+			let displayedRemainingSizeOfGroup = min(remainingSizeInLine, remainingSizeOfGroup)
+
 			func contentsRect() -> CGRect {
 				// TODO: Does not consider groups spanning across multiple word spacing groups
-				let remainingSizeInLine = wordsPerLine - wordOffsetInLine
-				let offsetOfGroup = group.offset
-
 				let widthOfImage = CGFloat(group.image.width) / scale
 				let totalWordsOccupiedByImage = widthOfImage / widthPerWord
 
-				let remainingWordsOccupiedByImage = max(0.0, totalWordsOccupiedByImage - CGFloat(offsetOfGroup))
+				let remainingWordsOccupiedByImage = max(0.0, totalWordsOccupiedByImage - CGFloat(offsetWithinGroup))
 				let displayedRemainingWordsOccupiedByImage = min(CGFloat(remainingSizeInLine), remainingWordsOccupiedByImage)
 
-				let relativeOffsetInGroup = CGFloat(offsetOfGroup) / CGFloat(totalWordsOccupiedByImage)
+				let relativeOffsetInGroup = CGFloat(offsetWithinGroup) / CGFloat(totalWordsOccupiedByImage)
 				let relativeDisplayedSizeOfGroup = CGFloat(displayedRemainingWordsOccupiedByImage) / CGFloat(totalWordsOccupiedByImage)
 
 				return CGRect(x: relativeOffsetInGroup, y: 0.0, width: relativeDisplayedSizeOfGroup, height: 1.0)
 			}
 
-			let sublayer = EditorAtomicWordGroupLayer(wordOffset: offset + wordOffsetInLine)
+			let sublayer = EditorAtomicWordGroupLayer(wordOffset: globalOffset..<(globalOffset + displayedRemainingSizeOfGroup))
 			sublayer.contents = group.image
 			sublayer.contentsRect = contentsRect()
 			sublayer.contentsGravity = .topLeft
@@ -252,11 +256,11 @@ class EditorContentView: UIView {
 
 	private func addMissingWordGroupSublayersAtBegin() {
 		while true {
-			guard let firstSublayer = layer.sublayers?.compactMap({ $0 as? EditorAtomicWordGroupLayer }).min(by: { $0.wordOffset < $1.wordOffset }) else {
+			guard let firstSublayer = layer.sublayers?.compactMap({ $0 as? EditorAtomicWordGroupLayer }).min(by: { $0.wordOffset.lowerBound < $1.wordOffset.lowerBound }) else {
 				break
 			}
 
-			let offset = ((firstSublayer.wordOffset / wordsPerLine) - 1) * wordsPerLine
+			let offset = ((firstSublayer.wordOffset.lowerBound / wordsPerLine) - 1) * wordsPerLine
 			let origin = CGPoint(x: contentInsets.left, y: firstSublayer.frame.minY)
 
 			if offset >= 0, origin.y > visibleRect.minY {
@@ -271,8 +275,8 @@ class EditorContentView: UIView {
 		while true {
 			let offset: Int
 			let origin: CGPoint
-			if let lastSublayer = layer.sublayers?.compactMap({ $0 as? EditorAtomicWordGroupLayer }).max(by: { $0.wordOffset < $1.wordOffset }) {
-				offset = ((lastSublayer.wordOffset / wordsPerLine) + 1) * wordsPerLine
+			if let lastSublayer = layer.sublayers?.compactMap({ $0 as? EditorAtomicWordGroupLayer }).max(by: { $0.wordOffset.lowerBound < $1.wordOffset.lowerBound }) { // TODO: Check if upper bound should be used
+				offset = ((lastSublayer.wordOffset.lowerBound / wordsPerLine) + 1) * wordsPerLine
 				origin = CGPoint(x: contentInsets.left, y: lastSublayer.frame.maxY) // TODO: Use actual line height
 			} else {
 				(offset, origin) = estimatedWordOffset(for: visibleRect.origin)
@@ -301,7 +305,7 @@ class EditorContentView: UIView {
 			return nil
 		}
 
-		if let wordGroup = dataSource.atomicWordGroup(at: offset), let sublayer = sublayers.first(where: { ($0 as? EditorAtomicWordGroupLayer)?.wordOffset == wordGroup.range.startIndex }) {
+		if let wordGroup = dataSource.atomicWordGroup(at: offset), let sublayer = sublayers.first(where: { ($0 as? EditorAtomicWordGroupLayer)?.wordOffset.lowerBound == wordGroup.range.startIndex }) {
 			return sublayer.frame
 		} else {
 			return estimatedFrame(for: offset)
@@ -350,13 +354,32 @@ class EditorContentView: UIView {
 		return [firstRect, middleRect, lastRect].compactMap { $0 }
 	}
 
-	var offsetRangeOfVisibleWordGroups: Range<Int> {
+	var rectsOfVisibleAtomicWordGroups: [Int : (y: CGFloat, height: CGFloat)] {
 		guard let sublayers = layer.sublayers else {
-			return 0..<0
+			return [:]
 		}
 
-		let offsets = sublayers.compactMap { ($0 as? EditorAtomicWordGroupLayer)?.wordOffset }
-		return (offsets.min() ?? 0)..<(offsets.max() ?? 0)
+		let atomicWordGroupLayers = sublayers.compactMap { $0 as? EditorAtomicWordGroupLayer }
+		return atomicWordGroupLayers.reduce(into: [:]) { (result, layer) in
+			for index in layer.wordOffset {
+				result[index] = (y: layer.frame.origin.y, height: layer.frame.size.height)
+			}
+		}
+	}
+
+	func alignVisibleAtomicWordGroup(to reference: [Int : (y: CGFloat, height: CGFloat)]) {
+		guard let sublayers = layer.sublayers else {
+			return
+		}
+
+		for sublayer in sublayers.compactMap({ $0 as? EditorAtomicWordGroupLayer }) {
+			guard let (newY, newHeight) = reference[sublayer.wordOffset.lowerBound] else {
+				continue
+			}
+
+			sublayer.frame.origin.y = newY
+			sublayer.frame.size.height = newHeight
+		}
 	}
 
 	/*override func sizeThatFits(_ size: CGSize) -> CGSize {
@@ -823,7 +846,7 @@ extension EditorContentView: UITextInput {
 			return TextPosition(0)
 		}
 
-		return TextPosition(wordGroupLayer.wordOffset)
+		return TextPosition(wordGroupLayer.wordOffset.lowerBound)
 	}
 
 	func closestPosition(to point: CGPoint, within range: UITextRange) -> UITextPosition? {

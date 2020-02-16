@@ -9,9 +9,15 @@
 import QuartzCore
 
 class EditorAtomicWordGroupLayer: CALayer {
-	let wordOffset: Int
+	let wordOffset: Range<Int>
 
-	init(wordOffset: Int) {
+	override init(layer: Any) {
+		self.wordOffset = (layer as! Self).wordOffset
+
+		super.init(layer: layer)
+	}
+
+	init(wordOffset: Range<Int>) {
 		self.wordOffset = wordOffset
 
 		super.init()
