@@ -219,8 +219,26 @@ class EditorContentView: UIView {
 
 		var wordOffsetInLine = 0
 		for group in groups {
+			func contentsRect() -> CGRect {
+				// TODO: Does not consider groups spanning across multiple word spacing groups
+				let remainingSizeInLine = wordsPerLine - wordOffsetInLine
+				let offsetOfGroup = group.offset
+
+				let widthOfImage = CGFloat(group.image.width) / scale
+				let totalWordsOccupiedByImage = widthOfImage / widthPerWord
+
+				let remainingWordsOccupiedByImage = max(0.0, totalWordsOccupiedByImage - CGFloat(offsetOfGroup))
+				let displayedRemainingWordsOccupiedByImage = min(CGFloat(remainingSizeInLine), remainingWordsOccupiedByImage)
+
+				let relativeOffsetInGroup = CGFloat(offsetOfGroup) / CGFloat(totalWordsOccupiedByImage)
+				let relativeDisplayedSizeOfGroup = CGFloat(displayedRemainingWordsOccupiedByImage) / CGFloat(totalWordsOccupiedByImage)
+
+				return CGRect(x: relativeOffsetInGroup, y: 0.0, width: relativeDisplayedSizeOfGroup, height: 1.0)
+			}
+
 			let sublayer = EditorAtomicWordGroupLayer(wordOffset: offset + wordOffsetInLine)
 			sublayer.contents = group.image
+			sublayer.contentsRect = contentsRect()
 			sublayer.contentsGravity = .topLeft
 			sublayer.contentsScale = scale
 			sublayer.isOpaque = true
