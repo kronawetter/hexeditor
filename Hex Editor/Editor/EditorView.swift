@@ -162,13 +162,13 @@ class EditorView: UIScrollView {
 	var offsetRangeOfVisibleWordGroups: Range<Int> {
 		let ranges = contentViews.compactMap { view -> Range<Int>? in
 			let offsets = view.rectsOfVisibleAtomicWordGroups.keys
-			let range = (offsets.min() ?? 0)..<(offsets.max() ?? 0)
-
-			if range.isEmpty {
-				return nil
-			} else {
-				return range
+			if let min = offsets.min(), let max = offsets.max() {
+				let range = min..<(max + 1)
+				if !range.isEmpty {
+					return range
+				}
 			}
+			return nil
 		}
 
 		return (ranges.map { $0.lowerBound }.min() ?? 0)..<(ranges.map { $0.upperBound }.max() ?? 0)
