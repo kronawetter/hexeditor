@@ -12,13 +12,19 @@ struct AtomicWordGroupLayerImageCache {
 	private struct LayerMeta: Hashable {
 		let text: String
 		let size: Int
+		let font: UIFont
+		let foregroundColor: UIColor
+		let backgroundColor: UIColor
+
+		var attributedStringAttributes: [NSAttributedString.Key : NSObject] {
+			[.foregroundColor : foregroundColor, .font : font]
+		}
 	}
 
 	private var cache: [LayerMeta: CGImage] = [:]
-	private static let textAttributes: [NSAttributedString.Key : NSObject] = [.foregroundColor : UIColor.label, .font : UIFont.monospacedSystemFont(ofSize: 14.0, weight: .regular)]
 
-	mutating func image(text: String, size: Int) -> CGImage {
-		let meta = LayerMeta(text: text, size: size)
+	mutating func image(text: String, size: Int, font: UIFont, foregroundColor: UIColor, backgroundColor: UIColor) -> CGImage {
+		let meta = LayerMeta(text: text, size: size, font: font, foregroundColor: foregroundColor, backgroundColor: backgroundColor)
 		return image(for: meta)
 	}
 
@@ -34,7 +40,7 @@ struct AtomicWordGroupLayerImageCache {
 	}
 
 	private func generateImage(for meta: LayerMeta) -> CGImage {
-		let attributedString = NSAttributedString(string: meta.text, attributes: Self.textAttributes)
+		let attributedString = NSAttributedString(string: meta.text, attributes: meta.attributedStringAttributes)
 		let line = CTLineCreateWithAttributedString(attributedString)
 		let bounds = CTLineGetBoundsWithOptions(line, [])
 
@@ -45,7 +51,7 @@ struct AtomicWordGroupLayerImageCache {
 		let context = CGContext(data: nil, width: Int(width * scale), height: Int(height * scale), bitsPerComponent: 8, bytesPerRow: 0, space: CGColorSpaceCreateDeviceRGB(), bitmapInfo: CGImageAlphaInfo.noneSkipFirst.rawValue)!
 		context.scaleBy(x: scale, y: scale)
 
-		context.setFillColor(UIColor.systemBackground.cgColor)
+		context.setFillColor(meta.backgroundColor.cgColor)
 		context.fill(CGRect(x: .zero, y: .zero, width: width, height: height))
 
 		context.textPosition.y = -bounds.minY

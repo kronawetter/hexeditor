@@ -14,13 +14,14 @@ class EditorView: UIScrollView {
 		case text
 	}
 
+	private let lineNumberContentView = EditorContentView()
 	private let hexContentView = EditorContentView()
 	private let textContentView = EditorContentView()
 	private let separatorViews = [UIView(), UIView(), UIView()]
 	private let backgroundView = UIView()
 
 	private var contentViews: [EditorContentView] {
-		return [hexContentView, textContentView]
+		return [lineNumberContentView, hexContentView, textContentView]
 	}
 
 	var hexDataSource: EditorViewDataSource? {
@@ -29,6 +30,8 @@ class EditorView: UIScrollView {
 		}
 		set {
 			hexContentView.dataSource = newValue
+			lineNumberDataSource.totalWordCount = newValue?.totalWordCount ?? 0
+			lineNumberContentView.dataSource = lineNumberDataSource
 			setNeedsLayout()
 		}
 	}
@@ -43,10 +46,14 @@ class EditorView: UIScrollView {
 		}
 	}
 
+	private var lineNumberDataSource = LineNumberDataSource(totalWordCount: 0, wordsPerLine: 16)
+
 	var editorDelegate: EditorViewDelegate? = nil
 
 	var bytesPerLine = 16 {
 		didSet {
+			lineNumberDataSource.wordsPerLine = bytesPerLine
+			lineNumberContentView.dataSource = lineNumberDataSource
 			setNeedsLayout()
 		}
 	}
@@ -59,7 +66,13 @@ class EditorView: UIScrollView {
 		backgroundView.backgroundColor = .systemBackground
 		addSubview(backgroundView)
 
+		lineNumberContentView.editable = false
+		lineNumberContentView.wordsPerWordSpacingGroup = bytesPerLine
+		lineNumberContentView.textColor = .secondaryLabel
+		lineNumberContentView.backgroundColor = .secondarySystemBackground
+
 		textContentView.wordsPerWordSpacingGroup = bytesPerLine
+
 		contentViews.forEach { addSubview($0) }
 
 		separatorViews.forEach { $0.backgroundColor = .separator }
@@ -69,36 +82,42 @@ class EditorView: UIScrollView {
 	private var contentViewLayoutFinishedCounter = 0
 
 	override func layoutSubviews() {
-		assert(separatorViews.count == contentViews.count + 1)
+		assert(separatorViews.count == contentViews.count)
 
 		let separatorViewSize = CGSize(width: 1.0 / UIScreen.main.scale, height: bounds.height)
+		var separatorViewsIterator = separatorViews.makeIterator()
 
 		let totalContentWidth = contentViews.map { $0.size(for: bytesPerLine).width }.reduce(.zero) { $0 + $1 } + separatorViewSize.width * CGFloat(separatorViews.count)
 
-		var origin = CGPoint(x: max((bounds.width - totalContentWidth) / 2.0, .zero), y: .zero)
-		var separatorViewsIterator = separatorViews.makeIterator()
+		let firstContentViewWidth = contentViews.first?.size(for: bytesPerLine).width ?? .zero
+		let backgroundWidth = totalContentWidth - firstContentViewWidth
 
-		backgroundView.frame.origin = CGPoint(x: origin.x, y: contentOffset.y)
-		backgroundView.frame.size = CGSize(width: totalContentWidth, height: bounds.height)
+		var contentOrigin = CGPoint(x: max(((bounds.width - backgroundWidth) / 2.0) - firstContentViewWidth, .zero), y: .zero)
+		let backgroundOrigin = CGPoint(x: contentOrigin.x + firstContentViewWidth, y: contentOrigin.y)
+
+		backgroundView.frame.origin = CGPoint(x: backgroundOrigin.x, y: contentOffset.y)
+		backgroundView.frame.size = CGSize(width: backgroundWidth, height: bounds.height)
 
 		func layoutNextSeparator() {
 			let separator = separatorViewsIterator.next()!
 
-			separator.frame.origin = CGPoint(x: origin.x, y: contentOffset.y)
+			separator.frame.origin = CGPoint(x: contentOrigin.x, y: contentOffset.y)
 			separator.frame.size = separatorViewSize
 
-			origin.x = separator.frame.maxX
+			contentOrigin.x = separator.frame.maxX
 		}
 
-		for contentView in contentViews {
-			layoutNextSeparator()
+		for (index, contentView) in contentViews.enumerated() {
+			if index != contentViews.startIndex {
+				layoutNextSeparator()
+			}
 
-			contentView.frame.origin = origin
+			contentView.frame.origin = contentOrigin
 			contentView.frame.size = contentView.size(for: bytesPerLine)
 
 			contentView.visibleRect = CGRect(x: .zero, y: contentOffset.y, width: contentView.bounds.width, height: bounds.height)
 
-			origin.x = contentView.frame.maxX
+			contentOrigin.x = contentView.frame.maxX
 		}
 
 		layoutNextSeparator()

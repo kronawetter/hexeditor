@@ -16,6 +16,15 @@ class EditorContentView: UIView {
 		}
 	}
 
+	var textColor = UIColor.label {
+		didSet {
+			removeSublayers()
+			setNeedsLayout()
+		}
+	}
+
+	var editable = true
+
 	var dataSource: EditorViewDataSource? = nil {
 		didSet {
 			removeSublayers()
@@ -47,8 +56,15 @@ class EditorContentView: UIView {
 	}
 
 	private var widthPerWord: CGFloat {
-		// TODO: Get width of characters
-		return round(font.pointSize * 1.25)
+		if let dataSource = dataSource, dataSource is EditorView.LineNumberDataSource, let lastWordGroup = dataSource.atomicWordGroup(at: dataSource.totalWordCount) {
+			// TODO: Make slightly prettier
+			let lastWordGroupImage = cache.image(text: lastWordGroup.text, size: lastWordGroup.range.count, font: font, foregroundColor: textColor, backgroundColor: backgroundColor ?? .white)
+			let requiredWidth = CGFloat(lastWordGroupImage.width) / UIScreen.main.scale
+			return round(requiredWidth / CGFloat(wordsPerWordSpacingGroup))
+		} else {
+			// TODO: Get width of characters
+			return round(font.pointSize * 1.25)
+		}
 	}
 
 	private var wordGroupSpacingWidth: CGFloat {
@@ -200,7 +216,7 @@ class EditorContentView: UIView {
 
 			let offset1 = currentOffset - wordGroup.range.lowerBound
 			let totalSize = wordGroup.range.count // TODO: groups.map { $0.totalSize }.sum() can be greater than upperBound - lowerBound
-			let image = cache.image(text: wordGroup.text, size: totalSize)
+			let image = cache.image(text: wordGroup.text, size: totalSize, font: font, foregroundColor: textColor, backgroundColor: backgroundColor ?? .white)
 			groups.append((offset: offset1, totalSize: totalSize, image: image))
 
 			currentOffset += totalSize - offset1
@@ -243,7 +259,7 @@ class EditorContentView: UIView {
 			let sublayer = EditorAtomicWordGroupLayer(wordOffset: globalOffset..<(globalOffset + displayedRemainingSizeOfGroup))
 			sublayer.contents = group.image
 			sublayer.contentsRect = contentsRect()
-			sublayer.contentsGravity = .topLeft
+			sublayer.contentsGravity = dataSource is EditorView.LineNumberDataSource ? .topRight : .topLeft
 			sublayer.contentsScale = scale
 			sublayer.isOpaque = true
 			sublayer.frame = CGRect(x: origin.x + CGFloat(wordOffsetInLine) * widthPerWord + CGFloat(wordOffsetInLine / wordsPerWordSpacingGroup) * wordGroupSpacingWidth, y: origin.y + offsetFromYOrigin, width: CGFloat(group.totalSize - group.offset) * widthPerWord, height: lineHeight) // TODO: Width is incorrect if a multi-word group spans across multiple word spacing groups
@@ -291,7 +307,7 @@ class EditorContentView: UIView {
 	}
 
 	override var canBecomeFirstResponder: Bool {
-		true
+		editable
 	}
 
 	@objc func tap(sender: UITapGestureRecognizer) {

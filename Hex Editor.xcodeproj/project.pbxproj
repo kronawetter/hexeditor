@@ -27,6 +27,7 @@
 		F48BC76023550998006338F6 /* ExtendedUnicodeCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48BC75F23550998006338F6 /* ExtendedUnicodeCodec.swift */; };
 		F492B1B8235F563000CCE9E5 /* OffsetTree.swift in Sources */ = {isa = PBXBuildFile; fileRef = F492B1B7235F563000CCE9E5 /* OffsetTree.swift */; };
 		F492B1BA235F564B00CCE9E5 /* OffsetTreeNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = F492B1B9235F564B00CCE9E5 /* OffsetTreeNode.swift */; };
+		F4AE46AF23F9C3EA0037C987 /* EditorViewLineNumberDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4AE46AE23F9C3EA0037C987 /* EditorViewLineNumberDataSource.swift */; };
 		F4DF9C8E2354E33100ECA3C9 /* FileAccessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4DF9C8D2354E33100ECA3C9 /* FileAccessor.swift */; };
 		F4F162C22361C76600337EAA /* DocumentViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4F162C12361C76600337EAA /* DocumentViewController.swift */; };
 		F4F1D59523EF239E00C9CA4B /* OffsetTreeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4F1D59423EF239E00C9CA4B /* OffsetTreeTests.swift */; };
@@ -70,6 +71,7 @@
 		F48BC75F23550998006338F6 /* ExtendedUnicodeCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtendedUnicodeCodec.swift; sourceTree = "<group>"; };
 		F492B1B7235F563000CCE9E5 /* OffsetTree.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OffsetTree.swift; sourceTree = "<group>"; };
 		F492B1B9235F564B00CCE9E5 /* OffsetTreeNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OffsetTreeNode.swift; sourceTree = "<group>"; };
+		F4AE46AE23F9C3EA0037C987 /* EditorViewLineNumberDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorViewLineNumberDataSource.swift; sourceTree = "<group>"; };
 		F4DF9C8D2354E33100ECA3C9 /* FileAccessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileAccessor.swift; sourceTree = "<group>"; };
 		F4F162C12361C76600337EAA /* DocumentViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentViewController.swift; sourceTree = "<group>"; };
 		F4F1D59423EF239E00C9CA4B /* OffsetTreeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OffsetTreeTests.swift; sourceTree = "<group>"; };
@@ -176,6 +178,7 @@
 				F48073AD2380D4A2006DBBFA /* EditorAtomicWordGroupLayer.swift */,
 				F48073B02380DB7F006DBBFA /* EditorViewDataSource.swift */,
 				F47C28D023F8916700259EC3 /* EditorViewDelegate.swift */,
+				F4AE46AE23F9C3EA0037C987 /* EditorViewLineNumberDataSource.swift */,
 			);
 			path = Editor;
 			sourceTree = "<group>";
@@ -308,6 +311,7 @@
 				F4169FC12354B9BE00CF0F2C /* AtomicWordGroup.swift in Sources */,
 				F47D251E2385CAA600F75663 /* File.swift in Sources */,
 				F488B1E6236CEC7800C2170A /* EditorContentView.swift in Sources */,
+				F4AE46AF23F9C3EA0037C987 /* EditorViewLineNumberDataSource.swift in Sources */,
 				F4169F9E2354B41600CF0F2C /* SceneDelegate.swift in Sources */,
 				F48003FC23735ED200548417 /* EditorView.swift in Sources */,
 			);
