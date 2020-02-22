@@ -478,35 +478,53 @@ class EditorContentView: UIView {
 	}*/
 }
 
-extension EditorContentView: UIKeyInput {
-	var hasText: Bool {
-		true
+extension EditorContentView: UITextInputTraits {
+	var keyboardType: UIKeyboardType {
+		get {
+			.default
+		}
+		set {
+
+		}
 	}
 
-	func insertText(_ text: String) {
-		guard let selection = selection else {
-			return
+	var keyboardAppearance: UIKeyboardAppearance {
+		get {
+			.default
 		}
+		set {
 
-		if editingMode == .overwrite, selection.startIndex < dataSource?.totalWordCount ?? 0 {
-			(superview as! EditorView).delete(at: selection.startIndex, in: self)
-			self.selection = (selection.startIndex - 1)..<(selection.endIndex - 1)
 		}
-
-		let insertedWordGroups = (superview as! EditorView).insert(text: text, at: selection.startIndex, in: self)
-		self.selection = (selection.startIndex + insertedWordGroups)..<(selection.endIndex + insertedWordGroups)
 	}
 
-	func deleteBackward() {
-		guard let selection = selection, selection.startIndex > 0, editingMode == .insert else {
-			return
+	var returnKeyType: UIReturnKeyType {
+		get {
+			.default
 		}
+		set {
 
-		(superview as! EditorView).delete(at: selection.startIndex - 1, in: self)
-		self.selection = (selection.startIndex - 1)..<(selection.startIndex - 1)
+		}
+	}
+
+	var textContentType: UITextContentType! {
+		get {
+			.none
+		}
+		set {
+
+		}
 	}
 
 	var isSecureTextEntry: Bool {
+		get {
+			false
+		}
+		set {
+
+		}
+	}
+
+	var enablesReturnKeyAutomatically: Bool {
 		get {
 			false
 		}
@@ -522,6 +540,85 @@ extension EditorContentView: UIKeyInput {
 		set {
 
 		}
+	}
+
+	var autocapitalizationType: UITextAutocapitalizationType {
+		get {
+			.none
+		}
+		set {
+
+		}
+	}
+
+	var spellCheckingType: UITextSpellCheckingType {
+		get {
+			.no
+		}
+		set {
+
+		}
+	}
+
+	var smartQuotesType: UITextSmartQuotesType {
+		get {
+			.no
+		}
+		set {
+
+		}
+	}
+
+	var smartInsertDeleteType: UITextSmartInsertDeleteType {
+		get {
+			.no
+		}
+		set {
+
+		}
+	}
+
+	var smartDashesType: UITextSmartDashesType {
+		get {
+			.no
+		}
+		set {
+
+		}
+	}
+}
+
+extension EditorContentView: UIKeyInput {
+	var hasText: Bool {
+		true
+	}
+
+	func insertText(_ text: String) {
+		guard let selection = selection else {
+			return
+		}
+
+		if editingMode == .overwrite {
+			guard selection.startIndex < dataSource?.totalWordCount ?? 0 else {
+				// File can not grow in overwrite wrote
+				return
+			}
+			
+			(superview as! EditorView).delete(at: selection.startIndex, in: self)
+			self.selection = (selection.startIndex - 1)..<(selection.endIndex - 1)
+		}
+
+		let insertedWordGroups = (superview as! EditorView).insert(text: text, at: selection.startIndex, in: self)
+		self.selection = (selection.startIndex + insertedWordGroups)..<(selection.endIndex + insertedWordGroups)
+	}
+
+	func deleteBackward() {
+		guard let selection = selection, selection.startIndex > 0, editingMode == .insert else {
+			return
+		}
+
+		(superview as! EditorView).delete(at: selection.startIndex - 1, in: self)
+		self.selection = (selection.startIndex - 1)..<(selection.startIndex - 1)
 	}
 }
 
