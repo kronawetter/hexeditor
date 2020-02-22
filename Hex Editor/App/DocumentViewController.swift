@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import SwiftUI
 
 class DocumentViewController: UIViewController {
 	var documentURL: URL? {
@@ -50,7 +51,7 @@ class DocumentViewController: UIViewController {
 	private var keyboardObservers: [Any] = []
 
 	override var keyCommands: [UIKeyCommand] {
-		[UIKeyCommand(title: "Close File", action: #selector(close), input: "w", modifierFlags: .command)]
+		[UIKeyCommand(title: "Modify Selection", action: #selector(modifySelection), input: "l", modifierFlags: .command), UIKeyCommand(title: "Go to Documents", action: #selector(close), input: "o", modifierFlags: .command)]
 	}
 
 	// MARK: View Lifecycle
@@ -66,7 +67,8 @@ class DocumentViewController: UIViewController {
 		editorView.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
 		editorView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
 
-		navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Files", style: .plain, target: self, action: #selector(close))
+		navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Documents", style: .plain, target: self, action: #selector(close))
+		navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "arrow.turn.down.right"), style: .plain, target: self, action: #selector(modifySelection))
 	}
 
 	override func viewWillAppear(_ animated: Bool) {
@@ -86,6 +88,19 @@ class DocumentViewController: UIViewController {
 
 	@objc func close() {
 		dismiss(animated: true, completion: nil)
+	}
+
+	@objc func modifySelection() {
+		guard let selection = editorView.selection, let totalSize = editorView.hexDataSource?.totalWordCount else {
+			return
+		}
+		
+		let viewController = SelectionModificationViewController(originalSelection: selection, validRange: 0..<totalSize)
+		viewController.delegate = self
+		viewController.isModalInPresentation = true
+		viewController.modalPresentationStyle = .popover
+		viewController.popoverPresentationController?.barButtonItem = navigationItem.rightBarButtonItem
+		present(viewController, animated: true)
 	}
 
 	// MARK: Keyboard Events
@@ -145,5 +160,11 @@ extension DocumentViewController: EditorViewDelegate {
 			currentAtomicWordGroupManagerRange = range.lowerBound..<range.upperBound
 			editorView.textDataSource = atomicWordGroupManager
 		}
+	}
+}
+
+extension DocumentViewController: SelectionModificationViewControllerDelegate {
+	func selectionModificationViewController(_ selectionModificationViewController: SelectionModificationViewController, didChange selection: Range<Int>) {
+		editorView.selection = selection
 	}
 }
