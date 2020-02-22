@@ -14,6 +14,26 @@ class EditorView: UIScrollView {
 		case text
 	}
 
+	enum EditingMode {
+		case insert
+		case overwrite
+	}
+
+	var selection: Range<Int>? = 0..<0 {
+		willSet {
+			contentViews.forEach { $0.inputDelegate?.selectionWillChange($0) }
+		}
+		didSet {
+			contentViews.forEach { $0.inputDelegate?.selectionDidChange($0) }
+		}
+	}
+
+	var editingMode = EditingMode.insert {
+		didSet {
+			contentViews.forEach { $0.updateInputAssistantButtons(for: firstRespondingContentView) }
+		}
+	}
+
 	private let lineNumberContentView = EditorContentView()
 	private let hexContentView = EditorContentView()
 	private let textContentView = EditorContentView()
@@ -129,10 +149,12 @@ class EditorView: UIScrollView {
 	}
 
 	func insert(text: String, at offset: Int, in contentView: EditorContentView) -> Int {
+		// Note: Current editing mode must be handled in content view as the behavior might be different for different kinds of content views
 		editorDelegate?.editorView(self, didInsert: text, at: offset, in: contentViewEnumValue(for: contentView)) ?? 0
 	}
 
 	func delete(at offset: Int, in contentView: EditorContentView) {
+		// Note: Current editing mode must be handled in content view as the behavior might be different for different kinds of content views
 		editorDelegate?.editorView(self, didDeleteAt: offset, in: contentViewEnumValue(for: contentView))
 	}
 
@@ -172,6 +194,33 @@ class EditorView: UIScrollView {
 		}
 
 		return (ranges.map { $0.lowerBound }.min() ?? 0)..<(ranges.map { $0.upperBound }.max() ?? 0)
+	}
+
+	func changeFirstResponder(to contentView: ContentView) {
+		let targetContentView: EditorContentView
+
+		switch contentView {
+		case .hex:
+			targetContentView = hexContentView
+		case .text:
+			targetContentView = textContentView
+		}
+
+		_ = targetContentView.becomeFirstResponder()
+	}
+
+	var firstRespondingContentView: ContentView? {
+		if hexContentView.isFirstResponder {
+			return .hex
+		} else if textContentView.isFirstResponder {
+			return .text
+		} else {
+			return nil
+		}
+	}
+
+	func updateInputAssistantButtonsOfSubviews() {
+		contentViews.forEach { $0.updateInputAssistantButtons(for: firstRespondingContentView) }
 	}
 
 	required init?(coder: NSCoder) {

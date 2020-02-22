@@ -133,15 +133,28 @@ class EditorContentView: UIView {
 
 	var inputDelegate: UITextInputDelegate? = nil
 
-	private var selection: Range<Int>? = 0..<0 {
-		willSet {
-			inputDelegate?.selectionWillChange(self)
+	private var selection: Range<Int>? {
+		get {
+			(superview as! EditorView).selection
 		}
-		didSet {
-			print(selection as Any)
-			inputDelegate?.selectionDidChange(self)
+		set {
+			(superview as! EditorView).selection = newValue
 		}
 	}
+
+	private var editingMode: EditorView.EditingMode {
+		get {
+			(superview as! EditorView).editingMode
+		}
+		set {
+			(superview as! EditorView).editingMode = newValue
+		}
+	}
+
+	private let insertInputAssistantButton = EditorInputAssistantButton(text: "INSERT", accessibilityLabel: "Insert Mode")
+	private let overwriteInputAssistantButton = EditorInputAssistantButton(text: "OVERWRITE", accessibilityLabel: "Overwrite Mode")
+	private let hexInputAssistantButton = EditorInputAssistantButton(text: "0x12", accessibilityLabel: "Hexadecimal Mode")
+	private let textInputAssistantButton = EditorInputAssistantButton(text: "ABC", accessibilityLabel: "Text Mode")
 
 	override init(frame: CGRect) {
 		super.init(frame: frame)
@@ -152,10 +165,35 @@ class EditorContentView: UIView {
 		tapGestureRecognizer.isEnabled = true
 		addGestureRecognizer(tapGestureRecognizer)
 
+		insertInputAssistantButton.addTarget(self, action: #selector(changeEditingModeToInsert), for: .touchUpInside)
+		overwriteInputAssistantButton.addTarget(self, action: #selector(changeEditingModeToOverwrite), for: .touchUpInside)
+		hexInputAssistantButton.addTarget(self, action: #selector(changeFirstResponderToHexContentView), for: .touchUpInside)
+		textInputAssistantButton.addTarget(self, action: #selector(changeFirstResponderToTextContentView), for: .touchUpInside)
+
+		func barButtonItem(for button: EditorInputAssistantButton) -> UIBarButtonItem {
+			let barButtonItem = UIBarButtonItem(customView: button)
+			barButtonItem.width = button.sizeThatFits(.zero).width
+			return barButtonItem
+		}
+
+		let insertBarButtonItem = barButtonItem(for: insertInputAssistantButton)
+		let overwriteBarButtonItem = barButtonItem(for: overwriteInputAssistantButton)
+		let hexBarButtonItem = barButtonItem(for: hexInputAssistantButton)
+		let textBarButtonItem = barButtonItem(for: textInputAssistantButton)
+		let leadingGroup = UIBarButtonItemGroup(barButtonItems: [insertBarButtonItem, overwriteBarButtonItem], representativeItem: nil)
+		let trailingGroup = UIBarButtonItemGroup(barButtonItems: [hexBarButtonItem, textBarButtonItem], representativeItem: nil)
+		inputAssistantItem.leadingBarButtonGroups = [leadingGroup]
+		inputAssistantItem.trailingBarButtonGroups = [trailingGroup]
+		inputAssistantItem.allowsHidingShortcuts = false
+
 		textInteraction.textInput = self
 	}
 
 	override func becomeFirstResponder() -> Bool {
+		defer {
+			(superview as! EditorView).updateInputAssistantButtonsOfSubviews()
+		}
+
 		addInteraction(textInteraction)
 
 		return super.becomeFirstResponder()
@@ -163,6 +201,8 @@ class EditorContentView: UIView {
 
 	override func resignFirstResponder() -> Bool {
 		defer {
+			(superview as! EditorView).updateInputAssistantButtonsOfSubviews()
+
 			removeInteraction(textInteraction)
 		}
 
@@ -398,6 +438,29 @@ class EditorContentView: UIView {
 		}
 	}
 
+	func updateInputAssistantButtons(for currentContentView: EditorView.ContentView?) {
+		insertInputAssistantButton.isSelected = editingMode == .insert
+		overwriteInputAssistantButton.isSelected = editingMode == .overwrite
+		hexInputAssistantButton.isSelected = currentContentView == .hex
+		textInputAssistantButton.isSelected = currentContentView == .text
+	}
+
+	@objc func changeFirstResponderToHexContentView() {
+		(superview as! EditorView).changeFirstResponder(to: .hex)
+	}
+
+	@objc func changeFirstResponderToTextContentView() {
+		(superview as! EditorView).changeFirstResponder(to: .text)
+	}
+
+	@objc func changeEditingModeToInsert() {
+		editingMode = .insert
+	}
+
+	@objc func changeEditingModeToOverwrite() {
+		editingMode = .overwrite
+	}
+
 	/*override func sizeThatFits(_ size: CGSize) -> CGSize {
 		guard let dataSource = dataSource else {
 			return .zero
@@ -425,12 +488,17 @@ extension EditorContentView: UIKeyInput {
 			return
 		}
 
+		if editingMode == .overwrite, selection.startIndex < dataSource?.totalWordCount ?? 0 {
+			(superview as! EditorView).delete(at: selection.startIndex, in: self)
+			self.selection = (selection.startIndex - 1)..<(selection.endIndex - 1)
+		}
+
 		let insertedWordGroups = (superview as! EditorView).insert(text: text, at: selection.startIndex, in: self)
 		self.selection = (selection.startIndex + insertedWordGroups)..<(selection.endIndex + insertedWordGroups)
 	}
 
 	func deleteBackward() {
-		guard let selection = selection, selection.startIndex > 0 else {
+		guard let selection = selection, selection.startIndex > 0, editingMode == .insert else {
 			return
 		}
 

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		F400AC7F23F9F380008F0356 /* EditorInputAssistantButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = F400AC7E23F9F380008F0356 /* EditorInputAssistantButton.swift */; };
 		F4169F9C2354B41600CF0F2C /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4169F9B2354B41600CF0F2C /* AppDelegate.swift */; };
 		F4169F9E2354B41600CF0F2C /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4169F9D2354B41600CF0F2C /* SceneDelegate.swift */; };
 		F4169FA22354B41B00CF0F2C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F4169FA12354B41B00CF0F2C /* Assets.xcassets */; };
@@ -47,6 +48,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		F400AC7E23F9F380008F0356 /* EditorInputAssistantButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorInputAssistantButton.swift; sourceTree = "<group>"; };
 		F4169F982354B41600CF0F2C /* Hex Editor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Hex Editor.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		F4169F9B2354B41600CF0F2C /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		F4169F9D2354B41600CF0F2C /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -179,6 +181,7 @@
 				F48073B02380DB7F006DBBFA /* EditorViewDataSource.swift */,
 				F47C28D023F8916700259EC3 /* EditorViewDelegate.swift */,
 				F4AE46AE23F9C3EA0037C987 /* EditorViewLineNumberDataSource.swift */,
+				F400AC7E23F9F380008F0356 /* EditorInputAssistantButton.swift */,
 			);
 			path = Editor;
 			sourceTree = "<group>";
@@ -293,6 +296,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F400AC7F23F9F380008F0356 /* EditorInputAssistantButton.swift in Sources */,
 				F435EE552370B72500A09FB3 /* AtomicWordGroupLayerImageCache.swift in Sources */,
 				F47C28D123F8916700259EC3 /* EditorViewDelegate.swift in Sources */,
 				F48725ED2355FA9400959C4A /* ByteOrder.swift in Sources */,
