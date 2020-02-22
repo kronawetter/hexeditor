@@ -49,6 +49,10 @@ class DocumentViewController: UIViewController {
 
 	private var keyboardObservers: [Any] = []
 
+	override var keyCommands: [UIKeyCommand] {
+		[UIKeyCommand(title: "Close File", action: #selector(close), input: "w", modifierFlags: .command)]
+	}
+
 	// MARK: View Lifecycle
 
 	override func loadView() {

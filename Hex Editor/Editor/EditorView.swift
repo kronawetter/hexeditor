@@ -227,3 +227,24 @@ class EditorView: UIScrollView {
 		fatalError("init(coder:) has not been implemented")
 	}
 }
+
+extension EditorView {
+	override var keyCommands: [UIKeyCommand] {
+		[UIKeyCommand(title: "Switch to Insert Mode", action: #selector(changeEditingModeToInsert), input: "i", modifierFlags: [.command, .shift]), UIKeyCommand(title: "Switch to Overwrite Mode", action: #selector(changeEditingModeToOverwrite), input: "o", modifierFlags: [.command, .shift]), UIKeyCommand(title: "Switch to Hexadecimal Mode", action: #selector(changeFirstResponderToHexContentView), input: "1", modifierFlags: [.command]), UIKeyCommand(title: "Switch to Text Mode", action: #selector(changeFirstResponderToTextContentView), input: "2", modifierFlags: [.command])]
+	}
+
+	@objc func changeFirstResponderToHexContentView() {
+		changeFirstResponder(to: .hex)
+	}
+
+	@objc func changeFirstResponderToTextContentView() {
+		changeFirstResponder(to: .text)
+	}
+
+	@objc func changeEditingModeToInsert() {
+		editingMode = .insert
+	}
+
+	@objc func changeEditingModeToOverwrite() {
+		editingMode = .overwrite
+	}}
