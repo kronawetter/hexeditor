@@ -8,7 +8,7 @@
 
 import Foundation
 
-protocol EditorViewDelegate {
+protocol EditorViewDelegate: AnyObject {
 	func editorView(_ editorView: EditorView, didInsert data: Data, at offset: Int, in contentView: EditorView.ContentView)
 	func editorView(_ editorView: EditorView, didDeleteIn range: Range<Int>, in contentView: EditorView.ContentView)
 	func editorView(_ editorView: EditorView, didChangeVisibleWordGroupTo range: Range<Int>)

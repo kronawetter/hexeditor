@@ -10,7 +10,7 @@ import UIKit
 import SwiftUI
 
 class SelectionModificationViewController: UIHostingController<SelectionModificationView> {
-	var delegate: SelectionModificationViewControllerDelegate? = nil
+	weak var delegate: SelectionModificationViewControllerDelegate? = nil
 
 	override var keyCommands: [UIKeyCommand]? {
 		[UIKeyCommand(input: UIKeyCommand.inputEscape, modifierFlags: [], action: #selector(close))]
@@ -19,7 +19,7 @@ class SelectionModificationViewController: UIHostingController<SelectionModifica
 	init(originalSelection: Range<Int>, validRange: Range<Int>) {
 		super.init(rootView: SelectionModificationView(originalSelection: originalSelection, validRange: validRange))
 
-		rootView.dismiss = { newSelection in
+		rootView.dismiss = { [unowned self] newSelection in
 			if let newSelection = newSelection {
 				self.delegate?.selectionModificationViewController(self, didChange: newSelection)
 			}

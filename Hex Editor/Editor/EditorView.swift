@@ -76,7 +76,7 @@ class EditorView: UIScrollView {
 
 	private var lineNumberDataSource = LineNumberDataSource(totalWordCount: 0, wordsPerLine: 16)
 
-	var editorDelegate: EditorViewDelegate? = nil
+	weak var editorDelegate: EditorViewDelegate? = nil
 
 	var bytesPerLine = 16 {
 		didSet {

@@ -6,6 +6,6 @@
 //  Copyright © 2020 Philip Kronawetter. All rights reserved.
 //
 
-protocol SelectionModificationViewControllerDelegate {
+protocol SelectionModificationViewControllerDelegate: AnyObject {
 	func selectionModificationViewController(_ selectionModificationViewController: SelectionModificationViewController, didChange selection: Range<Int>)
 }

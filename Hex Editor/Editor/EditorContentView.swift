@@ -131,7 +131,7 @@ class EditorContentView: UIView {
 
 	private let textInteraction = UITextInteraction(for: .editable)
 
-	var inputDelegate: UITextInputDelegate? = nil
+	weak var inputDelegate: UITextInputDelegate? = nil
 
 	private var selection: Range<Int> {
 		get {
