@@ -14,11 +14,7 @@ class DocumentViewController: UIViewController {
 		documentURL?.stopAccessingSecurityScopedResource()
 
 		guard url.startAccessingSecurityScopedResource(), let file = try? File(url: url) else {
-			editorView.hexDataSource = nil
-			editorView.textDataSource = nil
-			editorView.selection = 0..<0
-			self.file = nil
-			documentURL = nil
+			unload()
 			return
 		}
 
@@ -34,6 +30,17 @@ class DocumentViewController: UIViewController {
 
 		self.file = file
 		documentURL = url
+	}
+
+	func unload() {
+		documentURL?.stopAccessingSecurityScopedResource()
+
+		editorView.hexDataSource = nil
+		editorView.textDataSource = nil
+		editorView.selection = 0..<0
+		atomicWordGroupManager = nil
+		file = nil
+		documentURL = nil
 	}
 
 	private(set) var documentURL: URL? {
@@ -100,7 +107,9 @@ class DocumentViewController: UIViewController {
 	// MARK: Button Actions
 
 	@objc func close() {
-		dismiss(animated: true, completion: nil)
+		dismiss(animated: true) {
+			self.unload()
+		}
 	}
 
 	@objc func modifySelection() {
@@ -219,6 +228,7 @@ extension DocumentViewController: NSFilePresenter {
 
 	func accommodatePresentedItemDeletion(completionHandler: @escaping (Error?) -> Void) {
 		dismiss(animated: true) {
+			self.unload()
 			completionHandler(nil)
 		}
 	}
@@ -229,6 +239,7 @@ extension DocumentViewController: NSFilePresenter {
 
 	func presentedItemDidChange() {
 		guard let documentURL = documentURL else {
+			unload()
 			return
 		}
 

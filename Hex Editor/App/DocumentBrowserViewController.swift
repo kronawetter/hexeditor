@@ -9,7 +9,7 @@
 import UIKit
 
 class DocumentBrowserViewController: UIDocumentBrowserViewController, UIDocumentBrowserViewControllerDelegate {
-	var currentDocumentViewController: DocumentViewController? = nil
+	let documentViewController = DocumentViewController()
 
 	override func viewDidLoad() {
 		super.viewDidLoad()
@@ -41,16 +41,12 @@ class DocumentBrowserViewController: UIDocumentBrowserViewController, UIDocument
 	}
 		
 	func presentDocument(at documentURL: URL) {
-		let documentViewController = DocumentViewController()
 		documentViewController.load(from: documentURL)
-		currentDocumentViewController = documentViewController
 
 		let navigationController = UINavigationController(rootViewController: documentViewController)
 		navigationController.modalPresentationStyle = .currentContext
 		
-		present(navigationController, animated: true) {
-			self.currentDocumentViewController = nil
-		}
+		present(navigationController, animated: true)
 	}
 }
  

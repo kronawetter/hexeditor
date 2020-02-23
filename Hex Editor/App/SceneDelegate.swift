@@ -11,6 +11,10 @@ import UIKit
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 	var window: UIWindow?
 
+	var documentViewController: DocumentViewController? {
+		(window?.rootViewController as? DocumentBrowserViewController)?.documentViewController
+	}
+
 	func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
 		guard let windowScene = scene as? UIWindowScene else {
 			return
@@ -23,31 +27,14 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 	}
 
 	func sceneWillEnterForeground(_ scene: UIScene) {
-		guard let windowScene = scene as? UIWindowScene else {
-			return
-		}
-
-		let window = UIWindow(windowScene: windowScene)
-		guard let documentBrowserViewController = window.rootViewController as? DocumentBrowserViewController else {
-			return
-		}
-		if let currentDocumentViewController = documentBrowserViewController.currentDocumentViewController {
-			NSFileCoordinator.addFilePresenter(currentDocumentViewController)
+		if let documentViewController = documentViewController {
+			NSFileCoordinator.addFilePresenter(documentViewController)
 		}
 	}
 
 	func sceneDidEnterBackground(_ scene: UIScene) {
-		guard let windowScene = scene as? UIWindowScene else {
-			return
-		}
-
-		let window = UIWindow(windowScene: windowScene)
-		guard let documentBrowserViewController = window.rootViewController as? DocumentBrowserViewController else {
-			return
-		}
-		
-		if let currentDocumentViewController = documentBrowserViewController.currentDocumentViewController {
-			NSFileCoordinator.removeFilePresenter(currentDocumentViewController)
+		if let documentViewController = documentViewController {
+			NSFileCoordinator.removeFilePresenter(documentViewController)
 		}
 	}
 }
