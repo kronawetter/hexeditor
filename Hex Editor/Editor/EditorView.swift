@@ -19,14 +19,21 @@ class EditorView: UIScrollView {
 		case overwrite
 	}
 
-	var selection: Range<Int>? = 0..<0 {
+	var selection: Range<Int> = 0..<0 {
 		willSet {
-			contentViews.forEach { $0.inputDelegate?.selectionWillChange($0) }
+			if selection != newValue {
+				contentViews.forEach { $0.inputDelegate?.selectionWillChange($0) }
+			}
 		}
 		didSet {
-			contentViews.forEach { $0.inputDelegate?.selectionDidChange($0) }
+			if selection != oldValue {
+				contentViews.forEach { $0.inputDelegate?.selectionDidChange($0) }
+				selectionDidChangeSinceInsertion = true
+			}
 		}
 	}
+
+	private(set) var selectionDidChangeSinceInsertion = true
 
 	var editingMode = EditingMode.insert {
 		didSet {
@@ -148,9 +155,10 @@ class EditorView: UIScrollView {
 		super.layoutSubviews()
 	}
 
-	func insert(text: String, at offset: Int, in contentView: EditorContentView) -> Int {
+	func insert(data: Data, at offset: Int, in contentView: EditorContentView) {
 		// Note: Current editing mode must be handled in content view as the behavior might be different for different kinds of content views
-		editorDelegate?.editorView(self, didInsert: text, at: offset, in: contentViewEnumValue(for: contentView)) ?? 0
+		selectionDidChangeSinceInsertion = false
+		editorDelegate?.editorView(self, didInsert: data, at: offset, in: contentViewEnumValue(for: contentView))
 	}
 
 	func delete(at offset: Int, in contentView: EditorContentView) {

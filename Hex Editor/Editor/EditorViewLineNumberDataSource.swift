@@ -6,6 +6,8 @@
 //  Copyright © 2020 Philip Kronawetter. All rights reserved.
 //
 
+import Foundation
+
 extension EditorView {
 	struct LineNumberDataSource: EditorViewDataSource {
 		var totalWordCount: Int
@@ -16,6 +18,10 @@ extension EditorView {
 			let endIndex = startIndex + wordsPerLine
 
 			return (text: String(format: "%X", startIndex), range: startIndex..<endIndex)
+		}
+
+		func value(for text: String, at wordIndex: Int, selectionMoved: Bool) -> (data: Data, moveSelectionBy: Int)? {
+			nil
 		}
 	}
 }

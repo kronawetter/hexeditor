@@ -6,6 +6,8 @@
 //  Copyright © 2019 Philip Kronawetter. All rights reserved.
 //
 
+import Foundation
+
 struct AtomicWordGroupManager<T: AtomicWordGroup> {
 	let dataSource: T.DataSource
 	var groups = OffsetTree<[T]>()
@@ -61,5 +63,13 @@ extension AtomicWordGroupManager: EditorViewDataSource {
 		}
 
 		return (text: data.value, range: data.range)
+	}
+
+	func value(for text: String, at wordIndex: Int, selectionMoved: Bool) -> (data: Data, moveSelectionBy: Int)? {
+		guard let data = T.data(for: text) else {
+			return nil
+		}
+		
+		return (data: data, moveSelectionBy: data.count)
 	}
 }

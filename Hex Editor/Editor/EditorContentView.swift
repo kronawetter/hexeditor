@@ -133,7 +133,7 @@ class EditorContentView: UIView {
 
 	var inputDelegate: UITextInputDelegate? = nil
 
-	private var selection: Range<Int>? {
+	private var selection: Range<Int> {
 		get {
 			(superview as! EditorView).selection
 		}
@@ -141,6 +141,8 @@ class EditorContentView: UIView {
 			(superview as! EditorView).selection = newValue
 		}
 	}
+
+	private var firstResponderDidChangeSinceInsertion = true
 
 	private var editingMode: EditorView.EditingMode {
 		get {
@@ -195,6 +197,7 @@ class EditorContentView: UIView {
 		}
 
 		addInteraction(textInteraction)
+		firstResponderDidChangeSinceInsertion = true
 
 		return super.becomeFirstResponder()
 	}
@@ -205,6 +208,8 @@ class EditorContentView: UIView {
 
 			removeInteraction(textInteraction)
 		}
+
+		firstResponderDidChangeSinceInsertion = true
 
 		return super.resignFirstResponder()
 	}
@@ -590,35 +595,97 @@ extension EditorContentView: UITextInputTraits {
 
 extension EditorContentView: UIKeyInput {
 	var hasText: Bool {
-		true
+		guard let dataSource = dataSource else {
+			return false
+		}
+		return dataSource.totalWordCount > 0
 	}
 
 	func insertText(_ text: String) {
-		guard let selection = selection else {
+		defer {
+			firstResponderDidChangeSinceInsertion = false
+		}
+
+		let selectionMoved = (superview as! EditorView).selectionDidChangeSinceInsertion || firstResponderDidChangeSinceInsertion
+
+		guard let dataSource = dataSource, let valueToInsert = dataSource.value(for: text, at: selection.startIndex, selectionMoved: selectionMoved) else {
 			return
 		}
 
-		if editingMode == .overwrite {
-			guard selection.startIndex < dataSource?.totalWordCount ?? 0 else {
-				// File can not grow in overwrite wrote
+		switch editingMode {
+		case .insert:
+			// Remove currently selected words
+			for _ in selection {
+				// TODO: Convert words to bytes, currently assuming one-to-one mapping between words and bytes
+				(superview as! EditorView).delete(at: selection.startIndex, in: self)
+			}
+			selection = selection.startIndex..<selection.startIndex
+
+			if !selectionMoved {
+				// In case of the hex content view, !selectionMoved means that the second nibble is being inserted
+				// The byte which contains both nibbles replaces the existing byte with just the first nibble, i.e. the existing byte needs to be removed first
+				// TODO: Make it work for word size != 1 byte
+				(superview as! EditorView).delete(at: selection.startIndex, in: self)
+
+				// Function above always deletes a single byte, the new data must have the same size
+				assert(valueToInsert.data.count == 1)
+			}
+
+			(superview as! EditorView).insert(data: valueToInsert.data, at: selection.startIndex, in: self)
+
+			selection = (selection.startIndex + valueToInsert.moveSelectionBy)..<(selection.endIndex + valueToInsert.moveSelectionBy)
+
+		case .overwrite:
+			guard selection.isEmpty else {
+				// Overwriting a selection is not supported in overwrite mode
 				return
 			}
-			
-			(superview as! EditorView).delete(at: selection.startIndex, in: self)
-			self.selection = (selection.startIndex - 1)..<(selection.endIndex - 1)
-		}
 
-		let insertedWordGroups = (superview as! EditorView).insert(text: text, at: selection.startIndex, in: self)
-		self.selection = (selection.startIndex + insertedWordGroups)..<(selection.endIndex + insertedWordGroups)
+			guard (selection.startIndex + valueToInsert.data.count) <= dataSource.totalWordCount else {
+				// File cannot grow in overwrite mode
+				return
+			}
+
+			// No need to differentiate between selectionMoved and !selectionMoved as overwrite mode always replaces data
+			for _ in valueToInsert.data {
+				(superview as! EditorView).delete(at: selection.startIndex, in: self)
+			}
+
+			(superview as! EditorView).insert(data: valueToInsert.data, at: selection.startIndex, in: self)
+
+			selection = (selection.startIndex + valueToInsert.moveSelectionBy)..<(selection.endIndex + valueToInsert.moveSelectionBy)
+		}
 	}
 
 	func deleteBackward() {
-		guard let selection = selection, selection.startIndex > 0, editingMode == .insert else {
+		guard editingMode == .insert else {
+			// Deletion is only supported in insert mode
 			return
 		}
 
-		(superview as! EditorView).delete(at: selection.startIndex - 1, in: self)
-		self.selection = (selection.startIndex - 1)..<(selection.startIndex - 1)
+		if selection.isEmpty {
+			// Delete word group before cursor
+
+			guard let rangeToDelete = dataSource?.atomicWordGroup(at: selection.startIndex - 1)?.range else {
+				return
+			}
+
+			for _ in rangeToDelete {
+				// TODO: Make it work for word size != 1 byte
+				(superview as! EditorView).delete(at: rangeToDelete.startIndex, in: self)
+			}
+
+			selection = rangeToDelete.startIndex..<rangeToDelete.startIndex
+		} else {
+			// Delete selected word groups
+
+			for _ in selection {
+				// TODO: Make it work for word size != 1 byte
+				(superview as! EditorView).delete(at: selection.startIndex, in: self)
+			}
+			
+			selection = selection.startIndex..<selection.startIndex
+		}
 	}
 }
 
@@ -803,16 +870,11 @@ extension EditorContentView: UITextInput {
 
 	var selectedTextRange: UITextRange? {
 		get {
-			guard let selection = selection else {
-				return nil
-			}
-
 			return TextRange(selection)
 		}
 		set(selectedTextRange) {
 			let selectedTextRange = selectedTextRange as! TextRange?
-
-			selection = selectedTextRange?.range ?? nil
+			selection = selectedTextRange?.range ?? 0..<0
 		}
 	}
 

@@ -133,7 +133,30 @@ extension File: EditorViewDataSource {
 	}
 
 	func atomicWordGroup(at wordIndex: Int) -> EditorViewDataSource.AtomicWordGroup? {
-		return (text: String(format: "%02X", contents[wordIndex]!), range: wordIndex..<(wordIndex + 1))
+		guard let byte = contents[wordIndex] else {
+			return nil
+		}
+		
+		return (text: String(format: "%02X", byte), range: wordIndex..<(wordIndex + 1))
+	}
+
+	func value(for text: String, at wordIndex: Int, selectionMoved: Bool) -> (data: Data, moveSelectionBy: Int)? {
+		guard let value = UInt8(text, radix: 16), (0..<16).contains(value) else {
+			return nil
+		}
+
+		if selectionMoved {
+			return (data: Data([value]), moveSelectionBy: 0)
+		} else {
+			let existingValue = contents[wordIndex]!
+			guard (0..<16).contains(existingValue) else {
+				assertionFailure()
+				return nil
+			}
+
+			let newValue = (existingValue << 4) | value
+			return (data: Data([newValue]), moveSelectionBy: 1)
+		}
 	}
 }
 

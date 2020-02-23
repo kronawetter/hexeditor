@@ -6,9 +6,21 @@
 //  Copyright © 2019 Philip Kronawetter. All rights reserved.
 //
 
+import Foundation
+
 struct UnicodeAtomicWordGroup<Codec: ExtendedUnicodeCodec, Endianness: _ByteOrder, DataSource: FileAccessor>: AtomicWordGroup {
 	let range: Range<DataSource.Index>
 	let value: String
+
+	static func data(for text: String) -> Data? {
+		var codeUnits: [Codec.CodeUnit] = []
+
+		guard !transcode(text.utf8.makeIterator(), from: UTF8.self, to: Codec.self, stoppingOnError: true, into: { codeUnits.append($0) }) else {
+			return nil
+		}
+
+		return codeUnits.withUnsafeBufferPointer { Data(buffer: $0) }
+	}
 
 	static func create(for rangeOfInterest: Range<Index>, in manager: inout AtomicWordGroupManager<Self>) {
 		let startIndex = max(rangeOfInterest.startIndex - (Codec.maximumNumberOfCodePointsPerScalar - 1), 0) // TODO: Replace 0 literal

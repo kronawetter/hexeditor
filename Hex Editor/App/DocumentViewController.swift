@@ -91,11 +91,11 @@ class DocumentViewController: UIViewController {
 	}
 
 	@objc func modifySelection() {
-		guard let selection = editorView.selection, let totalSize = editorView.hexDataSource?.totalWordCount else {
+		guard let totalSize = editorView.hexDataSource?.totalWordCount else {
 			return
 		}
 		
-		let viewController = SelectionModificationViewController(originalSelection: selection, validRange: 0..<totalSize)
+		let viewController = SelectionModificationViewController(originalSelection: editorView.selection, validRange: 0..<totalSize)
 		viewController.delegate = self
 		viewController.isModalInPresentation = true
 		viewController.modalPresentationStyle = .popover
@@ -125,8 +125,7 @@ class DocumentViewController: UIViewController {
 }
 
 extension DocumentViewController: EditorViewDelegate {
-	func editorView(_ editorView: EditorView, didInsert text: String, at offset: Int, in contentView: EditorView.ContentView) -> Int {
-		let data = Data(text.utf8)
+	func editorView(_ editorView: EditorView, didInsert data: Data, at offset: Int, in contentView: EditorView.ContentView) {
 		file!.insert(data, at: offset)
 
 		// TODO: Make editor data flow work better with copy-on-write behavior and remove these ugly workarounds
@@ -135,8 +134,6 @@ extension DocumentViewController: EditorViewDelegate {
 		atomicWordGroupManager?.create(for: currentAtomicWordGroupManagerRange)
 		editorView.hexDataSource = file
 		editorView.textDataSource = atomicWordGroupManager
-
-		return data.count
 	}
 
 	func editorView(_ editorView: EditorView, didDeleteAt offset: Int, in contentView: EditorView.ContentView) {
