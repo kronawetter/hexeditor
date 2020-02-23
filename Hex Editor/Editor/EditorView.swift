@@ -94,7 +94,7 @@ class EditorView: UIScrollView {
 		backgroundView.backgroundColor = .systemBackground
 		addSubview(backgroundView)
 
-		lineNumberContentView.editable = false
+		lineNumberContentView.isEditable = false
 		lineNumberContentView.wordsPerWordSpacingGroup = bytesPerLine
 		lineNumberContentView.textColor = .secondaryLabel
 		lineNumberContentView.backgroundColor = .secondarySystemBackground
@@ -230,6 +230,15 @@ class EditorView: UIScrollView {
 
 	func updateInputAssistantButtonsOfSubviews() {
 		contentViews.forEach { $0.updateInputAssistantButtons(for: firstRespondingContentView) }
+	}
+
+	func disableEditing() {
+		contentViews.forEach { $0.isEditable = false }
+	}
+
+	func enableEditing() {
+		contentViews.forEach { $0.isEditable = true }
+		lineNumberContentView.isEditable = false
 	}
 
 	required init?(coder: NSCoder) {

@@ -30,6 +30,7 @@
 		F48BC76023550998006338F6 /* ExtendedUnicodeCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = F48BC75F23550998006338F6 /* ExtendedUnicodeCodec.swift */; };
 		F492B1B8235F563000CCE9E5 /* OffsetTree.swift in Sources */ = {isa = PBXBuildFile; fileRef = F492B1B7235F563000CCE9E5 /* OffsetTree.swift */; };
 		F492B1BA235F564B00CCE9E5 /* OffsetTreeNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = F492B1B9235F564B00CCE9E5 /* OffsetTreeNode.swift */; };
+		F4AAC21E240318F500D5E400 /* FileContents.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4AAC21D240318F500D5E400 /* FileContents.swift */; };
 		F4AE46AF23F9C3EA0037C987 /* EditorViewLineNumberDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4AE46AE23F9C3EA0037C987 /* EditorViewLineNumberDataSource.swift */; };
 		F4DF9C8E2354E33100ECA3C9 /* FileAccessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4DF9C8D2354E33100ECA3C9 /* FileAccessor.swift */; };
 		F4EDB7022400B6F200C71A20 /* SelectionModificationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4EDB7012400B6F200C71A20 /* SelectionModificationView.swift */; };
@@ -77,6 +78,7 @@
 		F48BC75F23550998006338F6 /* ExtendedUnicodeCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtendedUnicodeCodec.swift; sourceTree = "<group>"; };
 		F492B1B7235F563000CCE9E5 /* OffsetTree.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OffsetTree.swift; sourceTree = "<group>"; };
 		F492B1B9235F564B00CCE9E5 /* OffsetTreeNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OffsetTreeNode.swift; sourceTree = "<group>"; };
+		F4AAC21D240318F500D5E400 /* FileContents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileContents.swift; sourceTree = "<group>"; };
 		F4AE46AE23F9C3EA0037C987 /* EditorViewLineNumberDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorViewLineNumberDataSource.swift; sourceTree = "<group>"; };
 		F4DF9C8D2354E33100ECA3C9 /* FileAccessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileAccessor.swift; sourceTree = "<group>"; };
 		F4EDB7012400B6F200C71A20 /* SelectionModificationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectionModificationView.swift; sourceTree = "<group>"; };
@@ -131,6 +133,7 @@
 				F4DF9C8D2354E33100ECA3C9 /* FileAccessor.swift */,
 				F48725EC2355FA9400959C4A /* ByteOrder.swift */,
 				F47D251D2385CAA600F75663 /* File.swift */,
+				F4AAC21D240318F500D5E400 /* FileContents.swift */,
 			);
 			path = "Hex Editor";
 			sourceTree = "<group>";
@@ -176,9 +179,9 @@
 			isa = PBXGroup;
 			children = (
 				F4169F9B2354B41600CF0F2C /* AppDelegate.swift */,
+				F4169F9D2354B41600CF0F2C /* SceneDelegate.swift */,
 				F4F162C12361C76600337EAA /* DocumentViewController.swift */,
 				F45B7BBB2401BA3B00FC7A22 /* Selection Modification */,
-				F4169F9D2354B41600CF0F2C /* SceneDelegate.swift */,
 				F4520073235510CA00B51AE1 /* DocumentBrowserViewController.swift */,
 				F435EE542370B72500A09FB3 /* AtomicWordGroupLayerImageCache.swift */,
 				F4169FA12354B41B00CF0F2C /* Assets.xcassets */,
@@ -329,6 +332,7 @@
 				F4169FBF2354B99200CF0F2C /* AtomicWordGroupManager.swift in Sources */,
 				F4169FC32354B9D100CF0F2C /* UnicodeAtomicWordGroup.swift in Sources */,
 				F4169F9C2354B41600CF0F2C /* AppDelegate.swift in Sources */,
+				F4AAC21E240318F500D5E400 /* FileContents.swift in Sources */,
 				F4DF9C8E2354E33100ECA3C9 /* FileAccessor.swift in Sources */,
 				F4F162C22361C76600337EAA /* DocumentViewController.swift in Sources */,
 				F4169FC12354B9BE00CF0F2C /* AtomicWordGroup.swift in Sources */,

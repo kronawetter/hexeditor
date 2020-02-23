@@ -23,7 +23,13 @@ class EditorContentView: UIView {
 		}
 	}
 
-	var editable = true
+	var isEditable = true {
+		didSet {
+			if !isEditable && isFirstResponder {
+				_ = resignFirstResponder()
+			}
+		}
+	}
 
 	var dataSource: EditorViewDataSource? = nil {
 		didSet {
@@ -368,7 +374,7 @@ class EditorContentView: UIView {
 	}
 
 	override var canBecomeFirstResponder: Bool {
-		editable
+		isEditable
 	}
 
 	@objc func tap(sender: UITapGestureRecognizer) {

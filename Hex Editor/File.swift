@@ -8,42 +8,6 @@
 
 import Foundation
 
-class FileContents {
-	let fileHandle: FileHandle
-	var cache = Data()
-	var rangeInCache = 0..<0
-
-	init(for url: URL) throws {
-		fileHandle = try FileHandle(forUpdating: url)
-	}
-
-	deinit {
-		try! fileHandle.close()
-	}
-
-	func invalidateCache() {
-		cache = Data()
-		rangeInCache = 0..<0
-	}
-
-	subscript(_ range: Range<Int>) -> Data {
-		get {
-			if range.lowerBound < rangeInCache.lowerBound || range.upperBound > rangeInCache.upperBound {
-				let offset = max(0, range.lowerBound - 10000)
-				try! fileHandle.seek(toOffset: UInt64(offset))
-
-				// TODO: Figure out how to use non-deprecated API instead of deprecated API
-				// Calling read(upToCount:) results in signal SIGABRT
-				cache = fileHandle.readData(ofLength: range.count + 10000)
-				//cache = try! fileHandle.read(upToCount: range.count + 10000)!
-				rangeInCache = offset..<(offset + cache.count)
-			}
-
-			return cache[range - rangeInCache.lowerBound]
-		}
-	}
-}
-
 struct File {
 	var fileCache = Data()
 
@@ -101,16 +65,15 @@ struct File {
 		}
 	}
 
-	let url: URL
-	var size: Int
-	var contents = OffsetTree<Data>()
-	let fileContents: FileContents
+	private(set) var size: Int
+	private(set) var hasChanges: Bool
+	private var contents = OffsetTree<Data>()
+	private let fileContents: FileContents
 
 	init(url: URL) throws {
-		self.url = url
-
 		size = (try url.resourceValues(forKeys: [.fileSizeKey])).fileSize!
 		fileContents = try FileContents(for: url)
+		hasChanges = false
 
 		let segment = FileSegment(fileContents: fileContents, rangeInFile: 0..<size)
 		contents.insert(segment, offset: 0)
@@ -122,6 +85,7 @@ struct File {
 		contents.insert(element, offset: wordIndex)
 
 		size += data.count
+		hasChanges = true
 	}
 	
 	mutating func remove(in wordIndexRange: Range<Int>) {
@@ -135,9 +99,14 @@ struct File {
 
 		assert(removedBytes == wordIndexRange.count)
 		size -= removedBytes
+		hasChanges = true
 	}
 
 	mutating func write() {
+		guard hasChanges else {
+			return
+		}
+
 		try! fileContents.fileHandle.truncate(atOffset: UInt64(totalWordCount))
 
 		var endIndex = totalWordCount
@@ -176,6 +145,7 @@ struct File {
 		contents.clear()
 		let segment = FileSegment(fileContents: fileContents, rangeInFile: 0..<size)
 		contents.insert(segment, offset: 0)
+		hasChanges = false
 	}
 }
 

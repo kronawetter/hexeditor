@@ -10,34 +10,42 @@ import UIKit
 import SwiftUI
 
 class DocumentViewController: UIViewController {
-	var documentURL: URL? {
+	func load(from url: URL) {
+		documentURL?.stopAccessingSecurityScopedResource()
+
+		guard url.startAccessingSecurityScopedResource(), let file = try? File(url: url) else {
+			editorView.hexDataSource = nil
+			editorView.textDataSource = nil
+			editorView.selection = 0..<0
+			self.file = nil
+			documentURL = nil
+			return
+		}
+
+		atomicWordGroupManager = AtomicWordGroupManager(dataSource: file)
+		currentAtomicWordGroupManagerRange = editorView.offsetRangeOfVisibleWordGroups
+		atomicWordGroupManager?.create(for: currentAtomicWordGroupManagerRange)
+
+		editorView.hexDataSource = file
+		editorView.textDataSource = atomicWordGroupManager
+		if editorView.selection.endIndex > file.size {
+			editorView.selection = 0..<0
+		}
+
+		self.file = file
+		documentURL = url
+	}
+
+	private(set) var documentURL: URL? {
 		didSet {
-			if let oldValue = oldValue {
-				oldValue.stopAccessingSecurityScopedResource()
-			}
-
 			if let documentURL = documentURL {
-				print(documentURL.path)
-
-				let isPermitted = documentURL.startAccessingSecurityScopedResource()
-				precondition(isPermitted)
-
-				file = try! File(url: documentURL)
-				atomicWordGroupManager = AtomicWordGroupManager(dataSource: file!)
-				currentAtomicWordGroupManagerRange = editorView.offsetRangeOfVisibleWordGroups
-				atomicWordGroupManager?.create(for: currentAtomicWordGroupManagerRange)
 				navigationItem.title = documentURL.lastPathComponent
-
-				editorView.hexDataSource = file
-				editorView.textDataSource = atomicWordGroupManager
 			}
 		}
 	}
 
 	deinit {
-		if let documentURL = documentURL {
-			documentURL.stopAccessingSecurityScopedResource()
-		}
+		documentURL?.stopAccessingSecurityScopedResource()
 	}
 
 	private var file: File?
@@ -75,6 +83,8 @@ class DocumentViewController: UIViewController {
 		super.viewWillAppear(animated)
 
 		keyboardObservers = [NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil), NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillChangeFrame(_:)), name: UIResponder.keyboardWillChangeFrameNotification, object: nil), NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)]
+
+		NSFileCoordinator.addFilePresenter(self)
 	}
 
 	override func viewDidDisappear(_ animated: Bool) {
@@ -82,6 +92,8 @@ class DocumentViewController: UIViewController {
 
 		keyboardObservers.forEach { NotificationCenter.default.removeObserver($0) }
 		keyboardObservers = []
+
+		NSFileCoordinator.removeFilePresenter(self)
 	}
 
 	// MARK: Button Actions
@@ -167,5 +179,56 @@ extension DocumentViewController: EditorViewDelegate {
 extension DocumentViewController: SelectionModificationViewControllerDelegate {
 	func selectionModificationViewController(_ selectionModificationViewController: SelectionModificationViewController, didChange selection: Range<Int>) {
 		editorView.selection = selection
+	}
+}
+
+extension DocumentViewController: NSFilePresenter {
+	var presentedItemURL: URL? {
+		documentURL
+	}
+
+	var presentedItemOperationQueue: OperationQueue {
+		OperationQueue.main
+	}
+
+	func relinquishPresentedItem(toReader reader: @escaping ((() -> Void)?) -> Void) {
+		editorView.disableEditing()
+
+		reader {
+			self.editorView.enableEditing()
+		}
+	}
+
+	func relinquishPresentedItem(toWriter writer: @escaping ((() -> Void)?) -> Void) {
+		editorView.disableEditing()
+
+		writer {
+			self.editorView.enableEditing()
+		}
+	}
+
+	func savePresentedItemChanges(completionHandler: @escaping (Error?) -> Void) {
+		writeFile()
+
+		completionHandler(nil)
+	}
+
+	func accommodatePresentedItemDeletion(completionHandler: @escaping (Error?) -> Void) {
+		dismiss(animated: true) {
+			completionHandler(nil)
+		}
+	}
+
+	func presentedItemDidMove(to newURL: URL) {
+		documentURL = newURL
+	}
+
+	func presentedItemDidChange() {
+		guard let documentURL = documentURL else {
+			return
+		}
+
+		// TODO: Do not reload document on attribute change (https://developer.apple.com/documentation/foundation/nsfilepresenter/1416103-presenteditemdidchange)
+		load(from: documentURL)
 	}
 }
