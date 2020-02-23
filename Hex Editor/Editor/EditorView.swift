@@ -28,6 +28,7 @@ class EditorView: UIScrollView {
 		didSet {
 			if selection != oldValue {
 				contentViews.forEach { $0.inputDelegate?.selectionDidChange($0) }
+				contentViews.forEach { $0.setNeedsLayout() }
 				selectionDidChangeSinceInsertion = true
 			}
 		}
@@ -255,4 +256,5 @@ extension EditorView {
 
 	@objc func changeEditingModeToOverwrite() {
 		editingMode = .overwrite
-	}}
+	}
+}

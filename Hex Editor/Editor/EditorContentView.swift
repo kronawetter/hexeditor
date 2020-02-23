@@ -158,6 +158,9 @@ class EditorContentView: UIView {
 	private let hexInputAssistantButton = EditorInputAssistantButton(text: "0x12", accessibilityLabel: "Hexadecimal Mode")
 	private let textInputAssistantButton = EditorInputAssistantButton(text: "ABC", accessibilityLabel: "Text Mode")
 
+	private let secondaryCaretView = UIView()
+	private let secondarySelectionViews = [UIView(), UIView(), UIView()]
+
 	override init(frame: CGRect) {
 		super.init(frame: frame)
 
@@ -171,6 +174,13 @@ class EditorContentView: UIView {
 		overwriteInputAssistantButton.addTarget(self, action: #selector(changeEditingModeToOverwrite), for: .touchUpInside)
 		hexInputAssistantButton.addTarget(self, action: #selector(changeFirstResponderToHexContentView), for: .touchUpInside)
 		textInputAssistantButton.addTarget(self, action: #selector(changeFirstResponderToTextContentView), for: .touchUpInside)
+
+		secondarySelectionViews.forEach { secondarySelectionView in
+			secondarySelectionView.backgroundColor = .secondarySystemFill
+			self.addSubview(secondarySelectionView)
+		}
+		secondaryCaretView.backgroundColor = .secondaryLabel
+		addSubview(secondaryCaretView)
 
 		func barButtonItem(for button: EditorInputAssistantButton) -> UIBarButtonItem {
 			let barButtonItem = UIBarButtonItem(customView: button)
@@ -199,6 +209,8 @@ class EditorContentView: UIView {
 		addInteraction(textInteraction)
 		firstResponderDidChangeSinceInsertion = true
 
+		updateSecondarySelectionAndCaretViews()
+
 		return super.becomeFirstResponder()
 	}
 
@@ -210,6 +222,8 @@ class EditorContentView: UIView {
 		}
 
 		firstResponderDidChangeSinceInsertion = true
+
+		updateSecondarySelectionAndCaretViews()
 
 		return super.resignFirstResponder()
 	}
@@ -226,6 +240,8 @@ class EditorContentView: UIView {
 		inputDelegate?.textDidChange(self)
 
 		(superview as! EditorView).contentViewDidLayout(self)
+
+		updateSecondarySelectionAndCaretViews()
 	}
 	
 	required init?(coder: NSCoder) {
@@ -374,6 +390,10 @@ class EditorContentView: UIView {
 	}
 
 	private func rectsForAtomicWordGroups(in range: Range<Int>) -> [CGRect] {
+		guard !range.isEmpty else {
+			return []
+		}
+
 		// First rect
 		let firstRect: CGRect?
 
@@ -464,6 +484,19 @@ class EditorContentView: UIView {
 
 	@objc func changeEditingModeToOverwrite() {
 		editingMode = .overwrite
+	}
+
+	func updateSecondarySelectionAndCaretViews() {
+		secondarySelectionViews.forEach { $0.isHidden = true }
+		for (index, rect) in rectsForAtomicWordGroups(in: selection).enumerated() {
+			secondarySelectionViews[index].isHidden = dataSource is EditorView.LineNumberDataSource || isFirstResponder
+			secondarySelectionViews[index].frame = rect
+			self.bringSubviewToFront(secondarySelectionViews[index])
+		}
+
+		secondaryCaretView.isHidden = dataSource is EditorView.LineNumberDataSource || !selection.isEmpty || isFirstResponder
+		secondaryCaretView.frame = caretRect(for: TextPosition(selection.startIndex))
+		bringSubviewToFront(secondaryCaretView)
 	}
 
 	/*override func sizeThatFits(_ size: CGSize) -> CGSize {
