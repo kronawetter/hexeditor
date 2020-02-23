@@ -32,7 +32,10 @@ class FileContents {
 				let offset = max(0, range.lowerBound - 10000)
 				try! fileHandle.seek(toOffset: UInt64(offset))
 
-				cache = try! fileHandle.read(upToCount: range.upperBound + 10000)!
+				// TODO: Figure out how to use non-deprecated API instead of deprecated API
+				// Calling read(upToCount:) results in signal SIGABRT
+				cache = fileHandle.readData(ofLength: range.count + 10000)
+				//cache = try! fileHandle.read(upToCount: range.count + 10000)!
 				rangeInCache = offset..<(offset + cache.count)
 			}
 
@@ -146,19 +149,33 @@ struct File {
 			let element = node.pairs[pairIndex].element
 
 			let writeChunkSize = 1024 * 1024 * 128
-			var indexInElement = 0
-			while indexInElement < range.count {
-				let bytesToRead = min(writeChunkSize, (range.count - indexInElement))
+			var remainingBytes = range.count
+			while remainingBytes > 0 {
+				let bytesToRead = min(remainingBytes, writeChunkSize)
 
-				let data = element.value(for: indexInElement..<(indexInElement + bytesToRead))!
-				try! fileContents.fileHandle.seek(toOffset: UInt64(indexInElement))
-				try! fileContents.fileHandle.write(contentsOf: data)
+				let rangeInElement = (remainingBytes - bytesToRead)..<remainingBytes
+				let data = element.value(for: rangeInElement)!
+
+				try! fileContents.fileHandle.seek(toOffset: UInt64(range.startIndex + rangeInElement.startIndex))
+
+				// TODO: Figure out how to use non-deprecated API instead of deprecated API
+				// Calling write(contentsOf:) results in signal SIGABRT
+				fileContents.fileHandle.write(data)
+				//try! fileContents.fileHandle.write(contentsOf: data)
 				
-				indexInElement += bytesToRead
+				remainingBytes -= bytesToRead
 			}
 
 			endIndex = range.startIndex
 		}
+
+		try! fileContents.fileHandle.synchronize()
+
+		fileContents.invalidateCache()
+
+		contents.clear()
+		let segment = FileSegment(fileContents: fileContents, rangeInFile: 0..<size)
+		contents.insert(segment, offset: 0)
 	}
 }
 
