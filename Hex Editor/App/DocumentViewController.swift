@@ -68,7 +68,7 @@ class DocumentViewController: UIViewController {
 		editorView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
 
 		navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Documents", style: .plain, target: self, action: #selector(close))
-		navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "arrow.turn.down.right"), style: .plain, target: self, action: #selector(modifySelection))
+		navigationItem.rightBarButtonItems = [UIBarButtonItem(image: UIImage(systemName: "ellipsis.circle"), style: .plain, target: self, action: #selector(writeFile)), UIBarButtonItem(image: UIImage(systemName: "arrow.turn.down.right"), style: .plain, target: self, action: #selector(modifySelection))]
 	}
 
 	override func viewWillAppear(_ animated: Bool) {
@@ -101,6 +101,10 @@ class DocumentViewController: UIViewController {
 		viewController.modalPresentationStyle = .popover
 		viewController.popoverPresentationController?.barButtonItem = navigationItem.rightBarButtonItem
 		present(viewController, animated: true)
+	}
+
+	@objc func writeFile() {
+		file?.write()
 	}
 
 	// MARK: Keyboard Events

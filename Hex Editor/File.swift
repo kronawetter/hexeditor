@@ -13,8 +13,12 @@ class FileContents {
 	var cache = Data()
 	var rangeInCache = 0..<0
 
-	init(fileHandle: FileHandle) {
-		self.fileHandle = fileHandle
+	init(for url: URL) throws {
+		fileHandle = try FileHandle(forUpdating: url)
+	}
+
+	deinit {
+		try! fileHandle.close()
 	}
 
 	func invalidateCache() {
@@ -28,7 +32,7 @@ class FileContents {
 				let offset = max(0, range.lowerBound - 10000)
 				try! fileHandle.seek(toOffset: UInt64(offset))
 
-				cache = fileHandle.readData(ofLength: range.upperBound + 10000)
+				cache = try! fileHandle.read(upToCount: range.upperBound + 10000)!
 				rangeInCache = offset..<(offset + cache.count)
 			}
 
@@ -103,8 +107,7 @@ struct File {
 		self.url = url
 
 		size = (try url.resourceValues(forKeys: [.fileSizeKey])).fileSize!
-		let fileHandle = try FileHandle(forUpdating: url)
-		fileContents = FileContents(fileHandle: fileHandle)
+		fileContents = try FileContents(for: url)
 
 		let segment = FileSegment(fileContents: fileContents, rangeInFile: 0..<size)
 		contents.insert(segment, offset: 0)
@@ -129,6 +132,33 @@ struct File {
 
 		assert(removedBytes == wordIndexRange.count)
 		size -= removedBytes
+	}
+
+	mutating func write() {
+		try! fileContents.fileHandle.truncate(atOffset: UInt64(totalWordCount))
+
+		var endIndex = totalWordCount
+		while endIndex > 0 {
+			let (node, pairIndex, _) = contents.find(offset: endIndex - 1)!
+			let rangeInNode = node.pairs[pairIndex].range
+			let rangeDelta = endIndex - rangeInNode.endIndex
+			let range = (rangeInNode.startIndex + rangeDelta)..<(rangeInNode.endIndex + rangeDelta)
+			let element = node.pairs[pairIndex].element
+
+			let writeChunkSize = 1024 * 1024 * 128
+			var indexInElement = 0
+			while indexInElement < range.count {
+				let bytesToRead = min(writeChunkSize, (range.count - indexInElement))
+
+				let data = element.value(for: indexInElement..<(indexInElement + bytesToRead))!
+				try! fileContents.fileHandle.seek(toOffset: UInt64(indexInElement))
+				try! fileContents.fileHandle.write(contentsOf: data)
+				
+				indexInElement += bytesToRead
+			}
+
+			endIndex = range.startIndex
+		}
 	}
 }
 
