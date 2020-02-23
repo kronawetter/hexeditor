@@ -39,6 +39,7 @@ class DocumentViewController: UIViewController {
 	private(set) var documentURL: URL? {
 		didSet {
 			if let documentURL = documentURL {
+				print(documentURL.path)
 				navigationItem.title = documentURL.lastPathComponent
 			}
 		}
@@ -116,7 +117,7 @@ class DocumentViewController: UIViewController {
 	}
 
 	@objc func writeFile() {
-		file?.write()
+		try! file?.write()
 	}
 
 	// MARK: Keyboard Events
@@ -208,9 +209,12 @@ extension DocumentViewController: NSFilePresenter {
 	}
 
 	func savePresentedItemChanges(completionHandler: @escaping (Error?) -> Void) {
-		writeFile()
-
-		completionHandler(nil)
+		do {
+			try file?.write()
+			completionHandler(nil)
+		} catch {
+			completionHandler(error)
+		}
 	}
 
 	func accommodatePresentedItemDeletion(completionHandler: @escaping (Error?) -> Void) {

@@ -9,8 +9,6 @@
 import Foundation
 
 struct File {
-	var fileCache = Data()
-
 	struct FileSegment: OffsetTreeElement {
 		typealias Value = Data
 
@@ -102,12 +100,12 @@ struct File {
 		hasChanges = true
 	}
 
-	mutating func write() {
+	mutating func write() throws {
 		guard hasChanges else {
 			return
 		}
 
-		try! fileContents.fileHandle.truncate(atOffset: UInt64(totalWordCount))
+		try fileContents.truncate(at: totalWordCount)
 
 		var endIndex = totalWordCount
 		while endIndex > 0 {
@@ -125,22 +123,15 @@ struct File {
 				let rangeInElement = (remainingBytes - bytesToRead)..<remainingBytes
 				let data = element.value(for: rangeInElement)!
 
-				try! fileContents.fileHandle.seek(toOffset: UInt64(range.startIndex + rangeInElement.startIndex))
+				try fileContents.write(data, to: (range.startIndex + rangeInElement.startIndex)..<(range.startIndex + rangeInElement.endIndex))
 
-				// TODO: Figure out how to use non-deprecated API instead of deprecated API
-				// Calling write(contentsOf:) results in signal SIGABRT
-				fileContents.fileHandle.write(data)
-				//try! fileContents.fileHandle.write(contentsOf: data)
-				
 				remainingBytes -= bytesToRead
 			}
 
 			endIndex = range.startIndex
 		}
 
-		try! fileContents.fileHandle.synchronize()
-
-		fileContents.invalidateCache()
+		try fileContents.synchronize()
 
 		contents.clear()
 		let segment = FileSegment(fileContents: fileContents, rangeInFile: 0..<size)

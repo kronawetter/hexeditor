@@ -22,7 +22,25 @@ class FileContents {
 		try! fileHandle.close()
 	}
 
-	func invalidateCache() {
+	func synchronize() throws {
+		try fileHandle.synchronize()
+	}
+
+	func truncate(at offset: Int) throws {
+		try fileHandle.truncate(atOffset: UInt64(offset))
+	}
+
+	func write(_ data: Data, to range: Range<Int>) throws {
+		assert(data.count == range.count)
+		
+		try fileHandle.seek(toOffset: UInt64(range.startIndex))
+
+		// TODO: Figure out how to use non-deprecated API instead of deprecated API
+		// Calling write(contentsOf:) results in signal SIGABRT
+		fileHandle.write(data)
+		//try! fileContents.fileHandle.write(contentsOf: data)
+
+		// Invalidate cache
 		cache = Data()
 		rangeInCache = 0..<0
 	}
