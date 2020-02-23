@@ -136,8 +136,8 @@ extension DocumentViewController: EditorViewDelegate {
 		editorView.textDataSource = atomicWordGroupManager
 	}
 
-	func editorView(_ editorView: EditorView, didDeleteAt offset: Int, in contentView: EditorView.ContentView) {
-		file!.remove(at: offset)
+	func editorView(_ editorView: EditorView, didDeleteIn range: Range<Int>, in contentView: EditorView.ContentView) {
+		file!.remove(in: range)
 
 		// TODO: Make editor data flow work better with copy-on-write behavior and remove these ugly workarounds
 		atomicWordGroupManager = AtomicWordGroupManager(dataSource: file!)

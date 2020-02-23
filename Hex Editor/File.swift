@@ -117,13 +117,18 @@ struct File {
 
 		size += data.count
 	}
+	
+	mutating func remove(in wordIndexRange: Range<Int>) {
+		contents.split(at: wordIndexRange.startIndex)
+		contents.split(at: wordIndexRange.endIndex)
 
-	mutating func remove(at wordIndex: Int) {
-		contents.split(at: wordIndex)
-		contents.split(at: wordIndex + 1)
-		contents.remove(at: wordIndex)
+		var removedBytes = 0
+		while removedBytes < wordIndexRange.count {
+			removedBytes += contents.remove(at: wordIndexRange.startIndex)!
+		}
 
-		size -= 1
+		assert(removedBytes == wordIndexRange.count)
+		size -= removedBytes
 	}
 }
 

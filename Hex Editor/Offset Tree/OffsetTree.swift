@@ -31,8 +31,8 @@
 		}
 	}
 
-	/*mutating*/ func remove(at offset: Int) {
-		_ = root?.remove(at: offset)
+	/*mutating*/ func remove(at offset: Int) -> Int? {
+		let removedElement = root?.remove(at: offset)
 
 		if let root = root {
 			if !root.isLeaf {
@@ -45,6 +45,8 @@
 				self.root = root.firstChild?.node
 			}
 		}
+
+		return removedElement?.size
 	}
 
 	func find(offset: Int) -> (node: Node, pairIndex: Int, offset: Int)? {

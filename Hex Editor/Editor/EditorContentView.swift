@@ -615,17 +615,15 @@ extension EditorContentView: UIKeyInput {
 		switch editingMode {
 		case .insert:
 			// Remove currently selected words
-			for _ in selection {
-				// TODO: Convert words to bytes, currently assuming one-to-one mapping between words and bytes
-				(superview as! EditorView).delete(at: selection.startIndex, in: self)
-			}
+			// TODO: Convert words to bytes, currently assuming one-to-one mapping between words and bytes
+			(superview as! EditorView).delete(in: selection, in: self)
 			selection = selection.startIndex..<selection.startIndex
 
 			if !selectionMoved {
 				// In case of the hex content view, !selectionMoved means that the second nibble is being inserted
 				// The byte which contains both nibbles replaces the existing byte with just the first nibble, i.e. the existing byte needs to be removed first
 				// TODO: Make it work for word size != 1 byte
-				(superview as! EditorView).delete(at: selection.startIndex, in: self)
+				(superview as! EditorView).delete(in: selection.startIndex..<(selection.startIndex + 1), in: self)
 
 				// Function above always deletes a single byte, the new data must have the same size
 				assert(valueToInsert.data.count == 1)
@@ -647,10 +645,9 @@ extension EditorContentView: UIKeyInput {
 			}
 
 			// No need to differentiate between selectionMoved and !selectionMoved as overwrite mode always replaces data
-			for _ in valueToInsert.data {
-				(superview as! EditorView).delete(at: selection.startIndex, in: self)
-			}
-
+			// TODO: Make it work for word size != 1 byte
+			(superview as! EditorView).delete(in: selection.startIndex..<(selection.startIndex + valueToInsert.data.count), in: self)
+			
 			(superview as! EditorView).insert(data: valueToInsert.data, at: selection.startIndex, in: self)
 
 			selection = (selection.startIndex + valueToInsert.moveSelectionBy)..<(selection.endIndex + valueToInsert.moveSelectionBy)
@@ -663,29 +660,20 @@ extension EditorContentView: UIKeyInput {
 			return
 		}
 
+		let rangeToDelete: Range<Int>
 		if selection.isEmpty {
 			// Delete word group before cursor
-
-			guard let rangeToDelete = dataSource?.atomicWordGroup(at: selection.startIndex - 1)?.range else {
+			guard let range = dataSource?.atomicWordGroup(at: selection.startIndex - 1)?.range else {
 				return
 			}
-
-			for _ in rangeToDelete {
-				// TODO: Make it work for word size != 1 byte
-				(superview as! EditorView).delete(at: rangeToDelete.startIndex, in: self)
-			}
-
-			selection = rangeToDelete.startIndex..<rangeToDelete.startIndex
+			rangeToDelete = range
 		} else {
 			// Delete selected word groups
-
-			for _ in selection {
-				// TODO: Make it work for word size != 1 byte
-				(superview as! EditorView).delete(at: selection.startIndex, in: self)
-			}
-			
-			selection = selection.startIndex..<selection.startIndex
+			rangeToDelete = selection
 		}
+
+		(superview as! EditorView).delete(in: rangeToDelete, in: self)
+		selection = rangeToDelete.startIndex..<rangeToDelete.startIndex
 	}
 }
 

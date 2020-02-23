@@ -161,9 +161,9 @@ class EditorView: UIScrollView {
 		editorDelegate?.editorView(self, didInsert: data, at: offset, in: contentViewEnumValue(for: contentView))
 	}
 
-	func delete(at offset: Int, in contentView: EditorContentView) {
-		// Note: Current editing mode must be handled in content view as the behavior might be different for different kinds of content views
-		editorDelegate?.editorView(self, didDeleteAt: offset, in: contentViewEnumValue(for: contentView))
+	func delete(in range: Range<Int>, in contentView: EditorContentView) {
+	   // Note: Current editing mode must be handled in content view as the behavior might be different for different kinds of content views
+	   editorDelegate?.editorView(self, didDeleteIn: range, in: contentViewEnumValue(for: contentView))
 	}
 
 	func contentViewDidLayout(_ contentView: EditorContentView) {

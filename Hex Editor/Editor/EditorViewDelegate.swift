@@ -10,6 +10,6 @@ import Foundation
 
 protocol EditorViewDelegate {
 	func editorView(_ editorView: EditorView, didInsert data: Data, at offset: Int, in contentView: EditorView.ContentView)
-	func editorView(_ editorView: EditorView, didDeleteAt offset: Int, in contentView: EditorView.ContentView)
+	func editorView(_ editorView: EditorView, didDeleteIn range: Range<Int>, in contentView: EditorView.ContentView)
 	func editorView(_ editorView: EditorView, didChangeVisibleWordGroupTo range: Range<Int>)
 }
