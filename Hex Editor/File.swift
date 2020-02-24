@@ -105,8 +105,6 @@ struct File {
 			return
 		}
 
-		try fileContents.truncate(at: totalWordCount)
-
 		var endIndex = totalWordCount
 		while endIndex > 0 {
 			let (node, pairIndex, _) = contents.find(offset: endIndex - 1)!
@@ -131,6 +129,7 @@ struct File {
 			endIndex = range.startIndex
 		}
 
+		try fileContents.truncate(at: totalWordCount)
 		try fileContents.synchronize()
 
 		contents.clear()
