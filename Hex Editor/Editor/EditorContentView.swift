@@ -128,7 +128,7 @@ class EditorContentView: UIView {
 		// TODO: Handle multi-word groups
 
 		let (lineOffset, offsetInLine) = offset.quotientAndRemainder(dividingBy: wordsPerLine)
-		return CGRect(x: CGFloat(offsetInLine) * widthPerWord + CGFloat(offsetInLine / wordsPerWordSpacingGroup) * wordGroupSpacingWidth + contentInsets.left, y: CGFloat(lineOffset) * estimatedLineHeight, width: widthPerWord, height: estimatedLineHeight)
+		return CGRect(x: CGFloat(offsetInLine) * widthPerWord + CGFloat(offsetInLine / wordsPerWordSpacingGroup) * wordGroupSpacingWidth + contentInsets.left, y: CGFloat(lineOffset) * estimatedLineHeight + lineSpacing + contentInsets.top, width: widthPerWord, height: estimatedLineHeight - lineSpacing)
 	}
 
 	private var cache = AtomicWordGroupLayerImageCache()
@@ -724,12 +724,11 @@ extension EditorContentView: UITextInput {
 			guard let contentView = contentView, let position = position as? TextPosition else {
 				return nil
 			}
+			print("rangeEnclosingPosition", position.index, granularity, direction)
 
 			switch granularity {
 			case .character:
 				return TextRange(position.index..<position.index + 1)
-			case .paragraph:
-				fallthrough
 			case .line:
 				return TextRange(((position.index / contentView.wordsPerLine) * contentView.wordsPerLine)..<position.index)
 			case .document:
@@ -743,12 +742,12 @@ extension EditorContentView: UITextInput {
 			guard let contentView = contentView, let position = position as? TextPosition else {
 				return false
 			}
+			print("isPosition atBoundary", position.index, granularity, direction)
+
 
 			switch granularity {
 			case .character:
 				return true
-			case .paragraph:
-				fallthrough
 			case .line:
 				if direction == .storage(.forward) || direction == .layout(.right) || direction == .layout(.down) {
 					return (position.index + 1).isMultiple(of: contentView.wordsPerLine)
@@ -774,12 +773,11 @@ extension EditorContentView: UITextInput {
 			guard let contentView = contentView, let position = position as? TextPosition else {
 				return nil
 			}
+			print("fromPositionToBoundary", position.index, granularity, direction)
 
 			switch granularity {
 			case .character:
 				return position
-			case .paragraph:
-				fallthrough
 			case .line:
 				if direction == .storage(.forward) || direction == .layout(.right) || direction == .layout(.down) {
 					return TextPosition((position.index / contentView.wordsPerLine + 1) * contentView.wordsPerLine - 1)
@@ -805,12 +803,11 @@ extension EditorContentView: UITextInput {
 			guard let contentView = contentView, let position = position as? TextPosition else {
 				return false
 			}
+			print("isPosition withinTextUnit", position.index, granularity, direction)
 
 			switch granularity {
 			case .character:
 				return true
-			case .paragraph:
-				fallthrough
 			case .line:
 				if direction == .storage(.forward) || direction == .layout(.right) || direction == .layout(.down) {
 					return true
@@ -888,11 +885,17 @@ extension EditorContentView: UITextInput {
 	}
 
 	func text(in range: UITextRange) -> String? {
-		""
+		guard let range = range as? TextRange, let dataSource = dataSource else {
+			return nil
+		}
+
+		let truncatedRange = range.range.startIndex..<min(range.range.startIndex + 10000, range.range.endIndex)
+		return truncatedRange.compactMap { dataSource.atomicWordGroup(at: $0)?.text }.joined()
 	}
 
 	func replace(_ range: UITextRange, withText text: String) {
-
+		// TODO: Find out when this is called and how to deal with different editing modes
+		assertionFailure()
 	}
 
 	var selectedTextRange: UITextRange? {
@@ -926,6 +929,10 @@ extension EditorContentView: UITextInput {
 
 	}
 
+	/*var selectionAffinity: UITextStorageDirection {
+
+	}*/
+
 	var beginningOfDocument: UITextPosition {
 		TextPosition(0)
 	}
@@ -940,47 +947,61 @@ extension EditorContentView: UITextInput {
 			return nil
 		}
 
-		if fromPosition.index <= toPosition.index {
-			return TextRange(fromPosition.index..<toPosition.index)
-		} else {
-			return TextRange(toPosition.index..<fromPosition.index)
-		}
+		let startIndex = min(fromPosition.index, toPosition.index)
+		let endIndex = max(fromPosition.index, toPosition.index)
+
+		return TextRange(startIndex..<endIndex)
 	}
 
 	func position(from position: UITextPosition, offset: Int) -> UITextPosition? {
+		self.position(from: position, in: offset > 0 ? .right : .left, offset: abs(offset))
+	}
+
+	func position(from position: UITextPosition, in direction: UITextLayoutDirection, offset: Int) -> UITextPosition? {
 		guard let position = position as? TextPosition, let dataSource = dataSource else {
 			return nil
 		}
 
-		// TODO: Handle multi-word groups
-		let newIndex = position.index + offset
-
-		if (0..<dataSource.totalWordCount).contains(newIndex) {
-			return TextPosition(newIndex)
-		} else {
-			return nil
-		}
-	}
-
-	func position(from position: UITextPosition, in direction: UITextLayoutDirection, offset: Int) -> UITextPosition? {
-		guard let position = position as? TextPosition else {
-			return nil
-		}
-
-		// TODO: Handle multi-word groups
-		// TODO: "Return nil if the computed text position is less than 0 or greater than the length of the backing string."
+		let newIndex: Int
+		let backwards: Bool
 		switch direction {
 		case .right:
-			return TextPosition(min(position.index + offset, dataSource?.totalWordCount ?? 0))
+			newIndex = position.index + offset
+			backwards = false
 		case .left:
-			return TextPosition(max(position.index - offset, 0))
+			newIndex = position.index - offset
+			backwards = true
 		case .up:
-			return TextPosition(max(position.index - offset * wordsPerLine, 0))
+			newIndex = position.index - offset * wordsPerLine
+			backwards = true
 		case .down:
-			return TextPosition(min(position.index + offset * wordsPerLine, dataSource?.totalWordCount ?? 0))
+			newIndex = position.index + offset * wordsPerLine
+			backwards = false
 		@unknown default:
 			assertionFailure()
 			return nil
+		}
+		
+		guard (0...dataSource.totalWordCount).contains(newIndex) else {
+			return nil
+		}
+
+		if newIndex == dataSource.totalWordCount {
+			// New index points to end of file, no atomic word group handling needed
+			return TextPosition(newIndex)
+		} else {
+			guard let atomicWordGroupAtNewIndex = dataSource.atomicWordGroup(at: newIndex) else {
+				return nil
+			}
+			assert(!atomicWordGroupAtNewIndex.range.isEmpty)
+
+			if atomicWordGroupAtNewIndex.range.startIndex == newIndex {
+				// New atomic word groups starts at newIndex, no need to extend the selection
+				return TextPosition(newIndex)
+			} else {
+				// As only full atomic word groups can be selected, extend the selection to the begin or end of the word group at newIndex
+				return TextPosition(backwards ? atomicWordGroupAtNewIndex.range.startIndex : atomicWordGroupAtNewIndex.range.endIndex)
+			}
 		}
 	}
 
@@ -1014,7 +1035,7 @@ extension EditorContentView: UITextInput {
 	}
 
 	func position(within range: UITextRange, farthestIn direction: UITextLayoutDirection) -> UITextPosition? {
-		// TODO
+		// TODO: Find out what is meant exactly, i.e. left shall go to begin to file or begin of line
 		switch direction {
 		case .left:
 			fallthrough
@@ -1035,14 +1056,14 @@ extension EditorContentView: UITextInput {
 			return nil
 		}
 
-		// TODO check whether select from cursor to begin/end of line/document shortcuts work
+		// TODO: Find out what is meant exactly, i.e. left shall go to begin to file or begin of line
 		switch direction {
 		case .left:
-			return TextRange(((position.index / wordsPerLine) * wordsPerLine)..<position.index)
+			fallthrough
 		case .up:
 			return TextRange(0..<position.index)
 		case .right:
-			return TextRange(position.index..<min((position.index / wordsPerLine) * (wordsPerLine + 1), dataSource.totalWordCount))
+			fallthrough
 		case .down:
 			return TextRange(position.index..<dataSource.totalWordCount)
 		@unknown default:
@@ -1109,33 +1130,35 @@ extension EditorContentView: UITextInput {
 	}
 
 	func closestPosition(to point: CGPoint) -> UITextPosition? {
-		// TODO: Hit test is insufficient
-		let point = layer.convert(point, to: layer.superlayer)
+		// TODO: Rewrite for variable line height
+		let lineNumber = Int((point.y - contentInsets.top) / estimatedLineHeight)
+		let offsetInLine = Int((point.x - contentInsets.left) / widthPerWord)
 
-		guard let wordGroupLayer = layer.hitTest(point) as? EditorAtomicWordGroupLayer else {
-			return TextPosition(0)
+		let index = lineNumber * wordsPerLine + offsetInLine
+		guard let dataSource = dataSource, (0...dataSource.totalWordCount).contains(index) else {
+			return nil
 		}
 
-		return TextPosition(wordGroupLayer.wordOffset.lowerBound)
+		return TextPosition(index)
 	}
 
 	func closestPosition(to point: CGPoint, within range: UITextRange) -> UITextPosition? {
-		// TODO: Hit test is insufficient
+		// TODO: Rewrite for variable line height
 		guard let closestPosition = closestPosition(to: point) as? TextPosition, let range = range as? TextRange else {
-			return TextPosition(0)
+			return nil
 		}
 
-		if range.range.contains(closestPosition.index) {
-			return closestPosition
-		} else {
-			return TextPosition(0)
+		guard range.range.contains(closestPosition.index) else {
+			return nil
 		}
+
+		return closestPosition
 	}
 
 	func characterRange(at point: CGPoint) -> UITextRange? {
-		// TODO: Hit test is insufficient
+		// TODO: Rewrite for variable line height
 		guard let closestPosition = closestPosition(to: point) as? TextPosition else {
-			return TextRange(0..<0)
+			return nil
 		}
 
 		return TextRange(closestPosition.index..<(closestPosition.index + 1))
