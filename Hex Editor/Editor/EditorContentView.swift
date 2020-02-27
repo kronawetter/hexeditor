@@ -249,6 +249,15 @@ class EditorContentView: UIView {
 
 		updateSecondarySelectionAndCaretViews()
 	}
+
+	override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+		super.traitCollectionDidChange(previousTraitCollection)
+
+		// Clear layer image cache and force re-layout
+		cache = AtomicWordGroupLayerImageCache()
+		removeSublayers()
+		setNeedsLayout()
+	}
 	
 	required init?(coder: NSCoder) {
 		fatalError("init(coder:) has not been implemented")
