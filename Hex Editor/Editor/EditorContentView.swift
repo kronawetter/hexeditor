@@ -66,7 +66,7 @@ class EditorContentView: UIView {
 			// TODO: Make slightly prettier
 			let lastWordGroupImage = cache.image(text: lastWordGroup.text, size: lastWordGroup.range.count, font: font, foregroundColor: textColor, backgroundColor: backgroundColor ?? .white)
 			let requiredWidth = CGFloat(lastWordGroupImage.width) / UIScreen.main.scale
-			return round(requiredWidth / CGFloat(wordsPerWordSpacingGroup))
+			return ceil(requiredWidth / CGFloat(wordsPerWordSpacingGroup))
 		} else {
 			// TODO: Get width of characters
 			return round(font.pointSize * 1.25)
