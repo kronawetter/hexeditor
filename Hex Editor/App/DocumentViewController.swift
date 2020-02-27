@@ -38,6 +38,7 @@ class DocumentViewController: UIViewController {
 		editorView.hexDataSource = nil
 		editorView.textDataSource = nil
 		editorView.selection = 0..<0
+		editorView.contentOffset = CGPoint(x: .zero, y: -editorView.safeAreaInsets.top)
 		atomicWordGroupManager = nil
 		file = nil
 		documentURL = nil
@@ -66,6 +67,10 @@ class DocumentViewController: UIViewController {
 
 	private var keyboardObservers: [Any] = []
 
+	private var documentsButton: UIBarButtonItem!
+	private var modifySelectionButton: UIBarButtonItem!
+	private var changeBytesPerLineButton: UIBarButtonItem!
+
 	override var keyCommands: [UIKeyCommand] {
 		[UIKeyCommand(title: "Modify Selection", action: #selector(modifySelection), input: "l", modifierFlags: .command), UIKeyCommand(title: "Go to Documents", action: #selector(close), input: "o", modifierFlags: .command)]
 	}
@@ -83,8 +88,12 @@ class DocumentViewController: UIViewController {
 		editorView.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
 		editorView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
 
+		documentsButton = UIBarButtonItem(title: "Documents", style: .plain, target: self, action: #selector(close))
+		modifySelectionButton = UIBarButtonItem(image: UIImage(systemName: "arrow.turn.down.right"), style: .plain, target: self, action: #selector(modifySelection))
+		changeBytesPerLineButton = UIBarButtonItem(image: UIImage(systemName: "aspectratio"), style: .plain, target: self, action: nil)
+
 		navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Documents", style: .plain, target: self, action: #selector(close))
-		navigationItem.rightBarButtonItems = [UIBarButtonItem(image: UIImage(systemName: "ellipsis.circle"), style: .plain, target: self, action: #selector(writeFile)), UIBarButtonItem(image: UIImage(systemName: "arrow.turn.down.right"), style: .plain, target: self, action: #selector(modifySelection))]
+		navigationItem.rightBarButtonItems = [changeBytesPerLineButton, modifySelectionButton]
 	}
 
 	override func viewWillAppear(_ animated: Bool) {
@@ -123,10 +132,6 @@ class DocumentViewController: UIViewController {
 		viewController.modalPresentationStyle = .popover
 		viewController.popoverPresentationController?.barButtonItem = navigationItem.rightBarButtonItem
 		present(viewController, animated: true)
-	}
-
-	@objc func writeFile() {
-		try! file?.write()
 	}
 
 	// MARK: Keyboard Events
