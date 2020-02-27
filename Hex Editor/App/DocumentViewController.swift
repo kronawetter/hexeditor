@@ -128,6 +128,8 @@ class DocumentViewController: UIViewController {
 		keyboardObservers.forEach { NotificationCenter.default.removeObserver($0) }
 		keyboardObservers = []
 
+		self.unload()
+
 		NSFileCoordinator.removeFilePresenter(self)
 	}
 
@@ -142,16 +144,12 @@ class DocumentViewController: UIViewController {
 			if let error = error {
 				let alert = UIAlertController(title: "Failed to Save Document", message: error.localizedDescription, preferredStyle: .alert)
 				alert.addAction(.init(title: "Close Document", style: .destructive) { _ in
-					self.dismiss(animated: true) {
-						self.unload()
-					}
+					self.dismiss(animated: true)
 				})
 				self.present(alert, animated: true)
 				return
 			} else {
-				self.dismiss(animated: true) {
-					self.unload()
-				}
+				self.dismiss(animated: true)
 			}
 		}
 	}
@@ -173,15 +171,19 @@ class DocumentViewController: UIViewController {
 		let alertController = UIAlertController(title: "Change Bytes Per Line", message: nil, preferredStyle: .alert)
 		alertController.addTextField { textField in
 			textField.placeholder = "Byte Groups Per Line"
+			textField.autocorrectionType = .no
+			textField.autocapitalizationType = .none
 		}
 		alertController.addTextField { textField in
 			textField.placeholder = "Bytes Per Byte Group"
+			textField.autocorrectionType = .no
+			textField.autocapitalizationType = .none
 		}
 		alertController.addAction(.init(title: "Done", style: .default) { _ in
 			let byteGroupsPerLineText = alertController.textFields?[0].text
 			let bytesPerByteGroupText = alertController.textFields?[1].text
 
-			if let byteGroupsPerLineText = byteGroupsPerLineText, let bytesPerByteGroupText = bytesPerByteGroupText, let byteGroupsPerLine = Int(byteGroupsPerLineText), let bytesPerByteGroup = Int(bytesPerByteGroupText), byteGroupsPerLine > 0, bytesPerByteGroup > 0 {
+			if let byteGroupsPerLineText = byteGroupsPerLineText, let bytesPerByteGroupText = bytesPerByteGroupText, let byteGroupsPerLine = Int.from(prefixedOctalDecimalOrHexadecimal: byteGroupsPerLineText), let bytesPerByteGroup = Int.from(prefixedOctalDecimalOrHexadecimal: bytesPerByteGroupText), byteGroupsPerLine > 0, bytesPerByteGroup > 0 {
 				self.editorView.byteSpacingGroupsPerLine = byteGroupsPerLine
 				self.editorView.bytesPerByteSpacingGroup = bytesPerByteGroup
 			}
@@ -289,7 +291,6 @@ extension DocumentViewController: NSFilePresenter {
 
 	func accommodatePresentedItemDeletion(completionHandler: @escaping (Error?) -> Void) {
 		dismiss(animated: true) {
-			self.unload()
 			completionHandler(nil)
 		}
 	}

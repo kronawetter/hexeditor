@@ -18,17 +18,12 @@ struct SelectionModificationView: View {
 	@State private var relativeToExistingCount = false
 	@State private var countString = ""
 
-	private func convert(_ string: String) -> Int? {
-		// Octal conversion must be attempted before decimal conversion as decimal number strings with leading zeros also represent valid integers
-		Int(octalDescriptionWithPrefix: string) ?? Int(hexadecimalDescriptionWithPrefix: string) ?? Int(string)
-	}
-
 	private var offset: Int? {
-		convert(offsetString)
+		Int.from(prefixedOctalDecimalOrHexadecimal: offsetString)
 	}
 
 	private var count: Int? {
-		convert(countString)
+		Int.from(prefixedOctalDecimalOrHexadecimal: countString)
 	}
 
 	private var modifiedSelection: Range<Int>? {
@@ -120,11 +115,16 @@ extension Int {
 		}
 	}
 
-	init?(octalDescriptionWithPrefix: String) {
-		self.init(octalDescriptionWithPrefix, prefix: "0", radix: 8)
+	init?(prefixedOctal description: String) {
+		self.init(description, prefix: "0", radix: 8)
 	}
 
-	init?(hexadecimalDescriptionWithPrefix description: String) {
+	init?(prefixedHexadecimal description: String) {
 		self.init(description, prefix: "0x", radix: 16)
+	}
+
+	static func from(prefixedOctalDecimalOrHexadecimal description: String) -> Int? {
+		// Octal conversion must be attempted before decimal conversion as decimal number strings with leading zeros also represent valid integers
+		Self.init(prefixedOctal: description) ?? Self.init(prefixedHexadecimal: description) ?? Self.init(description)
 	}
 }
