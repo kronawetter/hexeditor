@@ -100,42 +100,45 @@ struct File {
 		hasChanges = true
 	}
 
-	mutating func write() throws {
-		guard hasChanges else {
+	mutating func write(with filePresenter: NSFilePresenter) throws {
+		guard hasChanges, let url = filePresenter.presentedItemURL else {
 			return
 		}
 
-		var endIndex = totalWordCount
-		while endIndex > 0 {
-			let (node, pairIndex, _) = contents.find(offset: endIndex - 1)!
-			let rangeInNode = node.pairs[pairIndex].range
-			let rangeDelta = endIndex - rangeInNode.endIndex
-			let range = (rangeInNode.startIndex + rangeDelta)..<(rangeInNode.endIndex + rangeDelta)
-			let element = node.pairs[pairIndex].element
+		let fileCoordinator = NSFileCoordinator(filePresenter: filePresenter)
+		fileCoordinator.coordinate(writingItemAt: url, error: nil) { _ in
+			var endIndex = totalWordCount
+			while endIndex > 0 {
+				let (node, pairIndex, _) = contents.find(offset: endIndex - 1)!
+				let rangeInNode = node.pairs[pairIndex].range
+				let rangeDelta = endIndex - rangeInNode.endIndex
+				let range = (rangeInNode.startIndex + rangeDelta)..<(rangeInNode.endIndex + rangeDelta)
+				let element = node.pairs[pairIndex].element
 
-			let writeChunkSize = 1024 * 1024 * 128
-			var remainingBytes = range.count
-			while remainingBytes > 0 {
-				let bytesToRead = min(remainingBytes, writeChunkSize)
+				let writeChunkSize = 1024 * 1024 * 128
+				var remainingBytes = range.count
+				while remainingBytes > 0 {
+					let bytesToRead = min(remainingBytes, writeChunkSize)
 
-				let rangeInElement = (remainingBytes - bytesToRead)..<remainingBytes
-				let data = element.value(for: rangeInElement)!
+					let rangeInElement = (remainingBytes - bytesToRead)..<remainingBytes
+					let data = element.value(for: rangeInElement)!
 
-				try fileContents.write(data, to: (range.startIndex + rangeInElement.startIndex)..<(range.startIndex + rangeInElement.endIndex))
+					try! fileContents.write(data, to: (range.startIndex + rangeInElement.startIndex)..<(range.startIndex + rangeInElement.endIndex))
 
-				remainingBytes -= bytesToRead
+					remainingBytes -= bytesToRead
+				}
+
+				endIndex = range.startIndex
 			}
 
-			endIndex = range.startIndex
+			try! fileContents.truncate(at: totalWordCount)
+			try! fileContents.synchronize()
+
+			contents.clear()
+			let segment = FileSegment(fileContents: fileContents, rangeInFile: 0..<size)
+			contents.insert(segment, offset: 0)
+			hasChanges = false
 		}
-
-		try fileContents.truncate(at: totalWordCount)
-		try fileContents.synchronize()
-
-		contents.clear()
-		let segment = FileSegment(fileContents: fileContents, rangeInFile: 0..<size)
-		contents.insert(segment, offset: 0)
-		hasChanges = false
 	}
 }
 

@@ -75,6 +75,25 @@ class DocumentViewController: UIViewController {
 		[UIKeyCommand(title: "Modify Selection", action: #selector(modifySelection), input: "l", modifierFlags: .command), UIKeyCommand(title: "Go to Documents", action: #selector(close), input: "o", modifierFlags: .command)]
 	}
 
+	private var isSaving = false {
+		willSet {
+			if newValue {
+				navigationItem.leftBarButtonItems?.forEach { $0.isEnabled = false }
+				navigationItem.rightBarButtonItems?.forEach { $0.isEnabled = false }
+				editorView.disableEditing()
+				editorView.isUserInteractionEnabled = false
+			}
+		}
+		didSet {
+			if !isSaving {
+				navigationItem.leftBarButtonItems?.forEach { $0.isEnabled = true }
+				navigationItem.rightBarButtonItems?.forEach { $0.isEnabled = true }
+				editorView.enableEditing()
+				editorView.isUserInteractionEnabled = true
+			}
+		}
+	}
+
 	// MARK: View Lifecycle
 
 	override func loadView() {
@@ -116,8 +135,31 @@ class DocumentViewController: UIViewController {
 	// MARK: Button Actions
 
 	@objc func close() {
-		dismiss(animated: true) {
-			self.unload()
+		guard !isSaving else {
+			return
+		}
+
+		isSaving = true
+
+		DispatchQueue.global(qos: .userInitiated).async {
+			do {
+				try self.file?.write(with: self)
+
+				DispatchQueue.main.sync {
+					self.isSaving = false
+
+					self.dismiss(animated: true) {
+						self.unload()
+					}
+				}
+			} catch {
+				DispatchQueue.main.sync {
+					self.isSaving = false
+
+					let alert = UIAlertController(title: "Failed to Save Document", message: "The document couldn’t be saved.", preferredStyle: .alert)
+					self.present(alert, animated: true)
+				}
+			}
 		}
 	}
 
@@ -244,8 +286,17 @@ extension DocumentViewController: NSFilePresenter {
 	}
 
 	func savePresentedItemChanges(completionHandler: @escaping (Error?) -> Void) {
+		guard !isSaving else {
+			// TODO: Handle properly
+			struct SaveError: Error {
+
+			}
+			completionHandler(SaveError())
+			return
+		}
+
 		do {
-			try file?.write()
+			try file?.write(with: self)
 			completionHandler(nil)
 		} catch {
 			completionHandler(error)
@@ -264,6 +315,10 @@ extension DocumentViewController: NSFilePresenter {
 	}
 
 	func presentedItemDidChange() {
+		guard !isSaving else {
+			return
+		}
+
 		guard let documentURL = documentURL else {
 			unload()
 			return

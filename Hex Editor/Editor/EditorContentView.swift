@@ -237,9 +237,12 @@ class EditorContentView: UIView {
 	override func layoutSubviews() {
 		inputDelegate?.textWillChange(self)
 
-		removeSublayersOutsideVisibleRect()
-		addMissingWordGroupSublayersAtBegin()
-		addMissingWordGroupSublayersAtEnd()
+		// TODO: Remove workaround to avoid accessing file atomic word groups during file write
+		if isUserInteractionEnabled {
+			removeSublayersOutsideVisibleRect()
+			addMissingWordGroupSublayersAtBegin()
+			addMissingWordGroupSublayersAtEnd()
+		}
 
 		super.layoutSubviews()
 
