@@ -90,7 +90,7 @@ class DocumentViewController: UIViewController {
 
 		documentsButton = UIBarButtonItem(title: "Documents", style: .plain, target: self, action: #selector(close))
 		modifySelectionButton = UIBarButtonItem(image: UIImage(systemName: "arrow.turn.down.right"), style: .plain, target: self, action: #selector(modifySelection))
-		changeBytesPerLineButton = UIBarButtonItem(image: UIImage(systemName: "aspectratio"), style: .plain, target: self, action: nil)
+		changeBytesPerLineButton = UIBarButtonItem(image: UIImage(systemName: "aspectratio"), style: .plain, target: self, action: #selector(changeBytesPerLine))
 
 		navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Documents", style: .plain, target: self, action: #selector(close))
 		navigationItem.rightBarButtonItems = [changeBytesPerLineButton, modifySelectionButton]
@@ -132,6 +132,27 @@ class DocumentViewController: UIViewController {
 		viewController.modalPresentationStyle = .popover
 		viewController.popoverPresentationController?.barButtonItem = navigationItem.rightBarButtonItem
 		present(viewController, animated: true)
+	}
+
+	@objc func changeBytesPerLine() {
+		let alertController = UIAlertController(title: "Change Bytes Per Line", message: nil, preferredStyle: .alert)
+		alertController.addTextField { textField in
+			textField.placeholder = "Byte Groups Per Line"
+		}
+		alertController.addTextField { textField in
+			textField.placeholder = "Bytes Per Byte Group"
+		}
+		alertController.addAction(.init(title: "Done", style: .default) { _ in
+			let byteGroupsPerLineText = alertController.textFields?[0].text
+			let bytesPerByteGroupText = alertController.textFields?[1].text
+
+			if let byteGroupsPerLineText = byteGroupsPerLineText, let bytesPerByteGroupText = bytesPerByteGroupText, let byteGroupsPerLine = Int(byteGroupsPerLineText), let bytesPerByteGroup = Int(bytesPerByteGroupText), byteGroupsPerLine > 0, bytesPerByteGroup > 0 {
+				self.editorView.byteSpacingGroupsPerLine = byteGroupsPerLine
+				self.editorView.bytesPerByteSpacingGroup = bytesPerByteGroup
+			}
+		})
+		alertController.addAction(.init(title: "Cancel", style: .cancel))
+		present(alertController, animated: true)
 	}
 
 	// MARK: Keyboard Events

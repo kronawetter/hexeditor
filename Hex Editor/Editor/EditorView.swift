@@ -88,12 +88,30 @@ class EditorView: UIScrollView {
 
 	weak var editorDelegate: EditorViewDelegate? = nil
 
-	var bytesPerLine = 16 {
+	var bytesPerByteSpacingGroup = 2 {
 		didSet {
+			hexContentView.wordsPerWordSpacingGroup = bytesPerByteSpacingGroup
+			textContentView.wordsPerWordSpacingGroup = bytesPerLine
+			lineNumberContentView.wordsPerWordSpacingGroup = bytesPerLine
 			lineNumberDataSource.wordsPerLine = bytesPerLine
 			lineNumberContentView.dataSource = lineNumberDataSource
 			setNeedsLayout()
 		}
+	}
+
+	var byteSpacingGroupsPerLine = 8 {
+		didSet {
+			hexContentView.wordsPerWordSpacingGroup = bytesPerByteSpacingGroup
+			textContentView.wordsPerWordSpacingGroup = bytesPerLine
+			lineNumberContentView.wordsPerWordSpacingGroup = bytesPerLine
+			lineNumberDataSource.wordsPerLine = bytesPerLine
+			lineNumberContentView.dataSource = lineNumberDataSource
+			setNeedsLayout()
+		}
+	}
+
+	var bytesPerLine: Int {
+		bytesPerByteSpacingGroup * byteSpacingGroupsPerLine
 	}
 
 	override init(frame: CGRect) {
