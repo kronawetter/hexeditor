@@ -67,7 +67,8 @@ struct File {
 	private(set) var hasChanges: Bool
 	private var contents = OffsetTree<Data>()
 	private let fileContents: FileContents
-
+	private let writeQueue: OperationQueue
+	
 	init(url: URL) throws {
 		size = (try url.resourceValues(forKeys: [.fileSizeKey])).fileSize!
 		fileContents = try FileContents(for: url)
@@ -75,6 +76,12 @@ struct File {
 
 		let segment = FileSegment(fileContents: fileContents, rangeInFile: 0..<size)
 		contents.insert(segment, offset: 0)
+
+		let writeQueue = OperationQueue()
+		writeQueue.name = "File Write Queue"
+		writeQueue.qualityOfService = .userInitiated
+		writeQueue.maxConcurrentOperationCount = 1
+		self.writeQueue = writeQueue
 	}
 
 	mutating func insert(_ data: Data, at wordIndex: Int) {
@@ -100,44 +107,87 @@ struct File {
 		hasChanges = true
 	}
 
-	mutating func write(with filePresenter: NSFilePresenter) throws {
+	// MARK: File Writing
+
+	func modificationDate(with filePresenter: NSFilePresenter) -> Date? {
+		guard let url = filePresenter.presentedItemURL else {
+			return nil
+		}
+
+		var error: NSError? = nil
+		var date: Date? = nil
+
+		let fileCoordinator = NSFileCoordinator(filePresenter: filePresenter)
+		fileCoordinator.coordinate(readingItemAt: url, error: &error) { url in
+			date = (try? url.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate
+		}
+
+		guard error == nil else {
+			return nil
+		}
+
+		return date
+	}
+
+	mutating func write(with filePresenter: NSFilePresenter, callback: ((Error?) -> Void)?) {
 		guard hasChanges, let url = filePresenter.presentedItemURL else {
+			callback?(nil)
 			return
 		}
 
+		let contents = self.contents
+		let size = self.size
+		let fileContents = self.fileContents
+
+		self.contents = OffsetTree<Data>()
+		self.size = 0
+		self.hasChanges = false
+
 		let fileCoordinator = NSFileCoordinator(filePresenter: filePresenter)
-		fileCoordinator.coordinate(writingItemAt: url, error: nil) { _ in
-			var endIndex = totalWordCount
-			while endIndex > 0 {
-				let (node, pairIndex, _) = contents.find(offset: endIndex - 1)!
-				let rangeInNode = node.pairs[pairIndex].range
-				let rangeDelta = endIndex - rangeInNode.endIndex
-				let range = (rangeInNode.startIndex + rangeDelta)..<(rangeInNode.endIndex + rangeDelta)
-				let element = node.pairs[pairIndex].element
-
-				let writeChunkSize = 1024 * 1024 * 128
-				var remainingBytes = range.count
-				while remainingBytes > 0 {
-					let bytesToRead = min(remainingBytes, writeChunkSize)
-
-					let rangeInElement = (remainingBytes - bytesToRead)..<remainingBytes
-					let data = element.value(for: rangeInElement)!
-
-					try! fileContents.write(data, to: (range.startIndex + rangeInElement.startIndex)..<(range.startIndex + rangeInElement.endIndex))
-
-					remainingBytes -= bytesToRead
+		fileCoordinator.coordinate(with: [.writingIntent(with: url)], queue: writeQueue) { error in
+			if let error = error {
+				DispatchQueue.main.sync {
+					callback?(error)
 				}
-
-				endIndex = range.startIndex
+				return
 			}
 
-			try! fileContents.truncate(at: totalWordCount)
-			try! fileContents.synchronize()
+			do {
+				var endIndex = size
+				while endIndex > 0 {
+					let (node, pairIndex, _) = contents.find(offset: endIndex - 1)!
+					let rangeInNode = node.pairs[pairIndex].range
+					let rangeDelta = endIndex - rangeInNode.endIndex
+					let range = (rangeInNode.startIndex + rangeDelta)..<(rangeInNode.endIndex + rangeDelta)
+					let element = node.pairs[pairIndex].element
 
-			contents.clear()
-			let segment = FileSegment(fileContents: fileContents, rangeInFile: 0..<size)
-			contents.insert(segment, offset: 0)
-			hasChanges = false
+					let writeChunkSize = 1024 * 1024 * 128
+					var remainingBytes = range.count
+					while remainingBytes > 0 {
+						let bytesToRead = min(remainingBytes, writeChunkSize)
+
+						let rangeInElement = (remainingBytes - bytesToRead)..<remainingBytes
+						let data = element.value(for: rangeInElement)!
+
+						try fileContents.write(data, to: (range.startIndex + rangeInElement.startIndex)..<(range.startIndex + rangeInElement.endIndex))
+
+						remainingBytes -= bytesToRead
+					}
+
+					endIndex = range.startIndex
+				}
+
+				try fileContents.truncate(at: size)
+				try fileContents.synchronize()
+
+				DispatchQueue.main.sync {
+					callback?(nil)
+				}
+			} catch {
+				DispatchQueue.main.sync {
+					callback?(error)
+				}
+			}
 		}
 	}
 }

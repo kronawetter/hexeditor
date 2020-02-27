@@ -30,6 +30,7 @@ class DocumentViewController: UIViewController {
 
 		self.file = file
 		documentURL = url
+		lastModificationDate = file.modificationDate(with: self)
 	}
 
 	func unload() {
@@ -42,6 +43,7 @@ class DocumentViewController: UIViewController {
 		atomicWordGroupManager = nil
 		file = nil
 		documentURL = nil
+		lastModificationDate = nil
 	}
 
 	private(set) var documentURL: URL? {
@@ -71,27 +73,24 @@ class DocumentViewController: UIViewController {
 	private var modifySelectionButton: UIBarButtonItem!
 	private var changeBytesPerLineButton: UIBarButtonItem!
 
+	private var lastModificationDate: Date? = nil
+
 	override var keyCommands: [UIKeyCommand] {
 		[UIKeyCommand(title: "Modify Selection", action: #selector(modifySelection), input: "l", modifierFlags: .command), UIKeyCommand(title: "Go to Documents", action: #selector(close), input: "o", modifierFlags: .command)]
 	}
 
-	private var isSaving = false {
-		willSet {
-			if newValue {
-				navigationItem.leftBarButtonItems?.forEach { $0.isEnabled = false }
-				navigationItem.rightBarButtonItems?.forEach { $0.isEnabled = false }
-				editorView.disableEditing()
-				editorView.isUserInteractionEnabled = false
-			}
-		}
-		didSet {
-			if !isSaving {
-				navigationItem.leftBarButtonItems?.forEach { $0.isEnabled = true }
-				navigationItem.rightBarButtonItems?.forEach { $0.isEnabled = true }
-				editorView.enableEditing()
-				editorView.isUserInteractionEnabled = true
-			}
-		}
+	private func disableForSaving() {
+		navigationItem.leftBarButtonItems?.forEach { $0.isEnabled = false }
+		navigationItem.rightBarButtonItems?.forEach { $0.isEnabled = false }
+		editorView.disableEditing()
+		editorView.isUserInteractionEnabled = false
+	}
+
+	private func enableAfterSaving() {
+		navigationItem.leftBarButtonItems?.forEach { $0.isEnabled = true }
+		navigationItem.rightBarButtonItems?.forEach { $0.isEnabled = true }
+		editorView.enableEditing()
+		editorView.isUserInteractionEnabled = true
 	}
 
 	// MARK: View Lifecycle
@@ -135,29 +134,23 @@ class DocumentViewController: UIViewController {
 	// MARK: Button Actions
 
 	@objc func close() {
-		guard !isSaving else {
-			return
-		}
+		disableForSaving()
 
-		isSaving = true
+		file?.write(with: self) { error in
+			self.enableAfterSaving()
 
-		DispatchQueue.global(qos: .userInitiated).async {
-			do {
-				try self.file?.write(with: self)
-
-				DispatchQueue.main.sync {
-					self.isSaving = false
-
+			if let error = error {
+				let alert = UIAlertController(title: "Failed to Save Document", message: error.localizedDescription, preferredStyle: .alert)
+				alert.addAction(.init(title: "Close Document", style: .destructive) { _ in
 					self.dismiss(animated: true) {
 						self.unload()
 					}
-				}
-			} catch {
-				DispatchQueue.main.sync {
-					self.isSaving = false
-
-					let alert = UIAlertController(title: "Failed to Save Document", message: "The document couldn’t be saved.", preferredStyle: .alert)
-					self.present(alert, animated: true)
+				})
+				self.present(alert, animated: true)
+				return
+			} else {
+				self.dismiss(animated: true) {
+					self.unload()
 				}
 			}
 		}
@@ -270,35 +263,26 @@ extension DocumentViewController: NSFilePresenter {
 	}
 
 	func relinquishPresentedItem(toReader reader: @escaping ((() -> Void)?) -> Void) {
-		editorView.disableEditing()
+		disableForSaving()
 
 		reader {
-			self.editorView.enableEditing()
+			self.enableAfterSaving()
 		}
 	}
 
 	func relinquishPresentedItem(toWriter writer: @escaping ((() -> Void)?) -> Void) {
-		editorView.disableEditing()
+		disableForSaving()
 
 		writer {
-			self.editorView.enableEditing()
+			self.enableAfterSaving()
 		}
 	}
 
 	func savePresentedItemChanges(completionHandler: @escaping (Error?) -> Void) {
-		guard !isSaving else {
-			// TODO: Handle properly
-			struct SaveError: Error {
+		disableForSaving()
 
-			}
-			completionHandler(SaveError())
-			return
-		}
-
-		do {
-			try file?.write(with: self)
-			completionHandler(nil)
-		} catch {
+		file?.write(with: self) { error in
+			self.enableAfterSaving()
 			completionHandler(error)
 		}
 	}
@@ -315,16 +299,20 @@ extension DocumentViewController: NSFilePresenter {
 	}
 
 	func presentedItemDidChange() {
-		guard !isSaving else {
-			return
-		}
-
 		guard let documentURL = documentURL else {
 			unload()
 			return
 		}
 
-		// TODO: Do not reload document on attribute change (https://developer.apple.com/documentation/foundation/nsfilepresenter/1416103-presenteditemdidchange)
-		load(from: documentURL)
+		guard let modificationDate = file?.modificationDate(with: self) else {
+			// Always reload when modification date is not available
+			load(from: documentURL)
+			return
+		}
+
+		if lastModificationDate != modificationDate {
+			// Reload when modification date is different from modification date when file was last loaded
+			load(from: documentURL)
+		}
 	}
 }
