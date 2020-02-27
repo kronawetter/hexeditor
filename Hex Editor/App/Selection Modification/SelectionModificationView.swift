@@ -108,10 +108,16 @@ struct SelectionModificationView_Previews: PreviewProvider {
 
 extension Int {
 	init?(_ description: String, prefix: String, radix: Int) {
-		guard description.starts(with: prefix) else {
+		let minus = "-"
+		let prefixWithMinus = minus + prefix
+
+		if description.starts(with: prefixWithMinus) {
+			self.init(minus + description.dropFirst(prefixWithMinus.count), radix: radix)
+		} else if description.starts(with: prefix) {
+			self.init(description.dropFirst(prefix.count), radix: radix)
+		} else {
 			return nil
 		}
-		self.init(description.dropFirst(prefix.count), radix: radix)
 	}
 
 	init?(octalDescriptionWithPrefix: String) {
