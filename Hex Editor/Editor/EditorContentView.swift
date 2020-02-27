@@ -383,7 +383,7 @@ class EditorContentView: UIView {
 		}
 	}
 
-	private func rectForAtomicWordGroup(at offset: Int) -> CGRect? {
+	func rectForAtomicWordGroup(at offset: Int) -> CGRect? {
 		guard let dataSource = dataSource, let sublayers = layer.sublayers else {
 			return nil
 		}
@@ -724,10 +724,11 @@ extension EditorContentView: UITextInput {
 			guard let contentView = contentView, let position = position as? TextPosition else {
 				return nil
 			}
-			print("rangeEnclosingPosition", position.index, granularity, direction)
 
 			switch granularity {
 			case .character:
+				fallthrough
+			case .word:
 				return TextRange(position.index..<position.index + 1)
 			case .line:
 				return TextRange(((position.index / contentView.wordsPerLine) * contentView.wordsPerLine)..<position.index)
@@ -742,11 +743,11 @@ extension EditorContentView: UITextInput {
 			guard let contentView = contentView, let position = position as? TextPosition else {
 				return false
 			}
-			print("isPosition atBoundary", position.index, granularity, direction)
-
 
 			switch granularity {
 			case .character:
+				fallthrough
+			case .word:
 				return true
 			case .line:
 				if direction == .storage(.forward) || direction == .layout(.right) || direction == .layout(.down) {
@@ -773,10 +774,11 @@ extension EditorContentView: UITextInput {
 			guard let contentView = contentView, let position = position as? TextPosition else {
 				return nil
 			}
-			print("fromPositionToBoundary", position.index, granularity, direction)
 
 			switch granularity {
 			case .character:
+				fallthrough
+			case .word:
 				return position
 			case .line:
 				if direction == .storage(.forward) || direction == .layout(.right) || direction == .layout(.down) {
@@ -803,10 +805,11 @@ extension EditorContentView: UITextInput {
 			guard let contentView = contentView, let position = position as? TextPosition else {
 				return false
 			}
-			print("isPosition withinTextUnit", position.index, granularity, direction)
 
 			switch granularity {
 			case .character:
+				fallthrough
+			case .word:
 				return true
 			case .line:
 				if direction == .storage(.forward) || direction == .layout(.right) || direction == .layout(.down) {
@@ -1133,6 +1136,10 @@ extension EditorContentView: UITextInput {
 		// TODO: Rewrite for variable line height
 		let lineNumber = Int((point.y - contentInsets.top) / estimatedLineHeight)
 		let offsetInLine = Int((point.x - contentInsets.left) / widthPerWord)
+
+		guard offsetInLine < wordsPerLine else {
+			return nil
+		}
 
 		let index = lineNumber * wordsPerLine + offsetInLine
 		guard let dataSource = dataSource, (0...dataSource.totalWordCount).contains(index) else {

@@ -29,6 +29,16 @@ class EditorView: UIScrollView {
 			if selection != oldValue {
 				contentViews.forEach { $0.inputDelegate?.selectionDidChange($0) }
 				contentViews.forEach { $0.setNeedsLayout() }
+
+				if let rectOfLastSelectedWordGroup = hexContentView.rectForAtomicWordGroup(at: selection.endIndex) {
+					let visibleRect = CGRect(x: contentOffset.x, y: contentOffset.y + safeAreaInsets.top, width: bounds.width, height: bounds.height - safeAreaInsets.top - safeAreaInsets.bottom - contentInset.bottom)
+					let convertedRect = hexContentView.convert(rectOfLastSelectedWordGroup, to: self)
+
+					if !visibleRect.contains(convertedRect) {
+						scrollRectToVisible(convertedRect, animated: true)
+					}
+				}
+
 				selectionDidChangeSinceInsertion = true
 			}
 		}
