@@ -170,6 +170,7 @@ class EditorView: UIScrollView {
 
 			contentView.frame.origin = contentOrigin
 			contentView.frame.size = contentView.size(for: bytesPerLine)
+			contentView.frame.size.height = max(contentView.frame.size.height, bounds.height)
 
 			contentView.visibleRect = CGRect(x: .zero, y: contentOffset.y, width: contentView.bounds.width, height: bounds.height)
 

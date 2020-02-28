@@ -110,7 +110,7 @@ class DocumentViewController: UIViewController {
 		modifySelectionButton = UIBarButtonItem(image: UIImage(systemName: "arrow.turn.down.right"), style: .plain, target: self, action: #selector(modifySelection))
 		changeBytesPerLineButton = UIBarButtonItem(image: UIImage(systemName: "aspectratio"), style: .plain, target: self, action: #selector(changeBytesPerLine))
 
-		navigationItem.leftBarButtonItem = UIBarButtonItem(title: "Documents", style: .plain, target: self, action: #selector(close))
+		navigationItem.leftBarButtonItem = documentsButton
 		navigationItem.rightBarButtonItems = [changeBytesPerLineButton, modifySelectionButton]
 	}
 
