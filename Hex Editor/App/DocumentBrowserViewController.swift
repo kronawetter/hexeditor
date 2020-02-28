@@ -49,6 +49,12 @@ class DocumentBrowserViewController: UIDocumentBrowserViewController, UIDocument
 	}
 
 	func presentDocument(at documentURL: URL) {
+		// URL must not be presented in any other scene
+		let currentlyPresentedDocumentURLs = UIApplication.shared.connectedScenes.compactMap { ($0.delegate as? SceneDelegate)?.documentViewController?.presentedItemURL }
+		guard !currentlyPresentedDocumentURLs.contains(documentURL) else {
+			return
+		}
+
 		documentViewController.load(from: documentURL)
 
 		let navigationController = UINavigationController(rootViewController: documentViewController)
