@@ -341,7 +341,7 @@ class EditorContentView: UIView {
 			sublayer.contentsGravity = dataSource is EditorView.LineNumberDataSource ? .topRight : .topLeft
 			sublayer.contentsScale = scale
 			sublayer.isOpaque = true
-			sublayer.frame = CGRect(x: origin.x + CGFloat(wordOffsetInLine) * widthPerWord + CGFloat(wordOffsetInLine / wordsPerWordSpacingGroup) * wordGroupSpacingWidth, y: origin.y + offsetFromYOrigin, width: CGFloat(group.totalSize - group.offset) * widthPerWord, height: lineHeight) // TODO: Width is incorrect if a multi-word group spans across multiple word spacing groups
+			sublayer.frame = CGRect(x: origin.x + CGFloat(wordOffsetInLine) * widthPerWord + CGFloat(wordOffsetInLine / wordsPerWordSpacingGroup) * wordGroupSpacingWidth, y: origin.y + offsetFromYOrigin, width: CGFloat(displayedRemainingSizeOfGroup) * widthPerWord, height: lineHeight) // TODO: Width is incorrect if a multi-word group spans across multiple word spacing groups
 
 			layer.addSublayer(sublayer)
 
@@ -396,7 +396,9 @@ class EditorContentView: UIView {
 	}
 
 	func rectForAtomicWordGroup(at offset: Int) -> CGRect? {
-		guard let dataSource = dataSource, let sublayers = layer.sublayers else {
+		// Always use estimated frames for now as estimated frames always equal the actual frames (as variable line height has been disabled)
+		// TODO: Fix frame extraction from sublayers for word groups that span across multiple lines
+		/*guard let dataSource = dataSource, let sublayers = layer.sublayers else {
 			return nil
 		}
 
@@ -404,7 +406,8 @@ class EditorContentView: UIView {
 			return sublayer.frame
 		} else {
 			return estimatedFrame(for: offset)
-		}
+		}*/
+		estimatedFrame(for: offset)
 	}
 
 	private func rectsForAtomicWordGroups(in range: Range<Int>) -> [CGRect] {
