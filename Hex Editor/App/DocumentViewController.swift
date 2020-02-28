@@ -51,6 +51,10 @@ class DocumentViewController: UIViewController {
 			if let documentURL = documentURL {
 				print(documentURL.path)
 				navigationItem.title = documentURL.lastPathComponent
+				view.window?.windowScene?.title = documentURL.lastPathComponent
+			} else {
+				navigationItem.title = nil
+				view.window?.windowScene?.title = ""
 			}
 		}
 	}
@@ -120,6 +124,18 @@ class DocumentViewController: UIViewController {
 		keyboardObservers = [NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow(_:)), name: UIResponder.keyboardWillShowNotification, object: nil), NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillChangeFrame(_:)), name: UIResponder.keyboardWillChangeFrameNotification, object: nil), NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide(_:)), name: UIResponder.keyboardWillHideNotification, object: nil)]
 
 		NSFileCoordinator.addFilePresenter(self)
+	}
+
+	override func viewDidAppear(_ animated: Bool) {
+		super.viewDidAppear(animated)
+
+		view.window?.windowScene?.title = documentURL?.lastPathComponent ?? ""
+	}
+
+	override func viewWillDisappear(_ animated: Bool) {
+		super.viewWillDisappear(animated)
+
+		view.window?.windowScene?.title = ""
 	}
 
 	override func viewDidDisappear(_ animated: Bool) {
