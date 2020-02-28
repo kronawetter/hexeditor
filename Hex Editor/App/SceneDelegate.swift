@@ -11,8 +11,12 @@ import UIKit
 class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 	var window: UIWindow?
 
+	var documentBrowserViewController: DocumentBrowserViewController? {
+		window?.rootViewController as? DocumentBrowserViewController
+	}
+
 	var documentViewController: DocumentViewController? {
-		(window?.rootViewController as? DocumentBrowserViewController)?.documentViewController
+		documentBrowserViewController?.documentViewController
 	}
 
 	func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
@@ -35,6 +39,21 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 	func sceneDidEnterBackground(_ scene: UIScene) {
 		if let documentViewController = documentViewController {
 			NSFileCoordinator.removeFilePresenter(documentViewController)
+		}
+	}
+
+	func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+		guard let documentBrowserViewController = documentBrowserViewController, let URLContext = URLContexts.first else {
+			return
+		}
+
+		if URLContext.options.openInPlace {
+			documentBrowserViewController.presentDocument(at: URLContext.url)
+		} else {
+			guard let url = documentBrowserViewController.importDocument(at: URLContext.url) else {
+				return
+			}
+			documentBrowserViewController.presentDocument(at: url)
 		}
 	}
 }
