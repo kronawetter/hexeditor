@@ -8,45 +8,8 @@
 
 import UIKit
 
-class DocumentBrowserViewController: UIDocumentBrowserViewController, UIDocumentBrowserViewControllerDelegate {
+class DocumentBrowserViewController: UIDocumentBrowserViewController {
 	let documentViewController = DocumentViewController()
-
-	override func viewDidLoad() {
-		super.viewDidLoad()
-		
-		delegate = self
-		shouldShowFileExtensions = true
-		allowsPickingMultipleItems = false
-	}
-
-	func documentBrowser(_ controller: UIDocumentBrowserViewController, didRequestDocumentCreationWithHandler importHandler: @escaping (URL?, UIDocumentBrowserViewController.ImportMode) -> Void) {
-		let directoryURL = FileManager.default.temporaryDirectory
-		let fileName = "New Document"
-		let fileURL = directoryURL.appendingPathComponent(fileName, isDirectory: false)
-
-		do {
-			try Data().write(to: fileURL)
-			importHandler(fileURL, .copy)
-		} catch {
-			importHandler(nil, .none)
-		}
-	}
-
-	func documentBrowser(_ controller: UIDocumentBrowserViewController, didPickDocumentsAt documentURLs: [URL]) {
-		guard let documentURL = documentURLs.first else {
-			return
-		}
-
-		presentDocument(at: documentURL)
-	}
-
-	func documentBrowser(_ controller: UIDocumentBrowserViewController, didImportDocumentAt sourceURL: URL, toDestinationURL destinationURL: URL) {
-		presentDocument(at: destinationURL)
-	}
-	
-	func documentBrowser(_ controller: UIDocumentBrowserViewController, failedToImportDocumentAt documentURL: URL, error: Error?) {
-		
-	}
 
 	func presentDocument(at documentURL: URL) {
 		// URL must not be presented in any other scene
@@ -59,7 +22,7 @@ class DocumentBrowserViewController: UIDocumentBrowserViewController, UIDocument
 
 		let navigationController = UINavigationController(rootViewController: documentViewController)
 		navigationController.modalPresentationStyle = .currentContext
-		
+
 		present(navigationController, animated: true)
 	}
 
@@ -97,6 +60,48 @@ class DocumentBrowserViewController: UIDocumentBrowserViewController, UIDocument
 		}
 
 		return documentURL
+	}
+
+	// MARK: View Lifecycle
+
+	override func viewDidLoad() {
+		super.viewDidLoad()
+		
+		delegate = self
+		shouldShowFileExtensions = true
+		allowsPickingMultipleItems = false
+	}
+}
+
+// MARK: Document Browser View Controller Delegate
+extension DocumentBrowserViewController: UIDocumentBrowserViewControllerDelegate {
+	func documentBrowser(_ controller: UIDocumentBrowserViewController, didRequestDocumentCreationWithHandler importHandler: @escaping (URL?, UIDocumentBrowserViewController.ImportMode) -> Void) {
+		let directoryURL = FileManager.default.temporaryDirectory
+		let fileName = "New Document"
+		let fileURL = directoryURL.appendingPathComponent(fileName, isDirectory: false)
+
+		do {
+			try Data().write(to: fileURL)
+			importHandler(fileURL, .copy)
+		} catch {
+			importHandler(nil, .none)
+		}
+	}
+
+	func documentBrowser(_ controller: UIDocumentBrowserViewController, didPickDocumentsAt documentURLs: [URL]) {
+		guard let documentURL = documentURLs.first else {
+			return
+		}
+
+		presentDocument(at: documentURL)
+	}
+
+	func documentBrowser(_ controller: UIDocumentBrowserViewController, didImportDocumentAt sourceURL: URL, toDestinationURL destinationURL: URL) {
+		presentDocument(at: destinationURL)
+	}
+
+	func documentBrowser(_ controller: UIDocumentBrowserViewController, failedToImportDocumentAt documentURL: URL, error: Error?) {
+
 	}
 }
  

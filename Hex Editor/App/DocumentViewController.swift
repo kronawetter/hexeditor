@@ -179,7 +179,7 @@ class DocumentViewController: UIViewController {
 		viewController.delegate = self
 		viewController.isModalInPresentation = true
 		viewController.modalPresentationStyle = .popover
-		viewController.popoverPresentationController?.barButtonItem = navigationItem.rightBarButtonItem
+		viewController.popoverPresentationController?.barButtonItem = modifySelectionButton
 		present(viewController, animated: true)
 	}
 
