@@ -210,22 +210,31 @@ class DocumentViewController: UIViewController {
 
 	// MARK: Keyboard Events
 
-	@objc private func keyboardWillShow(_ notication: Notification) {
-		guard let keyboardFrame = (notication.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue else {
+	@objc private func keyboardWillShow(_ notification: Notification) {
+		// Source: https://gist.github.com/douglashill/41ea84f0ba59feecd3be51f21f73d501
+
+		guard let endFrameInScreenCoords = (notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue else {
 			return
 		}
 
-		editorView.contentInset.bottom = keyboardFrame.height - view.safeAreaInsets.bottom
-		editorView.verticalScrollIndicatorInsets.bottom = keyboardFrame.height - view.safeAreaInsets.bottom
+		let endFrameInSelfCoords = view.convert(endFrameInScreenCoords, from: nil)
+
+		// Need to clear the additionalSafeAreaInsets in order to be able to read the unaltered safeAreaInsets. We’ll set it again just below.
+		additionalSafeAreaInsets = .zero
+		let safeBounds = view.bounds.inset(by: view.safeAreaInsets)
+
+		let isDocked = endFrameInSelfCoords.maxY >= safeBounds.maxY
+		let keyboardOverlapWithViewFromBottom = isDocked ? max(0, safeBounds.maxY - endFrameInSelfCoords.minY) : 0
+
+		additionalSafeAreaInsets = UIEdgeInsets(top: 0, left: 0, bottom: keyboardOverlapWithViewFromBottom, right: 0)
 	}
 
-	@objc private func keyboardWillChangeFrame(_ notication: Notification) {
-		keyboardWillShow(notication)
+	@objc private func keyboardWillChangeFrame(_ notification: Notification) {
+		keyboardWillShow(notification)
 	}
 
-	@objc private func keyboardWillHide(_ notication: Notification) {
-		editorView.contentInset.bottom = .zero
-		editorView.verticalScrollIndicatorInsets.bottom = .zero
+	@objc private func keyboardWillHide(_ notification: Notification) {
+		additionalSafeAreaInsets = .zero
 	}
 }
 
